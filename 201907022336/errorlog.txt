@@ -1,0 +1,21 @@
+2019-07-02 22:20:03,317 [1] ERROR GrawMet.CommonLib - Version: 5.14.10.3
+2019-07-02 22:20:03,489 [1] ERROR GrawMet.CommonLib - Registered to:
+2019-07-02 22:20:03,489 [1] ERROR GrawMet.CommonLib - Name: 11-RS69
+2019-07-02 22:20:03,489 [1] ERROR GrawMet.CommonLib - Company: 
+2019-07-02 22:20:03,489 [1] ERROR GrawMet.CommonLib - Street: 
+2019-07-02 22:20:03,489 [1] ERROR GrawMet.CommonLib - Zip: 
+2019-07-02 22:20:03,489 [1] ERROR GrawMet.CommonLib - City: 
+2019-07-02 22:20:03,489 [1] ERROR GrawMet.CommonLib - Other info 1: 66136, Station 2, see GRS#749883326694
+2019-07-02 22:20:03,489 [1] ERROR GrawMet.CommonLib - Other info 2: 
+2019-07-02 22:20:03,489 [1] ERROR GrawMet.CommonLib - Other info 3: 
+2019-07-02 22:20:03,489 [1] ERROR GrawMet.CommonLib - Key: A7DC2E-63EA58-E76D68-E6B865
+2019-07-02 22:20:39,835 [7] ERROR GrawDevelopment.DFMCommunication.DFMCommunication.Sonde.Wrapper.SerialWrapper - System.ArgumentOutOfRangeException: Index was out of range. Must be non-negative and less than the size of the collection.
+Parameter name: index
+   at System.ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument argument, ExceptionResource resource)
+   at System.Collections.Generic.List`1.get_Item(Int32 index)
+   at GrawDevelopment.DFMCommunication.Sonde.SerialCommunicationDataReceived(Object sender, EventArgs e)
+   at GrawDevelopment.DFMCommunication.DFMCommunication.Sonde.Wrapper.SerialWrapper.OnDataReceived(SerialCommunicationArgs e)
+   at GrawDevelopment.DFMCommunication.DFMCommunication.Sonde.Wrapper.SerialWrapper.SerialDataReceived(Object sender, SerialDataReceivedEventArgs e)
+2019-07-02 23:35:39,980 [MainGui] ERROR GrawDevelopment.Charts.ChartView.DiagramBaseMember - 
+System.NullReferenceException: Object reference not set to an instance of an object.
+   at GrawDevelopment.Charts.ChartView.SkewT.DrawIndexLevel()
