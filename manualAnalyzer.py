@@ -152,7 +152,12 @@ def hodoPicker():
     # fig1.tight_layout()
     # fig1.show()
     
-   
+def fitEllipse():
+    #conic least squares algorithm
+    
+def doAnalysis():
+    #query list of potential wave candidates
+    
     
 
 def siftThroughUV():
