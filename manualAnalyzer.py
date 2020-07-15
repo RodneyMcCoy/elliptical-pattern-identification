@@ -32,7 +32,7 @@ latitudeOfAnalysis = 45
 select = False     #flag for plotting hodograph after selection
 def getFiles():    
     # specify the location of flight data
-    os.chdir("C:/Users/Malachi/OneDrive - University of Idaho/%SummerInternship2020/hodographMethod")
+    os.chdir("C:/Users/Malachi/OneDrive - University of Idaho/%SummerInternship2020/hodographAnalysis")
     #os.getcwd()
 
 
@@ -163,9 +163,14 @@ class microHodo:
       self.temp = TEMP.magnitude
       self.bv2 = BV2.magnitude
  
-    def saveMicroHodo(upperIndex, lowerIndex):
-        T = [Alt[lowerIndex:upperIndex], u[lowerIndex:upperIndex], v[lowerIndex:upperIndex], Temp[lowerIndex:upperIndex], bv2[lowerIndex:upperIndex]]
-        np.savetxt("Plot.txt", T)
+    def saveMicroHodo(self, upperIndex, lowerIndex):
+        T = np.column_stack([self.alt[lowerIndex:upperIndex], self.u[lowerIndex:upperIndex], self.v[lowerIndex:upperIndex], self.temp[lowerIndex:upperIndex], self.bv2[lowerIndex:upperIndex]])
+        T = pd.DataFrame(T, columns = ['Alt', 'u', 'v', 'temp', 'bv2'])
+        print("T")
+        print(T)
+        #for row in T:
+        #    np.savetxt("Plot.txt", T, fmt='%4.3f')
+        T.to_csv("Plot", index=False, float_format='%4.3f')
         
 def doAnalysis():
     #query list of potential wave candidates
@@ -201,7 +206,7 @@ def siftThroughUV(u, v, Alt):
     elif string == 'y' :
         print("Hodograph saved")
         temporary = microHodo(Alt, u, v, Temp, bv2)
-        temporary.saveMicroHodo(upperIndex)
+        temporary.saveMicroHodo(upperIndex, lowerIndex)
         #break
     
     
