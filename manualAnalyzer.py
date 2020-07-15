@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 #from metpy.plots import Hodograph
 from metpy.units import units
 
+
 #variables
 g = 9.8     #m * s^-2
 heightSamplingFreq = 1     #used in determining moving ave filter window, among other things
@@ -43,11 +44,11 @@ def truncateByAlt(df):
     
     return df
 
-def preprocessDataNoResample():
+def preprocessDataNoResample(file):
     # perform calculations on data to prepare for hodograph
     
     # interpret flight data into usable array/dictionary/list (not sure which is preferable yet...)
-    df = np.genfromtxt(fname='W5_L2_1820UTC_070220_Laurens_Profile.txt', skip_header=linesInHeader, skip_footer=linesInFooter, names=col_names)
+    df = np.genfromtxt(fname=file, skip_header=linesInHeader, skip_footer=linesInFooter, names=col_names)
     
     df = df[::heightSamplingFreq]   #Sample data at nth height
     
@@ -117,6 +118,7 @@ def preprocessDataNoResample():
     print(u)
     print(len(u))
     
+    
 def macroHodo():
     #plot v vs. u
     plt.figure("Macroscopic Hodograph")  #Plot macroscopic hodograph
@@ -152,42 +154,45 @@ def hodoPicker():
     # fig1.tight_layout()
     # fig1.show()
     
-def fitEllipse():
+def saveMicroHodo(upperIndex, lowerIndex):
     #conic least squares algorithm
+    
+    aura = 11
     
 def doAnalysis():
     #query list of potential wave candidates
-    
+    print('')
     
 
-def siftThroughUV():
+def siftThroughUV(u, v, Alt):
+
     #plot Altitude vs. U,V in two subplots
     fig1 = plt.figure("U, V, hodo")
+
     U = plt.subplot(131)
     V = plt.subplot(132)
+    microHodo = plt.subplot(133)
     fig1.suptitle('Alt vs u,v')
     U.plot(u, Alt, linewidth=.5)
     V.plot(v, Alt, linewidth=.5)
     fig1.tight_layout()
-    microHodo = plt.subplot(133)
-    fig1.show()
-    while True:
-        print("Made it through")
+    
+    print("Made it through")
+    
+    upperIndex, lowerIndex = hodoPicker()
+    #plot selected altitude window in third subplot
+    microHodo.plot(u[lowerIndex:upperIndex], v[lowerIndex:upperIndex])
+    #plt.ioff()
+    #fig1.show()
+    plt.pause(.1)   #crude solution that forces hodograph to update before user io is queried
+    ellipseSave = "Save Hodograph Data? (y/n)"
+    string = input(ellipseSave)
+    if string == 'n':
+        print("Hodo not saved")
         
-        upperIndex, lowerIndex = hodoPicker()
-        #plot selected altitude window in third subplot
-        print(upperIndex)
-        microHodo.plot(u[lowerIndex:upperIndex], v[lowerIndex:upperIndex])
-        print("HERE")
-        fig1.tight_layout()
-        fig1.show()
-        ellipseSave = "Save Hodograph Data? (y/n)"
-        string = input(ellipseSave)
-        if string == 'n':
-            microHodo.cla()    
-            continue
-        else:
-            break
+    elif string == 'y' :
+        print("Hodograph saved")
+        #break
     
     
     print("DONE W LOOP")
@@ -200,9 +205,9 @@ def siftThroughUV():
 #Call functions for analysis------------------------------------------
 plt.close('all')
 getFiles()
-preprocessDataNoResample()
+preprocessDataNoResample('W5_L2_1820UTC_070220_Laurens_Profile.txt')
 #macroHodo()
-siftThroughUV()
+siftThroughUV(u, v, Alt)
 
 #hodoPicker()
 
