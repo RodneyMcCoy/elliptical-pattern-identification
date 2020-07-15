@@ -96,15 +96,15 @@ def preprocessDataNoResample(file):
     
     #various calcs
     global potentialTemp
-    global bvFreqSquared
+    global bv2
     potentialTemp = mpcalc.potential_temperature(Pres, Temp).to('degC')    #potential temperature
-    bvFreqSquared = mpcalc.brunt_vaisala_frequency_squared(Alt, potentialTemp)    #N^2
+    bv2 = mpcalc.brunt_vaisala_frequency_squared(Alt, potentialTemp)    #N^2
     
     #potentialTemp = potentialTemperature(Pres, Temp)
     #bvFreqSquared = bruntVaisalaFreqSquared(Alt, potentialTemp)
     
     print('bv2')
-    print(bvFreqSquared)
+    print(bv2)
     print('pt')
     print(potentialTemp)
     
@@ -114,9 +114,9 @@ def preprocessDataNoResample(file):
     v -= vMean
     Temp -= TempMean
  
-    print("u")
+    print("u comps")
     print(u)
-    print(len(u))
+    print(type(u))
     
     
 def macroHodo():
@@ -153,12 +153,20 @@ def hodoPicker():
     # microHodo.plot(u[lowerIndex:upperIndex], v[lowerIndex:upperIndex])
     # fig1.tight_layout()
     # fig1.show()
+
     
-def saveMicroHodo(upperIndex, lowerIndex):
-    #conic least squares algorithm
-    
-    aura = 11
-    
+class microHodo:
+    def __init__(self, ALT, U, V, TEMP, BV2):
+      self.alt = ALT.magnitude
+      self.u = U.magnitude
+      self.v = V.magnitude
+      self.temp = TEMP.magnitude
+      self.bv2 = BV2.magnitude
+ 
+    def saveMicroHodo(upperIndex, lowerIndex):
+        T = [Alt[lowerIndex:upperIndex], u[lowerIndex:upperIndex], v[lowerIndex:upperIndex], Temp[lowerIndex:upperIndex], bv2[lowerIndex:upperIndex]]
+        np.savetxt("Plot.txt", T)
+        
 def doAnalysis():
     #query list of potential wave candidates
     print('')
@@ -171,7 +179,7 @@ def siftThroughUV(u, v, Alt):
 
     U = plt.subplot(131)
     V = plt.subplot(132)
-    microHodo = plt.subplot(133)
+    microscopicHodo = plt.subplot(133)
     fig1.suptitle('Alt vs u,v')
     U.plot(u, Alt, linewidth=.5)
     V.plot(v, Alt, linewidth=.5)
@@ -181,7 +189,7 @@ def siftThroughUV(u, v, Alt):
     
     upperIndex, lowerIndex = hodoPicker()
     #plot selected altitude window in third subplot
-    microHodo.plot(u[lowerIndex:upperIndex], v[lowerIndex:upperIndex])
+    microscopicHodo.plot(u[lowerIndex:upperIndex], v[lowerIndex:upperIndex])
     #plt.ioff()
     #fig1.show()
     plt.pause(.1)   #crude solution that forces hodograph to update before user io is queried
@@ -192,6 +200,8 @@ def siftThroughUV(u, v, Alt):
         
     elif string == 'y' :
         print("Hodograph saved")
+        temporary = microHodo(Alt, u, v, Temp, bv2)
+        temporary.saveMicroHodo(upperIndex)
         #break
     
     
