@@ -6,5 +6,5 @@ save_non_project_files = False
 
 [main]
 version = 0.2.0
-recent_files = ['altitudeTruncate.py', 'W5_L2_1820UTC_070220_Laurens_Profile.txt', 'plottingExample.py', '6_16_20.py']
+recent_files = ['altitudeTruncate.py', 'W5_L2_1820UTC_070220_Laurens_Profile.txt', 'plottingExample.py']
 
