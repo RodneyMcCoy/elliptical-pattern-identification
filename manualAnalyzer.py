@@ -55,8 +55,10 @@ def doAnalysis(microHodoDir):
         df = np.genfromtxt(fname=path, delimiter=',', names=True)
         
         instance = microHodo(df['Alt'], df['u'], df['v'], df['temp'], df['bv2'])
-        instance.fit_ellipse()
-    
+        eps = instance.fit_ellipse()
+        print("Ellipse Properties:", eps)
+        params = instance.getParameters(eps)
+        print("Wave Parameters:", params)
  
 
     
@@ -225,6 +227,15 @@ class microHodo:
       self.v = V#.magnitude
       self.temp = TEMP#.magnitude
       self.bv2 = BV2#.magnitude
+      
+    def getParameters(self, eps):
+        lambda_z = (self.alt[-1] - self.alt[0]) * 2
+        m = 2 * np.pi / lambda_z
+        phi = eps[4]    #orientation of ellipse
+        rot = [[np.cos(phi), -np.sin(phi)], [np.sin(phi), np.cos(phi)]]
+        uv = [self.u, self.v]
+        uvrot = rot * uv
+        return lambda_z
  
     def saveMicroHodo(self, upperIndex, lowerIndex, fname):
         wd = os.getcwd()
@@ -288,7 +299,7 @@ class microHodo:
         @param x first coordinate of points to fit (array)
         @param y second coord. of points to fit (array)
         """
-        self.x, self.y = x[:, np.newaxis], y[:, np.newaxis]
+        x, y = x[:, np.newaxis], y[:, np.newaxis]
         D = np.hstack((x * x, x * y, y * y, x, y, np.ones_like(x)))
         S, C = np.dot(D.T, D), np.zeros([6, 6])
         C[0, 2], C[2, 0], C[1, 1] = 2, 2, -1
@@ -320,7 +331,7 @@ class microHodo:
             a = tmp
     
             # ensure the angle is betwen 0 and 2*pi
-            phi = fmod(phi, 2. * np.pi)   #originally alpha = ...
+            phi = self.fmod(phi, 2. * np.pi)   #originally alpha = ...
         return [a, b, centre[0], centre[1], phi]
 
 def siftThroughUV(u, v, Alt):
