@@ -12,6 +12,10 @@ import pandas as pd
 from math import atan2
 from numpy.linalg import eig, inv, svd
 
+#data smoothing
+import scipy
+from scipy import signal
+
 
 #metpy related dependencies - consider removing entirely
 import metpy.calc as mpcalc
@@ -21,7 +25,7 @@ from metpy.units import units
 
 #variables
 g = 9.8     #m * s^-2
-heightSamplingFreq = 1     #used in determining moving ave filter window, among other things
+heightSamplingFreq = 5     #used in determining moving ave filter window, among other things
 linesInHeader = 20     #number of lines in header of txt profile
 linesInFooter = 10     #num of lines in footer
 col_names = ['Time', 'P', 'T', 'Hu', 'Ws', 'Wd', 'Long.', 'Lat.', 'Alt', 'Geopot', 'Dewp.', 'VirtTemp', 'Rs', 'D']     #header titles
@@ -32,9 +36,31 @@ movingAveWindow = 11     #need to inquire about window size selection
 
 latitudeOfAnalysis = 45
 
+microHodoDir = 'microHodographs'     #location where selections from siftThroughUV are saved. This is also the location where do analysis looks for micro hodos to analyse
+
+def doAnalysis(microHodoDir):
+    #query list of potential wave candidates
+    
+    #specify current working directory
+    #os.chdir(microHodoDir)
+    for file in os.listdir(microHodoDir):
+        print('Analyzing micro-hodos in: {}'.format(file))
+        
+        df = np.genfromtxt(fname=file, skip_header=1, delimiter=',')
+        print(df)
+    
+ 
+
+    
 
 
-select = False     #flag for plotting hodograph after selection
+
+
+
+
+
+
+
 def getFiles():    
     # specify the location of flight data
     os.chdir("C:/Users/Malachi/OneDrive - University of Idaho/%SummerInternship2020/hodographAnalysis")
@@ -55,7 +81,7 @@ def preprocessDataNoResample(file):
     # interpret flight data into usable array/dictionary/list (not sure which is preferable yet...)
     df = np.genfromtxt(fname=file, skip_header=linesInHeader, skip_footer=linesInFooter, names=col_names)
     
-    df = df[::heightSamplingFreq]   #Sample data at nth height
+    #df = df[::heightSamplingFreq]   #Sample data at nth height
     
     global Time 
     global Pres 
@@ -68,7 +94,11 @@ def preprocessDataNoResample(file):
     global Geopot 
     
     df = truncateByAlt(df)
+    
+    print("df size")
+    print(df.size)
     print(df)
+    #print(df)
     
     
     Time = df['Time']
@@ -86,42 +116,62 @@ def preprocessDataNoResample(file):
     #sampledAlt = Alt[::heightSamplingFreq] # find nth element in list
     global u, v     #make components accessible outside of function
     u, v = mpcalc.wind_components(Ws, Wd)   #raw u,v components
-
+    
+    plt.plot(u, Alt, label='Raw')
+    
     # run moving average over u,v comps
     altExtent = max(Alt) - minAlt    #NEED TO VERIFY THE CORRECT WINDOW SAMPLING SZE
     print("Alt Extent")
     print(altExtent)
-    window = max(int((altExtent.magnitude / heightSamplingFreq / 4)), 11)
+    window = int((altExtent.magnitude / heightSamplingFreq / 4))    #removed choosing max between calculated window and 11,artifact from IDL code
     print("WINDOW SIZE")
     print(window)
-    uMean = pd.Series(u).rolling(window=window, center=True, min_periods=1).mean().to_numpy() * units.m / units.second #units dropped, rolling ave ccalculated, units added
-    vMean = pd.Series(v).rolling(window=window, center=True, min_periods=1).mean().to_numpy() * units.m / units.second #units dropped, rolling ave ccalculated, units added
-    TempMean = pd.Series(Temp).rolling(window=10, center=True, min_periods=1).mean().to_numpy() * units.degC #units dropped, rolling ave ccalculated, units added
-
+    mask = np.ones(1100) / window
     
-    #various calcs
+    print("Mask")
+    print(mask.size)
+    print(mask)
+    #uMean = np.convolve(u.magnitude, mask, 'same') * units.m/units.second
+    uMean = signal.savgol_filter(u.magnitude, window, 3) * units.m/units.second
+    vMean = signal.savgol_filter(v.magnitude, window, 3) * units.m/units.second
+    tempMean = signal.savgol_filter(Temp.magnitude, window, 3) * units.degC
+    
+
+    #uMean = pd.Series(u).rolling(window=window, center=True, min_periods=1).mean().to_numpy() * units.m / units.second #units dropped, rolling ave ccalculated, units added
+    #vMean = pd.Series(v).rolling(window=window, center=True, min_periods=1).mean().to_numpy() * units.m / units.second #units dropped, rolling ave ccalculated, units added
+    #tempMean = pd.Series(Temp).rolling(window=window, center=True, min_periods=1).mean().to_numpy() * units.degC #units dropped, rolling ave ccalculated, units added
+    print("UMean")
+    print(uMean)
+    plt.plot(uMean, Alt, label='Mean')
+    
+    #subtract background
+    u -= uMean
+    v -= vMean
+    Temp -= tempMean
+
+    print("meanSmoothedData:")
+    print(np.mean(v))
+    
+    plt.plot(u, Alt, label='Smoothed')
+    plt.legend(loc='upper right')
+    #print("u comps")
+    #print(u)
+    #print(type(u))
+    
+     #various calcs
     global potentialTemp
     global bv2
     potentialTemp = mpcalc.potential_temperature(Pres, Temp).to('degC')    #potential temperature
     bv2 = mpcalc.brunt_vaisala_frequency_squared(Alt, potentialTemp)    #N^2
     
+    
+       
+    #print('bv2')
+    #print(bv2)
+    #print('pt')
+    #print(potentialTemp)
     #potentialTemp = potentialTemperature(Pres, Temp)
     #bvFreqSquared = bruntVaisalaFreqSquared(Alt, potentialTemp)
-    
-    print('bv2')
-    print(bv2)
-    print('pt')
-    print(potentialTemp)
-    
-        
-    #subtract background
-    u -= uMean
-    v -= vMean
-    Temp -= TempMean
- 
-    print("u comps")
-    print(u)
-    print(type(u))
     
     
 def macroHodo():
@@ -168,23 +218,16 @@ class microHodo:
       self.temp = TEMP.magnitude
       self.bv2 = BV2.magnitude
  
-    def saveMicroHodo(self, upperIndex, lowerIndex):
+    def saveMicroHodo(self, upperIndex, lowerIndex, fname):
+        wd = os.getcwd()
         T = np.column_stack([self.alt[lowerIndex:upperIndex], self.u[lowerIndex:upperIndex], self.v[lowerIndex:upperIndex], self.temp[lowerIndex:upperIndex], self.bv2[lowerIndex:upperIndex]])
         T = pd.DataFrame(T, columns = ['Alt', 'u', 'v', 'temp', 'bv2'])
-        print("T")
-        print(T)
-        #for row in T:
-        #    np.savetxt("Plot.txt", T, fmt='%4.3f')
-        T.to_csv("Plot", index=False, float_format='%4.3f')
+        #print("T")
+        #print(T)
+        fname = '{}-{}-{}'.format(fname, int(self.alt[lowerIndex]), int(self.alt[upperIndex]))
+        T.to_csv('{}/microHodographs/{}.csv'.format(wd, fname), index=False, float_format='%4.3f')
         
         
-def doAnalysis():
-    #query list of potential wave candidates
-    print('')
- 
-###def fitEllipse(x,y):
-    
-
 
 def siftThroughUV(u, v, Alt):
 
@@ -206,8 +249,8 @@ def siftThroughUV(u, v, Alt):
     microscopicHodo.plot(u[lowerIndex:upperIndex], v[lowerIndex:upperIndex])
     #plt.ioff()
     #fig1.show()
-    plt.pause(.1)   #crude solution that forces hodograph to update before user io is queried
-    ellipseSave = "Save Hodograph Data? (y/n)"
+    plt.pause(.1)   #crude solution that forces hodograph to update before user io is queried // what is the elegant solution?
+    ellipseSave = "Save Hodograph Data? (y/n/nextFile)"
     string = input(ellipseSave)
     if string == 'n':
         print("Hodo not saved")
@@ -215,13 +258,14 @@ def siftThroughUV(u, v, Alt):
     elif string == 'y' :
         print("Hodograph saved")
         temporary = microHodo(Alt, u, v, Temp, bv2)
-        temporary.saveMicroHodo(upperIndex, lowerIndex)
-        eps = fit_ellipse(temporary.u, temporary.v)
-        print(eps)
+        temporary.saveMicroHodo(upperIndex, lowerIndex, 'fname')
+        
         #break
-    
+    elif string == nextFile:
+        print("Continuing to next file")
     
     print("DONE W LOOP")
+    
     
     
     #print(type(result))
@@ -315,7 +359,7 @@ def fit_ellipse(x, y):
         a = tmp
 
         # ensure the angle is betwen 0 and 2*pi
-        alpha = fmod(phi, 2. * np.pi)
+        phi = fmod(phi, 2. * np.pi)   #originally alpha = ...
     return [a, b, centre[0], centre[1], phi]
 
 #---------------------------------------------------------------------
@@ -324,10 +368,11 @@ plt.close('all')
 getFiles()
 preprocessDataNoResample('W5_L2_1820UTC_070220_Laurens_Profile.txt')
 #macroHodo()
-siftThroughUV(u, v, Alt)
-
+#siftThroughUV(u, v, Alt)
+#eps = fit_ellipse(temporary.u, temporary.v)
+#print(eps)
 #hodoPicker()
-
+doAnalysis(microHodoDir)
 
 #---------------------------------------------------------------------
 
