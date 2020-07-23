@@ -34,7 +34,7 @@ minAlt = 12000 * units.m     #minimun altitude of analysis
 p_0 = 1000 * units.hPa     #needed for potential temp calculatiion
 movingAveWindow = 11     #need to inquire about window size selection
 
-latitudeOfAnalysis = 45
+latitudeOfAnalysis = 45 * units.degree
 
 microHodoDir = 'microHodographs'     #location where selections from siftThroughUV are saved. This is also the location where do analysis looks for micro hodos to analyse
 
@@ -56,9 +56,9 @@ def doAnalysis(microHodoDir):
         
         instance = microHodo(df['Alt'], df['u'], df['v'], df['temp'], df['bv2'])
         eps = instance.fit_ellipse()
-        print("Ellipse Properties:", eps)
+        #print("Ellipse Properties:", eps)
         params = instance.getParameters(eps)
-        print("Wave Parameters:", params)
+        #print("Wave Parameters:", params)
  
 
     
@@ -232,10 +232,35 @@ class microHodo:
         lambda_z = (self.alt[-1] - self.alt[0]) * 2
         m = 2 * np.pi / lambda_z
         phi = eps[4]    #orientation of ellipse
-        rot = [[np.cos(phi), -np.sin(phi)], [np.sin(phi), np.cos(phi)]]
-        uv = [self.u, self.v]
-        uvrot = rot * uv
-        return lambda_z
+        rot = np.array([[np.cos(phi), -np.sin(phi)], [np.sin(phi), np.cos(phi)]])
+        #print("ROTATION:", rot)
+        #print("SIZE OF ROT:", rot.shape)
+        uv = np.array([self.u, self.v])
+        uvrot = np.matmul(rot,uv)
+        urot = uvrot[0,:]
+        dT = np.diff(self.temp)
+        #print("Diferential Temperature:", dT)
+        dz = np.diff(self.alt)
+        wf = (2 * eps[0]) / (2 * eps[1])    #long axis / short axis
+        bvMean = np.mean(self.bv2)
+        coriolisFreq = mpcalc.coriolis_parameter(latitudeOfAnalysis)
+        #print("Coriolis Parameter:", coriolisFreq)
+        intrinsicFreq = coriolisFreq.magnitude * wf     #need to assign units to output from ellipse fitting to ensure dimensional accuracy
+        k_h = np.sqrt((coriolisFreq.magnitude**2 * m**2) / abs(bvMean) * (wf**2 - 1)) #horizontal wavenumber
+        intrinsicHorizPhaseSpeed = intrinsicFreq / k_h
+        k_h_2 = np.sqrt((intrinsicFreq**2 - coriolisFreq.magnitude**2) * (m**2 / abs(bvMean)))
+        int2 = intrinsicFreq / k_h_2
+        dTdz = dT / dz
+        eta = np.mean(dTdz / urot[0:-1])
+        
+        if eta < 0:
+            phi -= np.pi
+        
+        altOfDetection = np.mean(self.alt)
+        
+        print("m: {}, lz: {}, h: {}, bv{}".format(m, lambda_z, intrinsicHorizPhaseSpeed, bvMean))
+        
+        return 
  
     def saveMicroHodo(self, upperIndex, lowerIndex, fname):
         wd = os.getcwd()
