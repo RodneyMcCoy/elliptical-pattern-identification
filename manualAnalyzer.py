@@ -73,7 +73,7 @@ def doAnalysis(microHodoDir):
 
 def getFiles():    
     # specify the location of flight data
-    os.chdir("C:/Users/Malachi/OneDrive - University of Idaho/%SummerInternship2020/hodographAnalysis")
+    os.chdir("C:/Users/Malachi/OneDrive - University of Idaho/%SummerInternship2020/hodographAnalyzer/hodographAnalysis")
     #os.getcwd()
 
 
@@ -567,8 +567,6 @@ def potentialTemperature(pres, temp):
 """   
 
 
-# fit ellipses to hodograph
 
-# use ellipse characteristics to determine wave parameters
 
 # Visualize? 
