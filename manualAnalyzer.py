@@ -28,7 +28,7 @@ g = 9.8     #m * s^-2
 heightSamplingFreq = 5     #used in determining moving ave filter window, among other things
 linesInHeader = 20     #number of lines in header of txt profile
 linesInFooter = 10     #num of lines in footer
-col_names = ['Time', 'P', 'T', 'Hu', 'Ws', 'Wd', 'Long.', 'Lat.', 'Alt', 'Geopot', 'Dewp.', 'VirtTemp', 'Rs', 'D']     #header titles
+col_names = ['Time', 'P', 'T', 'Hu', 'Ws', 'Wd', 'Long.', 'Lat.', 'Alt', 'Geopot', 'MRI', 'RI', 'Dewp.', 'VirtTemp', 'Rs', 'Elevation', 'Az', 'Range', 'D']     #header titles
 minAlt = 12000 * units.m     #minimun altitude of analysis
 #variables for potential temperature calculation
 p_0 = 1000 * units.hPa     #needed for potential temp calculatiion
@@ -80,10 +80,15 @@ def getFiles():
 
 def truncateByAlt(df):
     #df = np.genfromtxt(fname=file, skip_header=linesInHeader, skip_footer=linesInFooter, names=col_names)
-    df = df[df['Alt'] >= minAlt.magnitude]
+    df = df[df['Alt'] > minAlt.magnitude]
     df = df[0 : np.where(df['Alt']== df['Alt'].max())[0][0]+1]
     
     return df
+
+def bruntViasalaFreqSquared(potTemp, heightSamplingFreq):
+    G = 9.8 * units.m / units.second**2
+    N2 = (G / potTemp) * np.gradient(potTemp, heightSamplingFreq * units.m) 
+    return N2
 
 def preprocessDataNoResample(file):
     # perform calculations on data to prepare for hodograph
@@ -105,11 +110,6 @@ def preprocessDataNoResample(file):
     
     df = truncateByAlt(df)
     
-    print("df size")
-    print(df.size)
-    print(df)
-    #print(df)
-    
     
     Time = df['Time']
     Pres = df['P'] * units.hPa
@@ -121,6 +121,17 @@ def preprocessDataNoResample(file):
     Lat = df['Lat']
     Alt = df['Alt'] * units.meter
     Geopot = df['Geopot']
+    
+    
+    #various calcs
+    tempK = Temp.to('kelvin')
+    global potentialTemp
+    global bv2
+    potentialTemperature =  Temp * (p_0 / Pres) ** (.286)    #try (2/7) for exponent    
+    
+    #bv2 = mpcalc.brunt_vaisala_frequency_squared(Alt, potTemp)    #N^2
+    bv2 = bruntViasalaFreqSquared(potentialTemperature, heightSamplingFreq)
+    print("BV2 ", bv2)
     
     
     #sampledAlt = Alt[::heightSamplingFreq] # find nth element in list
@@ -164,15 +175,10 @@ def preprocessDataNoResample(file):
     
     plt.plot(u, Alt, label='Smoothed')
     plt.legend(loc='upper right')
-    #print("u comps")
-    #print(u)
+    print("u comps")
+    print(u)
     #print(type(u))
     
-     #various calcs
-    global potentialTemp
-    global bv2
-    potentialTemp = mpcalc.potential_temperature(Pres, Temp).to('degC')    #potential temperature
-    bv2 = mpcalc.brunt_vaisala_frequency_squared(Alt, potentialTemp)    #N^2
     
     
        
@@ -232,6 +238,7 @@ class microHodo:
         lambda_z = (self.alt[-1] - self.alt[0]) * 2
         m = 2 * np.pi / lambda_z
         phi = eps[4]    #orientation of ellipse
+        print("PHIIII", phi)
         rot = np.array([[np.cos(phi), -np.sin(phi)], [np.sin(phi), np.cos(phi)]])
         #print("ROTATION:", rot)
         #print("SIZE OF ROT:", rot.shape)
@@ -242,11 +249,13 @@ class microHodo:
         #print("Diferential Temperature:", dT)
         dz = np.diff(self.alt)
         wf = (2 * eps[0]) / (2 * eps[1])    #long axis / short axis
+        print("WFFFFFFFFFFFF", wf)
         bvMean = np.mean(self.bv2)
         coriolisFreq = mpcalc.coriolis_parameter(latitudeOfAnalysis)
         #print("Coriolis Parameter:", coriolisFreq)
         intrinsicFreq = coriolisFreq.magnitude * wf     #need to assign units to output from ellipse fitting to ensure dimensional accuracy
         k_h = np.sqrt((coriolisFreq.magnitude**2 * m**2) / abs(bvMean) * (wf**2 - 1)) #horizontal wavenumber
+        print("KHHHHHHHHHHHHHHHHHHHHHHHHH", k_h)
         intrinsicHorizPhaseSpeed = intrinsicFreq / k_h
         k_h_2 = np.sqrt((intrinsicFreq**2 - coriolisFreq.magnitude**2) * (m**2 / abs(bvMean)))
         int2 = intrinsicFreq / k_h_2
@@ -357,6 +366,7 @@ class microHodo:
     
             # ensure the angle is betwen 0 and 2*pi
             phi = self.fmod(phi, 2. * np.pi)   #originally alpha = ...
+            print("ELLIPSE PARAMS:", a, b, phi)
         return [a, b, centre[0], centre[1], phi]
 
 def siftThroughUV(u, v, Alt):
@@ -391,7 +401,7 @@ def siftThroughUV(u, v, Alt):
         temporary.saveMicroHodo(upperIndex, lowerIndex, 'fname')
         
         #break
-    elif string == nextFile:
+    elif string == 'nextFile':
         print("Continuing to next file")
     
     print("DONE W LOOP")
