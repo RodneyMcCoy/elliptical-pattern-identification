@@ -58,17 +58,21 @@ def doAnalysis(microHodoDir):
         
         #instanceName = "{}-{}".format(min(df['Alt']), max(df['Alt']))
         instance = microHodo(df['Alt'], df['u'], df['v'], df['temp'], df['bv2'])
+        instance.addFileName(file)  #file name added to object attribute here to be used in labeling plots
         hodo_list.append(instance)
         eps = instance.fit_ellipse()
         
         #print("Ellipse Properties:", eps)
-        params = instance.getParameters(eps)
+        instance.getParameters(eps)
         #print("Wave Parameters:", params)
         
     print("HODOLIST", hodo_list)
-
+    return hodo_list     #list of micro-hodograph objects created 
     
-
+def plotBulkMicros(hodo_list, fname):
+    #plots all micro-hodographs for a single flight
+    bulkPlot = ''
+    
 
 
 
@@ -224,13 +228,6 @@ def hodoPicker():
     alt1, alt2 = np.argmin(abs(Alt.magnitude - alt1)), np.argmin(abs(Alt.magnitude-alt2))
     upperIndex, lowerIndex = max(alt1, alt2), min(alt1, alt2)     #indices of upper,lower altitudes
     return upperIndex, lowerIndex
-
-    # #plot selected altitude window in third subplot
-    # microHodo = plt.subplot(133)
-    # microHodo.plot(u[lowerIndex:upperIndex], v[lowerIndex:upperIndex])
-    # fig1.tight_layout()
-    # fig1.show()
-
     
 class microHodo:
     def __init__(self, ALT, U, V, TEMP, BV2):
@@ -239,6 +236,11 @@ class microHodo:
       self.v = V#.magnitude
       self.temp = TEMP#.magnitude
       self.bv2 = BV2#.magnitude
+      
+      
+    def addFileName(self, fname):
+        #adds file name attribute to object
+        self.fname = fname
       
     def getParameters(self, eps):
         self.lambda_z = (self.alt[-1] - self.alt[0]) * 2
@@ -272,6 +274,7 @@ class microHodo:
             phi -= np.pi
         
         self.altOfDetection = np.mean(self.alt)
+        
         
         #print("m: {}, lz: {}, h: {}, bv{}".format(self.m, self.lambda_z, intrinsicHorizPhaseSpeed, bvMean))
         
@@ -413,102 +416,9 @@ def siftThroughUV(u, v, Alt):
     print("DONE W LOOP")
     
     
+  
+    #result.cla()  
     
-    #print(type(result))
-    #result.cla()
-    
-#---------------------------------------------------------------------
-"""
-''' fit_ellipse.py by Nicky van Foreest '''
-
-def ellipse_center(a):
-    @brief calculate ellipse centre point
-    @param a the result of __fit_ellipse
-    
-    b, c, d, f, g, a = a[1] / 2, a[2], a[3] / 2, a[4] / 2, a[5], a[0]
-    num = b * b - a * c
-    x0 = (c * d - b * f) / num
-    y0 = (a * f - b * d) / num
-    return np.array([x0, y0])
-
-
-def ellipse_axis_length(a):
-    @brief calculate ellipse axes lengths
-    @param a the result of __fit_ellipse
-
-    b, c, d, f, g, a = a[1] / 2, a[2], a[3] / 2, a[4] / 2, a[5], a[0]
-    up = 2 * (a * f * f + c * d * d + g * b * b - 2 * b * d * f - a * c * g)
-    down1 = (b * b - a * c) *\
-            ((c - a) * np.sqrt(1 + 4 * b * b / ((a - c) * (a - c))) - (c + a))
-    down2 = (b * b - a * c) *\
-            ((a - c) * np.sqrt(1 + 4 * b * b / ((a - c) * (a - c))) - (c + a))
-    res1 = np.sqrt(up / down1)
-    res2 = np.sqrt(up / down2)
-    return np.array([res1, res2])
-
-
-def ellipse_angle_of_rotation(a):
-    @brief calculate ellipse rotation angle
-    @param a the result of __fit_ellipse
-    
-    b, c, d, f, g, a = a[1] / 2, a[2], a[3] / 2, a[4] / 2, a[5], a[0]
-    return atan2(2 * b, (a - c)) / 2
-
-def fmod(x, y):
-    @brief floating point modulus
-        e.g., fmod(theta, np.pi * 2) would keep an angle in [0, 2pi]
-    @param x angle to restrict
-    @param y end of  interval [0, y] to restrict to
-    
-    r = x
-    while(r < 0):
-        r = r + y
-    while(r > y):
-        r = r - y
-    return r
-
-
-def __fit_ellipse(x, y):
-    @brief fit an ellipse to supplied data points
-                (internal method.. use fit_ellipse below...)
-    @param x first coordinate of points to fit (array)
-    @param y second coord. of points to fit (array)
-    
-    x, y = x[:, np.newaxis], y[:, np.newaxis]
-    D = np.hstack((x * x, x * y, y * y, x, y, np.ones_like(x)))
-    S, C = np.dot(D.T, D), np.zeros([6, 6])
-    C[0, 2], C[2, 0], C[1, 1] = 2, 2, -1
-    U, s, V = svd(np.dot(inv(S), C))
-    return U[:, 0]
-
-
-def fit_ellipse(x, y):
-    @brief fit an ellipse to supplied data points: the 5 params
-        returned are:
-        a - major axis length
-        b - minor axis length
-        cx - ellipse centre (x coord.)
-        cy - ellipse centre (y coord.)
-        phi - rotation angle of ellipse bounding box
-    @param x first coordinate of points to fit (array)
-    @param y second coord. of points to fit (array)
-    
-    e = __fit_ellipse(x, y)
-    centre, phi = ellipse_center(e), ellipse_angle_of_rotation(e)
-    axes = ellipse_axis_length(e)
-    a, b = axes
-
-    # assert that a is the major axis (otherwise swap and correct angle)
-    if(b > a):
-        tmp = b
-        b = a
-        a = tmp
-
-        # ensure the angle is betwen 0 and 2*pi
-        phi = fmod(phi, 2. * np.pi)   #originally alpha = ...
-    return [a, b, centre[0], centre[1], phi]
-"""
-#---------------------------------------------------------------------
 #Call functions for analysis------------------------------------------
 plt.close('all')
 getFiles()
@@ -520,12 +430,11 @@ preprocessDataNoResample('W5_L2_1820UTC_070220_Laurens_Profile.txt')
 #hodoPicker()
 doAnalysis(microHodoDir)
 
-#---------------------------------------------------------------------
 
 
 
 
-#Artifacts
+#_________________Artifacts_____________________________________
 """
 #print(u)
 #print(u, v)
