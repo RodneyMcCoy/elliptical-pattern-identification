@@ -24,6 +24,7 @@ from metpy.units import units
 
 
 #variables
+fileToBeInspected = 'W5_L2_1820UTC_070220_Laurens_Profile.txt'
 g = 9.8     #m * s^-2
 heightSamplingFreq = 5     #used in determining moving ave filter window, among other things
 linesInHeader = 20     #number of lines in header of txt profile
@@ -71,7 +72,26 @@ def doAnalysis(microHodoDir):
     
 def plotBulkMicros(hodo_list, fname):
     #plots all micro-hodographs for a single flight
-    bulkPlot = ''
+    bulkPlot = plt.figure(fname)
+    
+    
+    totalPlots = len(hodo_list)
+    numColumns = np.ceil(np.sqrt(totalPlots)).astype('int')
+    numRows = (totalPlots / numColumns).astype('int')
+    position = range(1, totalPlots + 1)
+    print(numRows)
+    print("Type; ", type(numRows))
+    i = 0
+    for hodo in hodo_list:
+        print("HODO ITERATION: ", hodo)
+        ax = bulkPlot.add_subplot(numRows, numColumns, position[i])
+        ax.plot(hodo_list[i].u, hodo_list[i].v)      
+        i += 1
+    #plt.tight_layout() 
+    plt.suptitle("Micro-hodographs for \n {}".format(fname))
+    plt.show() 
+    
+    
     
 
 
@@ -422,13 +442,14 @@ def siftThroughUV(u, v, Alt):
 #Call functions for analysis------------------------------------------
 plt.close('all')
 getFiles()
-preprocessDataNoResample('W5_L2_1820UTC_070220_Laurens_Profile.txt')
+preprocessDataNoResample(fileToBeInspected)
 #macroHodo()
 #siftThroughUV(u, v, Alt)
 #eps = fit_ellipse(temporary.u, temporary.v)
 #print(eps)
 #hodoPicker()
-doAnalysis(microHodoDir)
+hodo_list= doAnalysis(microHodoDir)
+plotBulkMicros(hodo_list, fileToBeInspected)
 
 
 
