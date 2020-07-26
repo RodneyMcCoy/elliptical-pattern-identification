@@ -60,6 +60,7 @@ def doAnalysis(microHodoDir):
         #instanceName = "{}-{}".format(min(df['Alt']), max(df['Alt']))
         instance = microHodo(df['Alt'], df['u'], df['v'], df['temp'], df['bv2'])
         instance.addFileName(file)  #file name added to object attribute here to be used in labeling plots
+        instance.addAltitudeCharacteristics()
         hodo_list.append(instance)
         eps = instance.fit_ellipse()
         
@@ -81,14 +82,19 @@ def plotBulkMicros(hodo_list, fname):
     position = range(1, totalPlots + 1)
     print(numRows)
     print("Type; ", type(numRows))
+    
     i = 0
     for hodo in hodo_list:
         print("HODO ITERATION: ", hodo)
         ax = bulkPlot.add_subplot(numRows, numColumns, position[i])
-        ax.plot(hodo_list[i].u, hodo_list[i].v)      
+        ax.plot(hodo_list[i].u, hodo_list[i].v) 
+        ax.set_title("{}-{} (m)".format(hodo_list[i].lowerAlt, hodo_list[i].upperAlt))
         i += 1
-    #plt.tight_layout() 
-    plt.suptitle("Micro-hodographs for \n {}".format(fname))
+        
+    
+    plt.suptitle("Micro-hodographs for \n {}".format(fname), y=1.09)
+    plt.tight_layout()
+                      
     plt.show() 
     
     
@@ -261,6 +267,9 @@ class microHodo:
     def addFileName(self, fname):
         #adds file name attribute to object
         self.fname = fname
+    def addAltitudeCharacteristics(self):
+        self.lowerAlt = min(self.alt).astype('int')
+        self.upperAlt = max(self.alt).astype('int')
       
     def getParameters(self, eps):
         self.lambda_z = (self.alt[-1] - self.alt[0]) * 2
@@ -306,6 +315,7 @@ class microHodo:
         T = pd.DataFrame(T, columns = ['Alt', 'u', 'v', 'temp', 'bv2'])
         #print("T")
         #print(T)
+        
         fname = '{}-{}-{}'.format(fname, int(self.alt[lowerIndex]), int(self.alt[upperIndex]))
         T.to_csv('{}/microHodographs/{}.csv'.format(wd, fname), index=False, float_format='%4.3f')
 
