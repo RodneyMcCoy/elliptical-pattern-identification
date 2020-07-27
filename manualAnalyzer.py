@@ -61,40 +61,54 @@ def doAnalysis(microHodoDir):
         instance = microHodo(df['Alt'], df['u'], df['v'], df['temp'], df['bv2'])
         instance.addFileName(file)  #file name added to object attribute here to be used in labeling plots
         instance.addAltitudeCharacteristics()
-        hodo_list.append(instance)
-        eps = instance.fit_ellipse()
+        
+        instance.fit_ellipse()
         
         #print("Ellipse Properties:", eps)
-        instance.getParameters(eps)
+        instance.getParameters()
+        hodo_list.append(instance)  #add micro-hodo to running list
         #print("Wave Parameters:", params)
-        
+    hodo_list.sort(key=lambda x: x.altOfDetection)  #sort list of hodographs on order of altitude  
     print("HODOLIST", hodo_list)
     return hodo_list     #list of micro-hodograph objects created 
     
 def plotBulkMicros(hodo_list, fname):
     #plots all micro-hodographs for a single flight
     bulkPlot = plt.figure(fname)
+    plt.suptitle("Micro-hodographs for \n {}".format(fname), fontsize=30)#, y=1.09)
     
     
     totalPlots = len(hodo_list)
     numColumns = np.ceil(np.sqrt(totalPlots)).astype('int')
-    numRows = (totalPlots / numColumns).astype('int')
+    numRows = np.ceil((totalPlots / numColumns)).astype('int')
     position = range(1, totalPlots + 1)
     print(numRows)
     print("Type; ", type(numRows))
     
-    i = 0
+    i = 0   #counter for indexing micro-hodo objects
+    #k=1 #counter for indexing subplots
     for hodo in hodo_list:
         print("HODO ITERATION: ", hodo)
         ax = bulkPlot.add_subplot(numRows, numColumns, position[i])
         ax.plot(hodo_list[i].u, hodo_list[i].v) 
-        ax.set_title("{}-{} (m)".format(hodo_list[i].lowerAlt, hodo_list[i].upperAlt))
+        
+        
+        #plot parametric best fit ellipse
+        param = np.linspace(0, 2 * np.pi)
+        x = hodo_list[i].a * np.cos(param) * np.cos(hodo_list[i].phi) - hodo_list[i].b * np.sin(param) * np.sin(hodo_list[i].phi) + hodo_list[i].c_x
+        y = hodo_list[i].a * np.cos(param) * np.sin(hodo_list[i].phi) + hodo_list[i].b * np.sin(param) * np.cos(hodo_list[i].phi) + hodo_list[i].c_y
+        ax.plot(x, y)
+        
+        
+        ax.set_title("{}-{} (m)".format(hodo_list[i].lowerAlt, hodo_list[i].upperAlt), fontsize=14)
         i += 1
+        #k += 1
         
     
-    plt.suptitle("Micro-hodographs for \n {}".format(fname), y=1.09)
+    
     plt.tight_layout()
-                      
+    plt.subplots_adjust(top=.8)
+                  
     plt.show() 
     
     
@@ -163,7 +177,7 @@ def preprocessDataNoResample(file):
     tempK = Temp.to('kelvin')
     global potentialTemp
     global bv2
-    potentialTemperature =  Temp * (p_0 / Pres) ** (.286)    #try (2/7) for exponent    
+    potentialTemperature =  tempK * (p_0 / Pres) ** (.286)    #try (2/7) for exponent    
     
     #bv2 = mpcalc.brunt_vaisala_frequency_squared(Alt, potTemp)    #N^2
     bv2 = bruntViasalaFreqSquared(potentialTemperature, heightSamplingFreq)
@@ -173,6 +187,8 @@ def preprocessDataNoResample(file):
     #sampledAlt = Alt[::heightSamplingFreq] # find nth element in list
     global u, v     #make components accessible outside of function
     u, v = mpcalc.wind_components(Ws, Wd)   #raw u,v components
+    
+
     
     plt.plot(u, Alt, label='Raw')
     
@@ -228,9 +244,10 @@ def preprocessDataNoResample(file):
     
 def macroHodo():
     #plot v vs. u
-    plt.figure("Macroscopic Hodograph")  #Plot macroscopic hodograph
+    plt.figure("Macroscopic Hodograph", figsize=(10,10))  #Plot macroscopic hodograph
     c=Alt
-    plt.scatter( u, v, c=c, cmap = 'magma', s = 1, edgecolors=None, alpha=1)
+    #plt.scatter( u, v, c=c, cmap = 'magma', s = 1, edgecolors=None, alpha=1)
+    plt.plot(u,v)
     cbar = plt.colorbar()
     cbar.set_label('Altitude')        
            
@@ -271,12 +288,12 @@ class microHodo:
         self.lowerAlt = min(self.alt).astype('int')
         self.upperAlt = max(self.alt).astype('int')
       
-    def getParameters(self, eps):
+    def getParameters(self):
         self.lambda_z = (self.alt[-1] - self.alt[0]) * 2
         self.m = 2 * np.pi / self.lambda_z
-        phi = eps[4]    #orientation of ellipse
-        print("PHIIII", phi)
-        rot = np.array([[np.cos(phi), -np.sin(phi)], [np.sin(phi), np.cos(phi)]])
+        #phi = eps[4]    #orientation of ellipse
+        print("PHIIII", self.phi)
+        rot = np.array([[np.cos(self.phi), -np.sin(self.phi)], [np.sin(self.phi), np.cos(self.phi)]])
         #print("ROTATION:", rot)
         #print("SIZE OF ROT:", rot.shape)
         uv = np.array([self.u, self.v])
@@ -285,7 +302,7 @@ class microHodo:
         dT = np.diff(self.temp)
         #print("Diferential Temperature:", dT)
         dz = np.diff(self.alt)
-        wf = (2 * eps[0]) / (2 * eps[1])    #long axis / short axis
+        wf = (2 * self.a) / (2 * self.b)    #long axis / short axis
         print("WFFFFFFFFFFFF", wf)
         bvMean = np.mean(self.bv2)
         coriolisFreq = mpcalc.coriolis_parameter(latitudeOfAnalysis)
@@ -300,7 +317,7 @@ class microHodo:
         eta = np.mean(dTdz / urot[0:-1])
         
         if eta < 0:
-            phi -= np.pi
+            self.phi -= np.pi
         
         self.altOfDetection = np.mean(self.alt)
         
@@ -311,12 +328,12 @@ class microHodo:
  
     def saveMicroHodo(self, upperIndex, lowerIndex, fname):
         wd = os.getcwd()
-        T = np.column_stack([self.alt[lowerIndex:upperIndex+1], self.u[lowerIndex:upperIndex+1], self.v[lowerIndex:upperIndex+1], self.temp[lowerIndex:upperIndex+1], self.bv2[lowerIndex:upperIndex+1]])
+        T = np.column_stack([self.alt[lowerIndex:upperIndex+1].magnitude, self.u[lowerIndex:upperIndex+1].magnitude, self.v[lowerIndex:upperIndex+1].magnitude, self.temp[lowerIndex:upperIndex+1].magnitude, self.bv2[lowerIndex:upperIndex+1].magnitude])
         T = pd.DataFrame(T, columns = ['Alt', 'u', 'v', 'temp', 'bv2'])
         #print("T")
         #print(T)
         
-        fname = '{}-{}-{}'.format(fname, int(self.alt[lowerIndex]), int(self.alt[upperIndex]))
+        fname = '{}-{}-{}'.format(fname, int(self.alt[lowerIndex].magnitude), int(self.alt[upperIndex].magnitude))
         T.to_csv('{}/microHodographs/{}.csv'.format(wd, fname), index=False, float_format='%4.3f')
 
     def ellipse_center(self, a):
@@ -405,8 +422,14 @@ class microHodo:
     
             # ensure the angle is betwen 0 and 2*pi
             phi = self.fmod(phi, 2. * np.pi)   #originally alpha = ...
-            print("ELLIPSE PARAMS:", a, b, phi)
-        return [a, b, centre[0], centre[1], phi]
+            
+
+        self.a = a
+        self.b = b
+        self.c_x = centre[0]
+        self.c_y = centre[1]
+        self.phi = phi
+        return 
 
 def siftThroughUV(u, v, Alt):
 
@@ -421,27 +444,29 @@ def siftThroughUV(u, v, Alt):
     V.plot(v, Alt, linewidth=.5)
     fig1.tight_layout()
     
-    print("Made it through")
-    
-    upperIndex, lowerIndex = hodoPicker()
-    #plot selected altitude window in third subplot
-    microscopicHodo.plot(u[lowerIndex:upperIndex], v[lowerIndex:upperIndex])
-    #plt.ioff()
-    #fig1.show()
-    plt.pause(.1)   #crude solution that forces hodograph to update before user io is queried // what is the elegant solution?
-    ellipseSave = "Save Hodograph Data? (y/n/nextFile)"
-    string = input(ellipseSave)
-    if string == 'n':
-        print("Hodo not saved")
+    while True:
+        print("Made it through")
         
-    elif string == 'y' :
-        print("Hodograph saved")
-        temporary = microHodo(Alt, u, v, Temp, bv2)
-        temporary.saveMicroHodo(upperIndex, lowerIndex, 'fname')
-        
-        #break
-    elif string == 'nextFile':
-        print("Continuing to next file")
+        upperIndex, lowerIndex = hodoPicker()
+        #plot selected altitude window in third subplot
+        microscopicHodo.plot(u[lowerIndex:upperIndex], v[lowerIndex:upperIndex])
+        #plt.ioff()
+        #fig1.show()
+        plt.pause(.1)   #crude solution that forces hodograph to update before user io is queried // what is the elegant solution?
+        ellipseSave = "Save Hodograph Data? (y/n/nextFile)"
+        string = input(ellipseSave)
+        if string == 'n':
+            print("Hodo not saved")
+            
+        elif string == 'y' :
+            print("Hodograph saved")
+            temporary = microHodo(Alt, u, v, Temp, bv2)
+            temporary.saveMicroHodo(upperIndex, lowerIndex, 'fname')
+            
+            #break
+        elif string == 'nextFile':
+            print("Continuing to next file")
+            break
     
     print("DONE W LOOP")
     
@@ -450,6 +475,7 @@ def siftThroughUV(u, v, Alt):
     #result.cla()  
     
 #Call functions for analysis------------------------------------------
+
 plt.close('all')
 getFiles()
 preprocessDataNoResample(fileToBeInspected)
