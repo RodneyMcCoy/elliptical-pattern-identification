@@ -25,14 +25,18 @@ from metpy.units import units
 #manual GUI
 from matplotlib.widgets import Slider, Button, RadioButtons
 import matplotlib.widgets as widgets
+
+
+
+
 #variables
-fileToBeInspected = 'W5_L2_1820UTC_070220_Laurens_Profile.txt'
+fileToBeInspected = 'W9_L1_1500UTC_072920_Laurens_Profile.txt'#'W5_L2_1820UTC_070220_Laurens_Profile.txt'
 g = 9.8     #m * s^-2
 heightSamplingFreq = 5     #used in determining moving ave filter window, among other things
 linesInHeader = 20     #number of lines in header of txt profile
 linesInFooter = 10     #num of lines in footer
 col_names = ['Time', 'P', 'T', 'Hu', 'Ws', 'Wd', 'Long.', 'Lat.', 'Alt', 'Geopot', 'MRI', 'RI', 'Dewp.', 'VirtTemp', 'Rs', 'Elevation', 'Az', 'Range', 'D']     #header titles
-minAlt = 12000 * units.m     #minimun altitude of analysis
+minAlt = 1000 * units.m     #minimun altitude of analysis
 #variables for potential temperature calculation
 p_0 = 1000 * units.hPa     #needed for potential temp calculatiion
 movingAveWindow = 11     #need to inquire about window size selection
@@ -108,8 +112,8 @@ def plotBulkMicros(hodo_list, fname):
         
     
     
-    plt.tight_layout()
-    plt.subplots_adjust(top=.8)
+    #plt.tight_layout()
+    plt.subplots_adjust(top=.9, hspace=.5)
                   
     plt.show() 
     
@@ -199,6 +203,9 @@ def preprocessDataNoResample(file):
     print("Alt Extent")
     print(altExtent)
     window = int((altExtent.magnitude / heightSamplingFreq / 4))    #removed choosing max between calculated window and 11,artifact from IDL code
+    if (window%2) == 0:
+        window = window-1
+        
     print("WINDOW SIZE")
     print(window)
     mask = np.ones(1100) / window
@@ -278,27 +285,6 @@ def hodoPicker():
 def manualGUI():
     
     
-    """if 
-    
-    ellipseSave = "Save Hodograph Data? (y/n/nextFile)"
-    string = input(ellipseSave)
-    if string == 'n':
-        print("Hodo not saved")
-        
-    elif string == 'y' :
-        print("Hodograph saved")
-        temporary = microHodo(Alt, u, v, Temp, bv2)
-        temporary.saveMicroHodo(upperIndex, lowerIndex, 'fname')
-        
-        #break
-    elif string == 'nextFile':
-        print("Continuing to next file")
-        break
-
-print("DONE W LOOP")
-"""    
-    
-    
 
     fig5 = plt.figure('MANUAL GUI')
     ax = plt.axes([.25, .25, .6, .6])
@@ -322,6 +308,12 @@ print("DONE W LOOP")
     t1 = axoutput.text(0, .5 , "Lower Altitude: {}".format(Alt[alt0]))
     saveButton = Button(axSave, "SaveMicro", color='lightgoldenrodyellow', hovercolor='0.975')
     axoutput.axis('off')
+    
+    
+   
+    
+    
+    
     
     def update(val):
         
@@ -362,17 +354,9 @@ print("DONE W LOOP")
     fineAltSlider.on_changed(update)
     
     #plt.pause(.1)
-    fig5.show()
-    """resetax = plt.axes([0.8, 0.025, 0.1, 0.04])
-    button = Button(resetax, 'Reset',hovercolor='0.975')
+    #fig5.show()   needed in working gui
     
     
-    def reset(event):
-        altSlider.reset()
-        altWindow.reset()
-    button.on_clicked(reset)
-    """
-
 
    
     
@@ -602,6 +586,7 @@ hodo_list= doAnalysis(microHodoDir)
 plotBulkMicros(hodo_list, fileToBeInspected)
 
 #manualGUI()
+
 
 
 
