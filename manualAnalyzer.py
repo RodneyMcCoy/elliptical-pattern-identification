@@ -22,7 +22,9 @@ import metpy.calc as mpcalc
 import matplotlib.pyplot as plt
 from metpy.units import units
 
-
+#manual GUI
+from matplotlib.widgets import Slider, Button, RadioButtons
+import matplotlib.widgets as widgets
 #variables
 fileToBeInspected = 'W5_L2_1820UTC_070220_Laurens_Profile.txt'
 g = 9.8     #m * s^-2
@@ -75,7 +77,7 @@ def doAnalysis(microHodoDir):
 def plotBulkMicros(hodo_list, fname):
     #plots all micro-hodographs for a single flight
     bulkPlot = plt.figure(fname)
-    plt.suptitle("Micro-hodographs for \n {}".format(fname), fontsize=30)#, y=1.09)
+    plt.suptitle("Micro-hodographs for \n {}".format(fname))#, y=1.09)
     
     
     totalPlots = len(hodo_list)
@@ -100,7 +102,7 @@ def plotBulkMicros(hodo_list, fname):
         ax.plot(x, y)
         
         
-        ax.set_title("{}-{} (m)".format(hodo_list[i].lowerAlt, hodo_list[i].upperAlt), fontsize=14)
+        ax.set_title("{}-{} (m)".format(hodo_list[i].lowerAlt, hodo_list[i].upperAlt), fontsize=14 )
         i += 1
         #k += 1
         
@@ -189,8 +191,8 @@ def preprocessDataNoResample(file):
     u, v = mpcalc.wind_components(Ws, Wd)   #raw u,v components
     
 
-    
-    plt.plot(u, Alt, label='Raw')
+    #--------------------------------------------------------------------------------------
+    #plt.plot(u, Alt, label='Raw')
     
     # run moving average over u,v comps
     altExtent = max(Alt) - minAlt    #NEED TO VERIFY THE CORRECT WINDOW SAMPLING SZE
@@ -215,7 +217,8 @@ def preprocessDataNoResample(file):
     #tempMean = pd.Series(Temp).rolling(window=window, center=True, min_periods=1).mean().to_numpy() * units.degC #units dropped, rolling ave ccalculated, units added
     print("UMean")
     print(uMean)
-    plt.plot(uMean, Alt, label='Mean')
+    #--------------------------------------------------------------------------------------
+    #plt.plot(uMean, Alt, label='Mean')
     
     #subtract background
     u -= uMean
@@ -225,11 +228,10 @@ def preprocessDataNoResample(file):
     print("meanSmoothedData:")
     print(np.mean(v))
     
-    plt.plot(u, Alt, label='Smoothed')
-    plt.legend(loc='upper right')
-    print("u comps")
-    print(u)
-    #print(type(u))
+    #------------------------------------------------------------------------------------
+    #plt.plot(u, Alt, label='Smoothed')
+    #plt.legend(loc='upper right')
+    
     
     
     
@@ -241,6 +243,7 @@ def preprocessDataNoResample(file):
     #potentialTemp = potentialTemperature(Pres, Temp)
     #bvFreqSquared = bruntVaisalaFreqSquared(Alt, potentialTemp)
     
+
     
 def macroHodo():
     #plot v vs. u
@@ -271,6 +274,103 @@ def hodoPicker():
     alt1, alt2 = np.argmin(abs(Alt.magnitude - alt1)), np.argmin(abs(Alt.magnitude-alt2))
     upperIndex, lowerIndex = max(alt1, alt2), min(alt1, alt2)     #indices of upper,lower altitudes
     return upperIndex, lowerIndex
+    
+def manualGUI():
+    
+    
+    """if 
+    
+    ellipseSave = "Save Hodograph Data? (y/n/nextFile)"
+    string = input(ellipseSave)
+    if string == 'n':
+        print("Hodo not saved")
+        
+    elif string == 'y' :
+        print("Hodograph saved")
+        temporary = microHodo(Alt, u, v, Temp, bv2)
+        temporary.saveMicroHodo(upperIndex, lowerIndex, 'fname')
+        
+        #break
+    elif string == 'nextFile':
+        print("Continuing to next file")
+        break
+
+print("DONE W LOOP")
+"""    
+    
+    
+
+    fig5 = plt.figure('MANUAL GUI')
+    ax = plt.axes([.25, .25, .6, .6])
+    plt.subplots_adjust(left=0.2, bottom=0.2)
+    alt0 = 0
+    wind0 = 100
+    
+    l, = plt.plot(u[:alt0+wind0], v[:alt0+wind0], 'o', ls='-', markevery=[0])
+    ax.margins(.05)
+    plt.axis('equal')
+    
+    axAlt = plt.axes([0.01, 0.01, 0.02, 0.9])
+    axFineAlt = plt.axes([0.05, 0.01, 0.02, 0.9])
+    axamp = plt.axes([0.09, 0.01, 0.02, 0.9])
+    axoutput = plt.axes([.15, .9, .1, .1])
+    axSave = plt.axes([.5, .85, .1, .06])
+    
+    altSlider = Slider(axAlt, 'Altitude', 0, len(Alt), valinit=wind0, orientation='vertical')
+    fineAltSlider = Slider(axFineAlt, 'Fine Altitude \n Adjust', -50, 50, valinit=0, orientation='vertical')
+    altWindow = Slider(axamp, 'Window', 0, 1000, valinit=wind0, orientation='vertical')
+    t1 = axoutput.text(0, .5 , "Lower Altitude: {}".format(Alt[alt0]))
+    saveButton = Button(axSave, "SaveMicro")
+    axoutput.axis('off')
+    
+    def update(val):
+        
+        sliderAlt = int(altSlider.val) + int(fineAltSlider.val)
+        sliderWindow = int(altWindow.val)
+        l.set_ydata(v[sliderAlt:sliderAlt+sliderWindow])
+        l.set_xdata(u[sliderAlt:sliderAlt+sliderWindow])
+        
+        #plt.plot(u[sliderAlt], v[sliderAlt], marker='o', color='g', label='point')
+        ax.autoscale(enable=True)
+        ax.relim()
+
+        t1.set_text("Lower Altitude: {}".format(Alt[sliderAlt]))
+        
+        fig5.canvas.draw_idle()
+        plt.pause(.1)
+        
+    def save(val):
+        altInd = int(altSlider.val) + int(fineAltSlider.val)
+        winLength = int(altWindow.val)
+        
+        ALT = Alt[altInd:altInd+winLength+1]
+        U = u[altInd:altInd+winLength+1]
+        V = v[altInd:altInd+winLength+1]
+        TEMP = Temp[altInd:altInd+winLength+1]
+        BV2 = bv2[altInd:altInd+winLength+1]
+        instance = microHodo(ALT, U, V, TEMP, BV2)
+        instance.addFileName(fileToBeInspected)
+        instance.saveMocroHodographNoIndices
+        return
+        
+    
+    altSlider.on_changed(update)
+    altWindow.on_changed(update)
+    fineAltSlider.on_changed(update)
+    saveButton.on_clicked(save)
+    fig5.show()
+    """resetax = plt.axes([0.8, 0.025, 0.1, 0.04])
+    button = Button(resetax, 'Reset',hovercolor='0.975')
+    
+    
+    def reset(event):
+        altSlider.reset()
+        altWindow.reset()
+    button.on_clicked(reset)
+    """
+
+
+   
     
 class microHodo:
     def __init__(self, ALT, U, V, TEMP, BV2):
@@ -325,7 +425,17 @@ class microHodo:
         #print("m: {}, lz: {}, h: {}, bv{}".format(self.m, self.lambda_z, intrinsicHorizPhaseSpeed, bvMean))
         
         return 
- 
+    def saveMicroHodoNoIndices(self):
+        #used when the entire hodograph is to be saved
+        wd = os.getcwd()
+        T = np.column_stack([self.alt.magnitude, self.u.magnitude, self.v.magnitude, self.temp.magnitude, self.bv2.magnitude])
+        T = pd.DataFrame(T, columns = ['Alt', 'u', 'v', 'temp', 'bv2'])
+        #print("T")
+        #print(T)
+        
+        fname = '{}-{}-{}'.format(self.fname, int(self.alt.magnitude), int(self.alt.magnitude))
+        T.to_csv('{}/microHodographs/{}.csv'.format(wd, fname), index=False, float_format='%4.3f')
+        
     def saveMicroHodo(self, upperIndex, lowerIndex, fname):
         wd = os.getcwd()
         T = np.column_stack([self.alt[lowerIndex:upperIndex+1].magnitude, self.u[lowerIndex:upperIndex+1].magnitude, self.v[lowerIndex:upperIndex+1].magnitude, self.temp[lowerIndex:upperIndex+1].magnitude, self.bv2[lowerIndex:upperIndex+1].magnitude])
@@ -431,7 +541,7 @@ class microHodo:
         self.phi = phi
         return 
 
-def siftThroughUV(u, v, Alt):
+def siftThroughUV():   #u, v, Alt in argument
 
     #plot Altitude vs. U,V in two subplots
     fig1 = plt.figure("U, V, hodo")
@@ -480,14 +590,14 @@ plt.close('all')
 getFiles()
 preprocessDataNoResample(fileToBeInspected)
 #macroHodo()
-#siftThroughUV(u, v, Alt)
+#siftThroughUV()
 #eps = fit_ellipse(temporary.u, temporary.v)
 #print(eps)
 #hodoPicker()
-hodo_list= doAnalysis(microHodoDir)
-plotBulkMicros(hodo_list, fileToBeInspected)
+#hodo_list= doAnalysis(microHodoDir)
+#plotBulkMicros(hodo_list, fileToBeInspected)
 
-
+manualGUI()
 
 
 
