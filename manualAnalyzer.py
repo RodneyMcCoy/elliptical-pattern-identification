@@ -314,13 +314,13 @@ print("DONE W LOOP")
     axFineAlt = plt.axes([0.05, 0.01, 0.02, 0.9])
     axamp = plt.axes([0.09, 0.01, 0.02, 0.9])
     axoutput = plt.axes([.15, .9, .1, .1])
-    axSave = plt.axes([.5, .85, .1, .06])
+    axSave = plt.axes([.5, .9, .1, .06])
     
     altSlider = Slider(axAlt, 'Altitude', 0, len(Alt), valinit=wind0, orientation='vertical')
     fineAltSlider = Slider(axFineAlt, 'Fine Altitude \n Adjust', -50, 50, valinit=0, orientation='vertical')
     altWindow = Slider(axamp, 'Window', 0, 1000, valinit=wind0, orientation='vertical')
     t1 = axoutput.text(0, .5 , "Lower Altitude: {}".format(Alt[alt0]))
-    saveButton = Button(axSave, "SaveMicro")
+    saveButton = Button(axSave, "SaveMicro", color='lightgoldenrodyellow', hovercolor='0.975')
     axoutput.axis('off')
     
     def update(val):
@@ -338,8 +338,9 @@ print("DONE W LOOP")
         
         fig5.canvas.draw_idle()
         plt.pause(.1)
+        saveButton.on_clicked(save)
         
-    def save(val):
+    def save(event):
         altInd = int(altSlider.val) + int(fineAltSlider.val)
         winLength = int(altWindow.val)
         
@@ -350,14 +351,17 @@ print("DONE W LOOP")
         BV2 = bv2[altInd:altInd+winLength+1]
         instance = microHodo(ALT, U, V, TEMP, BV2)
         instance.addFileName(fileToBeInspected)
-        instance.saveMocroHodographNoIndices
+        instance.saveMicroHodoNoIndices()
         return
-        
+    def saave(event):
+        print("SAVED")
+    
     
     altSlider.on_changed(update)
     altWindow.on_changed(update)
     fineAltSlider.on_changed(update)
-    saveButton.on_clicked(save)
+    
+    #plt.pause(.1)
     fig5.show()
     """resetax = plt.axes([0.8, 0.025, 0.1, 0.04])
     button = Button(resetax, 'Reset',hovercolor='0.975')
@@ -433,7 +437,7 @@ class microHodo:
         #print("T")
         #print(T)
         
-        fname = '{}-{}-{}'.format(self.fname, int(self.alt.magnitude), int(self.alt.magnitude))
+        fname = '{}-{}-{}'.format(self.fname, int(self.alt[0].magnitude), int(self.alt[-1].magnitude))
         T.to_csv('{}/microHodographs/{}.csv'.format(wd, fname), index=False, float_format='%4.3f')
         
     def saveMicroHodo(self, upperIndex, lowerIndex, fname):
@@ -594,10 +598,10 @@ preprocessDataNoResample(fileToBeInspected)
 #eps = fit_ellipse(temporary.u, temporary.v)
 #print(eps)
 #hodoPicker()
-#hodo_list= doAnalysis(microHodoDir)
-#plotBulkMicros(hodo_list, fileToBeInspected)
+hodo_list= doAnalysis(microHodoDir)
+plotBulkMicros(hodo_list, fileToBeInspected)
 
-manualGUI()
+#manualGUI()
 
 
 
