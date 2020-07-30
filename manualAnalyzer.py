@@ -48,6 +48,7 @@ microHodoDir = 'microHodographs'     #location where selections from siftThrough
 def doAnalysis(microHodoDir):
     #query list of potential wave candidates
     
+    
     #specify current working directory
     #os.chdir(microHodoDir)
     print("microPathExists")
