@@ -196,7 +196,8 @@ def preprocessDataNoResample(file):
     
 
     #--------------------------------------------------------------------------------------
-    #plt.plot(u, Alt, label='Raw')
+    
+    plt.plot(u.magnitude, Alt.magnitude, label='Raw')
     
     # run moving average over u,v comps
     altExtent = max(Alt) - minAlt    #NEED TO VERIFY THE CORRECT WINDOW SAMPLING SZE
@@ -225,7 +226,7 @@ def preprocessDataNoResample(file):
     print("UMean")
     print(uMean)
     #--------------------------------------------------------------------------------------
-    #plt.plot(uMean, Alt, label='Mean')
+    plt.plot(uMean.magnitude, Alt.magnitude, label='Mean')
     
     #subtract background
     u -= uMean
@@ -236,8 +237,11 @@ def preprocessDataNoResample(file):
     print(np.mean(v))
     
     #------------------------------------------------------------------------------------
-    #plt.plot(u, Alt, label='Smoothed')
-    #plt.legend(loc='upper right')
+    plt.plot(u.magnitude, Alt.magnitude, label='Smoothed')
+    plt.xlabel('(m/s)', fontsize=40)
+    plt.ylabel('(m)', fontsize=40)
+    plt.title('Smoothed U Components', fontsize=45)
+    plt.legend(loc='upper right', fontsize=30)
     
     
     
@@ -582,10 +586,11 @@ preprocessDataNoResample(fileToBeInspected)
 #eps = fit_ellipse(temporary.u, temporary.v)
 #print(eps)
 #hodoPicker()
-hodo_list= doAnalysis(microHodoDir)
-plotBulkMicros(hodo_list, fileToBeInspected)
+#hodo_list= doAnalysis(microHodoDir)
+#plotBulkMicros(hodo_list, fileToBeInspected)
 
-#manualGUI()
+
+manualGUI()
 
 
 
