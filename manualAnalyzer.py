@@ -26,10 +26,17 @@ from metpy.units import units
 from matplotlib.widgets import Slider, Button, RadioButtons
 import matplotlib.widgets as widgets
 
+#tk gui
+import tkinter
+from matplotlib.backend_bases import key_press_handler
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (
+    FigureCanvasTkAgg, NavigationToolbar2Tk)
+from tkinter import *
+from tkinter.font import Font
 
 
-
-#variables
+#variables that are specific to analysis: These might be changed regularly depending on launch location, etc.
 fileToBeInspected = 'W9_L1_1500UTC_072920_Laurens_Profile.txt'#'W5_L2_1820UTC_070220_Laurens_Profile.txt'
 g = 9.8     #m * s^-2
 heightSamplingFreq = 5     #used in determining moving ave filter window, among other things
@@ -44,6 +51,218 @@ movingAveWindow = 11     #need to inquire about window size selection
 latitudeOfAnalysis = 45 * units.degree
 
 microHodoDir = 'microHodographs'     #location where selections from siftThroughUV are saved. This is also the location where do analysis looks for micro hodos to analyse
+
+
+def manualTKGUI():
+    
+    class App:
+        def __init__(self, master):
+            
+            alt0 = 0
+            wind0 = 100
+            # Create a container
+            frame = tkinter.Frame(master)
+            
+            #Create Sliders
+            self.alt = IntVar()
+            self.win = IntVar()
+            
+            #self.altSlider = tkinter.Scale(root, command=self.update, variable=self.alt, from_=len(Alt.magnitude), to=0, label='Lower Altitude').pack(side=tkinter.LEFT)
+            #self.fineAltSlider = tkinter.Scale(root, command=self.update, variable=self.fineAlt, from_=-50, to=50, label='Fine Altitude Adj.').pack(side=tkinter.LEFT)
+            #self.windowSlider = tkinter.Scale(root, command=self.update, variable=self.win, from_=5, to=3000, label='Window Height').pack(side=tkinter.LEFT)
+            
+            #self.altSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.alt, values=Alt.magnitude.tolist()).pack(side=tkinter.LEFT)
+            #self.winSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.win, from_=5, to=1000).pack(side=tkinter.LEFT)
+            
+            self.altSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.alt, values=Alt.magnitude.tolist(), font=Font(family='Helvetica', size=30, weight='normal')).place(relx=.05, rely=.12, relheight=.05, relwidth=.15)
+            self.winSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.win, from_=5, to=1000, font=Font(family='Helvetica', size=30, weight='normal')).place(relx=.05, rely=.22, relheight=.05, relwidth=.15)
+            self.altLabel = tkinter.Label(root, text="Select Lower Altitude :").place(relx=.05, rely=.1)
+            self.winLabel = tkinter.Label(root, text="Select Alt. Window (# data points):").place(relx=.05, rely=.2)
+            
+            #Create figure, plot 
+            fig = Figure(figsize=(5, 4), dpi=100)
+            self.ax = fig.add_subplot(111)
+            self.l, = self.ax.plot(u[:alt0+wind0], v[:alt0+wind0], 'o', ls='-', markevery=[0])
+            
+            
+            self.canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
+            self.canvas.draw()
+            #self.canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
+            self.canvas.get_tk_widget().place(relx=0.25, rely=0.1, relheight=.8, relwidth=.6)
+            #frame.pack()
+            
+            self.winLabel = tkinter.Label(root, text="Blue dot indicates lower altitude", font=Font(family='Helvetica', size=25, weight='normal')).place(relx=.05, rely=.3)
+            self.quitButton = tkinter.Button(master=root, text="Quit", command=self._quit).place(relx=.05, rely=.6, relheight=.05, relwidth=.15)
+            self.saveButton = tkinter.Button(master=root, text="Save Micro-Hodograph", command=self.save).place(relx=.05, rely=.5, relheight=.05, relwidth=.15)
+            #---------
+            
+        def update(self, *args):
+           sliderAlt = int(self.alt.get())
+           sliderWindow = int(self.win.get())
+           self.l.set_xdata(u[np.where(Alt.magnitude == sliderAlt)[0][0]:np.where(Alt.magnitude == sliderAlt)[0][0] + sliderWindow])
+           self.l.set_ydata(v[np.where(Alt.magnitude == sliderAlt)[0][0]:np.where(Alt.magnitude == sliderAlt)[0][0] + sliderWindow])
+           
+           self.ax.autoscale(enable=True)
+           self.ax.relim()
+           self.canvas.draw()
+        
+        def save(self): 
+            sliderAlt = int(self.alt.get())
+            sliderWindow = int(self.win.get())
+            lowerAltInd = np.where(Alt.magnitude == sliderAlt)[0][0]
+            upperAltInd = lowerAltInd + sliderWindow
+            print("Type:", type(lowerAltInd))
+            
+            
+            ALT = Alt[lowerAltInd : upperAltInd]
+            U = u[lowerAltInd : upperAltInd]
+            V = v[lowerAltInd : upperAltInd]
+            TEMP = Temp[lowerAltInd : upperAltInd]
+            BV2 = bv2[lowerAltInd : upperAltInd]
+            instance = microHodo(ALT, U, V, TEMP, BV2)
+            instance.addFileName(fileToBeInspected)
+            instance.saveMicroHodoNoIndices()
+            return
+        def _quit(self):
+           root.quit()     # stops mainloop
+           root.destroy()  # this is necessary on Windows to prevent
+                        # Fatal Python Error: PyEval_RestoreThread: NULL tstate
+    
+    
+    
+    
+       
+
+    root = tkinter.Tk()
+    root.wm_title("Manual GUI")
+    app = App(root)
+    root.mainloop()
+
+
+"""  
+    
+    fig = Figure(figsize=(5, 4), dpi=100)
+    t = np.arange(0, 3, .01)
+    fig.add_subplot(111).plot(t, 2 * np.sin(2 * np.pi * t))
+    
+    
+    
+    
+    altSlider = tkinter.Scale(root, from_=int(min(Alt.magnitude)), to=int(max(Alt.magnitude)), label='Lower Altitude').pack(side=tkinter.LEFT)
+    fineAltSlider = tkinter.Scale(root, from_=-100, to=100, label='Fine Altitude Adj.').pack(side=tkinter.LEFT)
+    windowSlider = tkinter.Scale(root, from_=5, to=3000, label='Window Height').pack(side=tkinter.LEFT)
+    
+    
+    canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
+    canvas.draw()
+    canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
+    
+    toolbar = NavigationToolbar2Tk(canvas, root)
+    toolbar.update()
+    canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
+    
+    
+    def on_key_press(event):
+        print("you pressed {}".format(event.key))
+        key_press_handler(event, canvas, toolbar)
+    
+    
+    canvas.mpl_connect("key_press_event", on_key_press)
+    
+    
+    def _quit():
+        root.quit()     # stops mainloop
+        root.destroy()  # this is necessary on Windows to prevent
+                        # Fatal Python Error: PyEval_RestoreThread: NULL tstate
+    
+    
+    button = tkinter.Button(master=root, text="Quit", command=_quit)
+    button.pack(side=tkinter.BOTTOM)
+    
+    tkinter.mainloop()
+"""
+"""
+    fig5 = plt.figure('MANUAL GUI')
+    ax = plt.axes([.25, .25, .6, .6])
+    plt.subplots_adjust(left=0.2, bottom=0.2)
+    alt0 = 0
+    wind0 = 100
+    
+    l, = plt.plot(u[:alt0+wind0], v[:alt0+wind0], 'o', ls='-', markevery=[0])
+    ax.margins(.05)
+    plt.axis('equal')
+    
+    axAlt = plt.axes([0.01, 0.01, 0.02, 0.9])
+    axFineAlt = plt.axes([0.05, 0.01, 0.02, 0.9])
+    axamp = plt.axes([0.09, 0.01, 0.02, 0.9])
+    axoutput = plt.axes([.15, .9, .1, .1])
+    axSave = plt.axes([.5, .9, .1, .06])
+    
+    altSlider = Slider(axAlt, 'Altitude', 0, len(Alt), valinit=wind0, orientation='vertical')
+    fineAltSlider = Slider(axFineAlt, 'Fine Altitude \n Adjust', -50, 50, valinit=0, orientation='vertical')
+    altWindow = Slider(axamp, 'Window', 0, 1000, valinit=wind0, orientation='vertical')
+    t1 = axoutput.text(0, .5 , "Lower Altitude: {}".format(Alt[alt0]))
+    saveButton = Button(axSave, "SaveMicro", color='lightgoldenrodyellow', hovercolor='0.975')
+    axoutput.axis('off')
+    
+    
+   
+    
+    
+    
+    
+    def update(val):
+        
+        sliderAlt = int(altSlider.val) + int(fineAltSlider.val)
+        sliderWindow = int(altWindow.val)
+        l.set_ydata(v[sliderAlt:sliderAlt+sliderWindow])
+        l.set_xdata(u[sliderAlt:sliderAlt+sliderWindow])
+        
+        #plt.plot(u[sliderAlt], v[sliderAlt], marker='o', color='g', label='point')
+        ax.autoscale(enable=True)
+        ax.relim()
+
+        t1.set_text("Lower Altitude: {}".format(Alt[sliderAlt]))
+        
+        fig5.canvas.draw_idle()
+        plt.pause(.1)
+        saveButton.on_clicked(save)
+        
+    def save(event):
+        altInd = int(altSlider.val) + int(fineAltSlider.val)
+        winLength = int(altWindow.val)
+        
+        ALT = Alt[altInd:altInd+winLength+1]
+        U = u[altInd:altInd+winLength+1]
+        V = v[altInd:altInd+winLength+1]
+        TEMP = Temp[altInd:altInd+winLength+1]
+        BV2 = bv2[altInd:altInd+winLength+1]
+        instance = microHodo(ALT, U, V, TEMP, BV2)
+        instance.addFileName(fileToBeInspected)
+        instance.saveMicroHodoNoIndices()
+        return
+    def saave(event):
+        print("SAVED")
+    
+    
+    altSlider.on_changed(update)
+    altWindow.on_changed(update)
+    fineAltSlider.on_changed(update)
+    
+    #plt.pause(.1)
+    #fig5.show()   needed in working gui
+    
+    
+"""
+
+
+
+
+
+
+
+
+
 
 def doAnalysis(microHodoDir):
     #query list of potential wave candidates
@@ -591,7 +810,7 @@ preprocessDataNoResample(fileToBeInspected)
 #plotBulkMicros(hodo_list, fileToBeInspected)
 
 
-manualGUI()
+manualTKGUI()
 
 
 
