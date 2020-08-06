@@ -74,15 +74,17 @@ def manualTKGUI():
             #self.altSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.alt, values=Alt.magnitude.tolist()).pack(side=tkinter.LEFT)
             #self.winSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.win, from_=5, to=1000).pack(side=tkinter.LEFT)
             
-            self.altSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.alt, values=Alt.magnitude.tolist(), font=Font(family='Helvetica', size=30, weight='normal')).place(relx=.05, rely=.12, relheight=.05, relwidth=.15)
-            self.winSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.win, from_=5, to=1000, font=Font(family='Helvetica', size=30, weight='normal')).place(relx=.05, rely=.22, relheight=.05, relwidth=.15)
-            self.altLabel = tkinter.Label(root, text="Select Lower Altitude :").place(relx=.05, rely=.1)
-            self.winLabel = tkinter.Label(root, text="Select Alt. Window (# data points):").place(relx=.05, rely=.2)
+            self.altSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.alt, values=Alt.magnitude.tolist(), font=Font(family='Helvetica', size=25, weight='normal')).place(relx=.05, rely=.12, relheight=.05, relwidth=.15)
+            self.winSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.win, from_=5, to=1000, font=Font(family='Helvetica', size=25, weight='normal')).place(relx=.05, rely=.22, relheight=.05, relwidth=.15)
+            self.altLabel = tkinter.Label(root, text="Select Lower Altitude (m):", font=Font(family='Helvetica', size=18, weight='normal')).place(relx=.05, rely=.09)
+            self.winLabel = tkinter.Label(root, text="Select Alt. Window (# data points):", font=Font(family='Helvetica', size=18, weight='normal')).place(relx=.05, rely=.19)
             
             #Create figure, plot 
             fig = Figure(figsize=(5, 4), dpi=100)
             self.ax = fig.add_subplot(111)
+            fig.suptitle("{}".format(fileToBeInspected))
             self.l, = self.ax.plot(u[:alt0+wind0], v[:alt0+wind0], 'o', ls='-', markevery=[0])
+            self.ax.set_aspect('equal')
             
             
             self.canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
@@ -91,7 +93,7 @@ def manualTKGUI():
             self.canvas.get_tk_widget().place(relx=0.25, rely=0.1, relheight=.8, relwidth=.6)
             #frame.pack()
             
-            self.winLabel = tkinter.Label(root, text="Blue dot indicates lower altitude", font=Font(family='Helvetica', size=25, weight='normal')).place(relx=.05, rely=.3)
+            self.winLabel = tkinter.Label(root, text="Blue dot indicates lower altitude", font=Font(family='Helvetica', size=15, weight='normal')).place(relx=.05, rely=.3)
             self.quitButton = tkinter.Button(master=root, text="Quit", command=self._quit).place(relx=.05, rely=.6, relheight=.05, relwidth=.15)
             self.saveButton = tkinter.Button(master=root, text="Save Micro-Hodograph", command=self.save).place(relx=.05, rely=.5, relheight=.05, relwidth=.15)
             #---------
@@ -134,130 +136,9 @@ def manualTKGUI():
        
 
     root = tkinter.Tk()
-    root.wm_title("Manual GUI")
+    root.wm_title("Manual Hodograph GUI")
     app = App(root)
     root.mainloop()
-
-
-"""  
-    
-    fig = Figure(figsize=(5, 4), dpi=100)
-    t = np.arange(0, 3, .01)
-    fig.add_subplot(111).plot(t, 2 * np.sin(2 * np.pi * t))
-    
-    
-    
-    
-    altSlider = tkinter.Scale(root, from_=int(min(Alt.magnitude)), to=int(max(Alt.magnitude)), label='Lower Altitude').pack(side=tkinter.LEFT)
-    fineAltSlider = tkinter.Scale(root, from_=-100, to=100, label='Fine Altitude Adj.').pack(side=tkinter.LEFT)
-    windowSlider = tkinter.Scale(root, from_=5, to=3000, label='Window Height').pack(side=tkinter.LEFT)
-    
-    
-    canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
-    canvas.draw()
-    canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
-    
-    toolbar = NavigationToolbar2Tk(canvas, root)
-    toolbar.update()
-    canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
-    
-    
-    def on_key_press(event):
-        print("you pressed {}".format(event.key))
-        key_press_handler(event, canvas, toolbar)
-    
-    
-    canvas.mpl_connect("key_press_event", on_key_press)
-    
-    
-    def _quit():
-        root.quit()     # stops mainloop
-        root.destroy()  # this is necessary on Windows to prevent
-                        # Fatal Python Error: PyEval_RestoreThread: NULL tstate
-    
-    
-    button = tkinter.Button(master=root, text="Quit", command=_quit)
-    button.pack(side=tkinter.BOTTOM)
-    
-    tkinter.mainloop()
-"""
-"""
-    fig5 = plt.figure('MANUAL GUI')
-    ax = plt.axes([.25, .25, .6, .6])
-    plt.subplots_adjust(left=0.2, bottom=0.2)
-    alt0 = 0
-    wind0 = 100
-    
-    l, = plt.plot(u[:alt0+wind0], v[:alt0+wind0], 'o', ls='-', markevery=[0])
-    ax.margins(.05)
-    plt.axis('equal')
-    
-    axAlt = plt.axes([0.01, 0.01, 0.02, 0.9])
-    axFineAlt = plt.axes([0.05, 0.01, 0.02, 0.9])
-    axamp = plt.axes([0.09, 0.01, 0.02, 0.9])
-    axoutput = plt.axes([.15, .9, .1, .1])
-    axSave = plt.axes([.5, .9, .1, .06])
-    
-    altSlider = Slider(axAlt, 'Altitude', 0, len(Alt), valinit=wind0, orientation='vertical')
-    fineAltSlider = Slider(axFineAlt, 'Fine Altitude \n Adjust', -50, 50, valinit=0, orientation='vertical')
-    altWindow = Slider(axamp, 'Window', 0, 1000, valinit=wind0, orientation='vertical')
-    t1 = axoutput.text(0, .5 , "Lower Altitude: {}".format(Alt[alt0]))
-    saveButton = Button(axSave, "SaveMicro", color='lightgoldenrodyellow', hovercolor='0.975')
-    axoutput.axis('off')
-    
-    
-   
-    
-    
-    
-    
-    def update(val):
-        
-        sliderAlt = int(altSlider.val) + int(fineAltSlider.val)
-        sliderWindow = int(altWindow.val)
-        l.set_ydata(v[sliderAlt:sliderAlt+sliderWindow])
-        l.set_xdata(u[sliderAlt:sliderAlt+sliderWindow])
-        
-        #plt.plot(u[sliderAlt], v[sliderAlt], marker='o', color='g', label='point')
-        ax.autoscale(enable=True)
-        ax.relim()
-
-        t1.set_text("Lower Altitude: {}".format(Alt[sliderAlt]))
-        
-        fig5.canvas.draw_idle()
-        plt.pause(.1)
-        saveButton.on_clicked(save)
-        
-    def save(event):
-        altInd = int(altSlider.val) + int(fineAltSlider.val)
-        winLength = int(altWindow.val)
-        
-        ALT = Alt[altInd:altInd+winLength+1]
-        U = u[altInd:altInd+winLength+1]
-        V = v[altInd:altInd+winLength+1]
-        TEMP = Temp[altInd:altInd+winLength+1]
-        BV2 = bv2[altInd:altInd+winLength+1]
-        instance = microHodo(ALT, U, V, TEMP, BV2)
-        instance.addFileName(fileToBeInspected)
-        instance.saveMicroHodoNoIndices()
-        return
-    def saave(event):
-        print("SAVED")
-    
-    
-    altSlider.on_changed(update)
-    altWindow.on_changed(update)
-    fineAltSlider.on_changed(update)
-    
-    #plt.pause(.1)
-    #fig5.show()   needed in working gui
-    
-    
-"""
-
-
-
-
 
 
 
@@ -323,7 +204,11 @@ def plotBulkMicros(hodo_list, fname):
         param = np.linspace(0, 2 * np.pi)
         x = hodo_list[i].a * np.cos(param) * np.cos(hodo_list[i].phi) - hodo_list[i].b * np.sin(param) * np.sin(hodo_list[i].phi) + hodo_list[i].c_x
         y = hodo_list[i].a * np.cos(param) * np.sin(hodo_list[i].phi) + hodo_list[i].b * np.sin(param) * np.cos(hodo_list[i].phi) + hodo_list[i].c_y
+        
         ax.plot(x, y)
+        ax.set_xlabel("(m/s)")
+        ax.set_ylabel("(m/s)")
+        ax.set_aspect('equal')
         
         
         ax.set_title("{}-{} (m)".format(hodo_list[i].lowerAlt, hodo_list[i].upperAlt), fontsize=14 )
@@ -333,26 +218,13 @@ def plotBulkMicros(hodo_list, fname):
     
     
     #plt.tight_layout()
-    plt.subplots_adjust(top=.9, hspace=.5)
-                  
+    plt.subplots_adjust(top=.9, hspace=.5)            
     plt.show() 
     
-    
-    
-
-
-
-
-
-
-
-
 def getFiles():    
     # specify the location of flight data
     os.chdir("C:/Users/Malachi/OneDrive - University of Idaho/%SummerInternship2020/hodographAnalyzer/hodographAnalysis")
     #os.getcwd()
-
-
 
 def truncateByAlt(df):
     #df = np.genfromtxt(fname=file, skip_header=linesInHeader, skip_footer=linesInFooter, names=col_names)
@@ -439,10 +311,6 @@ def preprocessDataNoResample(file):
     vMean = signal.savgol_filter(v.magnitude, window, 3) * units.m/units.second
     tempMean = signal.savgol_filter(Temp.magnitude, window, 3) * units.degC
     
-
-    #uMean = pd.Series(u).rolling(window=window, center=True, min_periods=1).mean().to_numpy() * units.m / units.second #units dropped, rolling ave ccalculated, units added
-    #vMean = pd.Series(v).rolling(window=window, center=True, min_periods=1).mean().to_numpy() * units.m / units.second #units dropped, rolling ave ccalculated, units added
-    #tempMean = pd.Series(Temp).rolling(window=window, center=True, min_periods=1).mean().to_numpy() * units.degC #units dropped, rolling ave ccalculated, units added
     print("UMean")
     print(uMean)
     #--------------------------------------------------------------------------------------
@@ -486,15 +354,6 @@ def macroHodo():
     cbar.set_label('Altitude')        
            
 def hodoPicker():
-    # #plot Altitude vs. U,V in two subplots
-    # fig1 = plt.figure("U, V, hodo")
-    # U = plt.subplot(131)
-    # V = plt.subplot(132)
-    # fig1.suptitle('Alt vs u,v')
-    # U.plot(u, Alt, linewidth=.5)
-    # V.plot(v, Alt, linewidth=.5)
-    # fig1.tight_layout()
-    
     
     #Select points from graph, choose indices of data that are closest match to selections
     print('Select Two Altitudes to Examine')
@@ -596,6 +455,7 @@ class microHodo:
     def addFileName(self, fname):
         #adds file name attribute to object
         self.fname = fname
+        
     def addAltitudeCharacteristics(self):
         self.lowerAlt = min(self.alt).astype('int')
         self.upperAlt = max(self.alt).astype('int')
@@ -767,7 +627,6 @@ def siftThroughUV():   #u, v, Alt in argument
     fig1.tight_layout()
     
     while True:
-        print("Made it through")
         
         upperIndex, lowerIndex = hodoPicker()
         #plot selected altitude window in third subplot
@@ -806,8 +665,8 @@ preprocessDataNoResample(fileToBeInspected)
 #eps = fit_ellipse(temporary.u, temporary.v)
 #print(eps)
 #hodoPicker()
-#hodo_list= doAnalysis(microHodoDir)
-#plotBulkMicros(hodo_list, fileToBeInspected)
+hodo_list= doAnalysis(microHodoDir)
+plotBulkMicros(hodo_list, fileToBeInspected)
 
 
 manualTKGUI()
@@ -815,64 +674,3 @@ manualTKGUI()
 
 
 
-#_________________Artifacts_____________________________________
-"""
-#print(u)
-#print(u, v)
-#print(Wd)
-# create hodograph
-fig = plt.figure(figsize=(10, 10))
-ax = fig.add_subplot(1, 1, 1)
-h = Hodograph(ax, component_range=40)
-h.add_grid(10)
-h.plot(-u, -v)  # need to verify the direction of u,v. There is a 180deg modulo ambiguity, this should be resolved by labeling radial azmiths on plot
-
-
-#print(u, v)
-
-"""
-
-
-"""
-#Rise rate calculation--------------------------------------------
-deltaZ = np.array([]) 
-for i in range(len(Alt)):
-    if i < len(Alt) - 1:
-        delta = Alt[i + 1] - Alt[i]
-        deltaZ = np.append(deltaZ, delta)
-
-rr = deltaZ * units.meters / (1 * units.second)
-print(rr)
-appendedTime = Time[0:-1]
-meanRr = rr.mean()
-print(meanRr)
-
-plt.plot(appendedTime, rr)
-plt.show()
-#End rise rate calculation-----------------------------------------
-"""
-"""
-# Function for calculating potential temperature, as done in Tom's code
-def potentialTemperature(Pressure, Temperature):
-    potTemp = (p_0 ** 0.286) * Temperature / (Pressure ** 0.286)
-    return potTemp
-#test potential temperature calculator__________________________________________
-#print(potentialTemperature(Pres, Temp).to('degC'))
-#print(mpcalc.potential_temperature(Pres, Temp).to('degC')) 
-#Results from metPy seem to match Tom's function
-"""
-
-""" Possibly use to replace metPy calculations   
-def bruntVaisalaFreqSquared(alt, potTemp):
-    N2 = (g / potTemp) * np.gradient(potTemp, heightSamplingFreq)
-    return N2
-
-def potentialTemperature(pres, temp):
-    theta = temp * (1000 / pres) ** 0.268
-    return theta
-"""   
-
-
-
-
-# Visualize? 
