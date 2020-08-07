@@ -40,6 +40,10 @@ doAnalysis = True     # Display list of microhodographs with overlayed fit ellip
 
 #variables that are specific to analysis: These might be changed regularly depending on launch location, etc.
 fileToBeInspected = 'W9_L1_1500UTC_072920_Laurens_Profile.txt'#'W5_L2_1820UTC_070220_Laurens_Profile.txt'
+microHodoDir = 'microHodographs'     #location where selections from siftThroughUV are saved. This is also the location where do analysis looks for micro hodos to analysis
+latitudeOfAnalysis = 45 * units.degree
+
+
 g = 9.8     #m * s^-2
 heightSamplingFreq = 5     #used in determining moving ave filter window, among other things
 linesInHeader = 20     #number of lines in header of txt profile
@@ -52,13 +56,8 @@ movingAveWindow = 11     #need to inquire about window size selection
 
 latitudeOfAnalysis = 45 * units.degree
 
-microHodoDir = 'microHodographs'     #location where selections from siftThroughUV are saved. This is also the location where do analysis looks for micro hodos to analyse
-#____________________________
+microHodoDir = 'microHodographs'     #location where selections from siftThroughUV are saved. This is also the location where do analysis looks for micro hodos to analysis
 
-#run_(fileToBeInspected)
-
-
-#_________________________
 
 def manualTKGUI():
     
@@ -281,7 +280,7 @@ def preprocessDataNoResample(file):
     tempK = Temp.to('kelvin')
     global potentialTemp
     global bv2
-    potentialTemperature =  tempK * (p_0 / Pres) ** (.286)    #try (2/7) for exponent    
+    potentialTemperature =  tempK * (p_0 / Pres) ** (2/7)    #try (2/7) for exponent    
     
     #bv2 = mpcalc.brunt_vaisala_frequency_squared(Alt, potTemp)    #N^2
     bv2 = bruntViasalaFreqSquared(potentialTemperature, heightSamplingFreq)
