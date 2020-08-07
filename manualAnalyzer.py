@@ -13,7 +13,7 @@ from math import atan2
 from numpy.linalg import eig, inv, svd
 
 #data smoothing
-import scipy
+#import scipy
 from scipy import signal
 
 
@@ -22,16 +22,12 @@ import metpy.calc as mpcalc
 import matplotlib.pyplot as plt
 from metpy.units import units
 
-#manual GUI
-from matplotlib.widgets import Slider, Button, RadioButtons
-import matplotlib.widgets as widgets
 
 #tk gui
 import tkinter
-from matplotlib.backend_bases import key_press_handler
+#from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import (
-    FigureCanvasTkAgg, NavigationToolbar2Tk)
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import *
 from tkinter.font import Font
 
@@ -51,7 +47,12 @@ movingAveWindow = 11     #need to inquire about window size selection
 latitudeOfAnalysis = 45 * units.degree
 
 microHodoDir = 'microHodographs'     #location where selections from siftThroughUV are saved. This is also the location where do analysis looks for micro hodos to analyse
+#____________________________
 
+run(fileToBeInspected)
+
+
+#_________________________
 
 def manualTKGUI():
     
@@ -61,7 +62,7 @@ def manualTKGUI():
             alt0 = 0
             wind0 = 100
             # Create a container
-            frame = tkinter.Frame(master)
+            tkinter.Frame(master)
             
             #Create Sliders
             self.alt = IntVar()
@@ -89,7 +90,6 @@ def manualTKGUI():
             
             self.canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
             self.canvas.draw()
-            #self.canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
             self.canvas.get_tk_widget().place(relx=0.25, rely=0.1, relheight=.8, relwidth=.6)
             #frame.pack()
             
@@ -137,7 +137,7 @@ def manualTKGUI():
 
     root = tkinter.Tk()
     root.wm_title("Manual Hodograph GUI")
-    app = App(root)
+    App(root)
     root.mainloop()
 
 
@@ -653,24 +653,36 @@ def siftThroughUV():   #u, v, Alt in argument
     
     
   
-    #result.cla()  
+    #result.cla() 
     
-#Call functions for analysis------------------------------------------
-
-plt.close('all')
-getFiles()
-preprocessDataNoResample(fileToBeInspected)
-#macroHodo()
-#siftThroughUV()
-#eps = fit_ellipse(temporary.u, temporary.v)
-#print(eps)
-#hodoPicker()
-hodo_list= doAnalysis(microHodoDir)
-plotBulkMicros(hodo_list, fileToBeInspected)
-
-
-manualTKGUI()
-
+def run(file):
+    
+    #Call functions for analysis------------------------------------------
+    
+    plt.close('all')
+    getFiles()
+    preprocessDataNoResample(file)
+    
+    if showMacroHodo:
+        macroHodo()
+        
+    if siftThruHodo:
+       manualTKGUI()
+       
+    if displayMicroHodos:
+        hodo_list= doAnalysis(microHodoDir)
+        plotBulkMicros(hodo_list, file)
+        
+    
+    #siftThroughUV()
+    #eps = fit_ellipse(temporary.u, temporary.v)
+    #print(eps)
+    #hodoPicker()
+    
+    
+    
+    
+    
 
 
 
