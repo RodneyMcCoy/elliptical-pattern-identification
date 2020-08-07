@@ -32,6 +32,12 @@ from tkinter import *
 from tkinter.font import Font
 
 
+
+#Which functionality would you like to use?
+showMacroHodo = True     # Displays macroscopic hodograph for flight
+siftThruHodo = True     # Use manual GUI to locate ellipse-like structures in hodograph
+doAnalysis = True     # Display list of microhodographs with overlayed fit ellipses
+
 #variables that are specific to analysis: These might be changed regularly depending on launch location, etc.
 fileToBeInspected = 'W9_L1_1500UTC_072920_Laurens_Profile.txt'#'W5_L2_1820UTC_070220_Laurens_Profile.txt'
 g = 9.8     #m * s^-2
@@ -49,7 +55,7 @@ latitudeOfAnalysis = 45 * units.degree
 microHodoDir = 'microHodographs'     #location where selections from siftThroughUV are saved. This is also the location where do analysis looks for micro hodos to analyse
 #____________________________
 
-run(fileToBeInspected)
+#run_(fileToBeInspected)
 
 
 #_________________________
@@ -350,8 +356,8 @@ def macroHodo():
     c=Alt
     #plt.scatter( u, v, c=c, cmap = 'magma', s = 1, edgecolors=None, alpha=1)
     plt.plot(u,v)
-    cbar = plt.colorbar()
-    cbar.set_label('Altitude')        
+    #cbar = plt.colorbar()
+    #cbar.set_label('Altitude')        
            
 def hodoPicker():
     
@@ -655,7 +661,7 @@ def siftThroughUV():   #u, v, Alt in argument
   
     #result.cla() 
     
-def run(file):
+def run_(file):
     
     #Call functions for analysis------------------------------------------
     
@@ -669,7 +675,7 @@ def run(file):
     if siftThruHodo:
        manualTKGUI()
        
-    if displayMicroHodos:
+    if doAnalysis:
         hodo_list= doAnalysis(microHodoDir)
         plotBulkMicros(hodo_list, file)
         
@@ -681,7 +687,7 @@ def run(file):
     
     
     
-    
+run_(fileToBeInspected)  
     
 
 
