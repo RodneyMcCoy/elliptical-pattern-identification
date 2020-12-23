@@ -6,5 +6,5 @@ save_non_project_files = False
 
 [main]
 version = 0.2.0
-recent_files = ['manualAnalyzer.py', 'W9_L1_1500UTC_072920_Laurens_Profile.txt']
+recent_files = ['..\\..\\LAPSERATE\\PBLHEIGHT_modifiedToIncludeLapseRate.py', 'PDAP_minimal_11122020.py', 'manualAnalyzer.py']
 

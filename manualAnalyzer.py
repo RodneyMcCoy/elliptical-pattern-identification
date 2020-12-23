@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jun 16 09:56:40 2020
+Manual Hodograph Analyzer
+Include this script in the same folder as the input and output directories, or else specify their file path
 
-@author: Malachi
+Malachi Mooney-Rivkin
+Summer 2020
+Idaho Space Grant Consortium
+moon8435@vandals.uidaho.edu
 """
 import os
 import numpy as np
@@ -32,33 +36,30 @@ from tkinter import *
 from tkinter.font import Font
 
 
+###############################BEGINING OF USER INPUT##########################
 
 #Which functionality would you like to use?
-showMacroHodo = True     # Displays macroscopic hodograph for flight
-siftThruHodo = True     # Use manual GUI to locate ellipse-like structures in hodograph
-doAnalysis = True     # Display list of microhodographs with overlayed fit ellipses
+showVisualizations = False     # Displays macroscopic hodograph for flight
+siftThruHodo = False     # Use manual GUI to locate ellipse-like structures in hodograph
+doAnalysis = True     # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
 
 #variables that are specific to analysis: These might be changed regularly depending on launch location, etc.
-fileToBeInspected = 'W9_L1_1500UTC_072920_Laurens_Profile.txt'#'W5_L2_1820UTC_070220_Laurens_Profile.txt'
+fileToBeInspected = 'W5_L2_1820UTC_070220_Laurens_Profile.txt'
 microHodoDir = 'microHodographs'     #location where selections from siftThroughUV are saved. This is also the location where do analysis looks for micro hodos to analysis
-latitudeOfAnalysis = 45 * units.degree
-
-
+latitudeOfAnalysis = 45 * units.degree     #latitude at which sonde was launched. Used to account for affect of coriolis force.
 g = 9.8     #m * s^-2
 heightSamplingFreq = 5     #used in determining moving ave filter window, among other things
 linesInHeader = 20     #number of lines in header of txt profile
 linesInFooter = 10     #num of lines in footer
 col_names = ['Time', 'P', 'T', 'Hu', 'Ws', 'Wd', 'Long.', 'Lat.', 'Alt', 'Geopot', 'MRI', 'RI', 'Dewp.', 'VirtTemp', 'Rs', 'Elevation', 'Az', 'Range', 'D']     #header titles
 minAlt = 1000 * units.m     #minimun altitude of analysis
+
 #variables for potential temperature calculation
 p_0 = 1000 * units.hPa     #needed for potential temp calculatiion
 movingAveWindow = 11     #need to inquire about window size selection
 
-latitudeOfAnalysis = 45 * units.degree
-
-microHodoDir = 'microHodographs'     #location where selections from siftThroughUV are saved. This is also the location where do analysis looks for micro hodos to analysis
-
-
+##################################END OF USER INPUT######################
+#------------------------------------------------------------------------
 def manualTKGUI():
     
     class App:
@@ -73,13 +74,6 @@ def manualTKGUI():
             self.alt = IntVar()
             self.win = IntVar()
             
-            #self.altSlider = tkinter.Scale(root, command=self.update, variable=self.alt, from_=len(Alt.magnitude), to=0, label='Lower Altitude').pack(side=tkinter.LEFT)
-            #self.fineAltSlider = tkinter.Scale(root, command=self.update, variable=self.fineAlt, from_=-50, to=50, label='Fine Altitude Adj.').pack(side=tkinter.LEFT)
-            #self.windowSlider = tkinter.Scale(root, command=self.update, variable=self.win, from_=5, to=3000, label='Window Height').pack(side=tkinter.LEFT)
-            
-            #self.altSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.alt, values=Alt.magnitude.tolist()).pack(side=tkinter.LEFT)
-            #self.winSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.win, from_=5, to=1000).pack(side=tkinter.LEFT)
-            
             self.altSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.alt, values=Alt.magnitude.tolist(), font=Font(family='Helvetica', size=25, weight='normal')).place(relx=.05, rely=.12, relheight=.05, relwidth=.15)
             self.winSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.win, from_=5, to=1000, font=Font(family='Helvetica', size=25, weight='normal')).place(relx=.05, rely=.22, relheight=.05, relwidth=.15)
             self.altLabel = tkinter.Label(root, text="Select Lower Altitude (m):", font=Font(family='Helvetica', size=18, weight='normal')).place(relx=.05, rely=.09)
@@ -91,8 +85,7 @@ def manualTKGUI():
             fig.suptitle("{}".format(fileToBeInspected))
             self.l, = self.ax.plot(u[:alt0+wind0], v[:alt0+wind0], 'o', ls='-', markevery=[0])
             self.ax.set_aspect('equal')
-            
-            
+        
             self.canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
             self.canvas.draw()
             self.canvas.get_tk_widget().place(relx=0.25, rely=0.1, relheight=.8, relwidth=.6)
@@ -110,6 +103,7 @@ def manualTKGUI():
            self.l.set_ydata(v[np.where(Alt.magnitude == sliderAlt)[0][0]:np.where(Alt.magnitude == sliderAlt)[0][0] + sliderWindow])
            
            self.ax.autoscale(enable=True)
+           #self.ax.autoscale
            self.ax.relim()
            self.canvas.draw()
         
@@ -118,7 +112,7 @@ def manualTKGUI():
             sliderWindow = int(self.win.get())
             lowerAltInd = np.where(Alt.magnitude == sliderAlt)[0][0]
             upperAltInd = lowerAltInd + sliderWindow
-            print("Type:", type(lowerAltInd))
+            
             
             
             ALT = Alt[lowerAltInd : upperAltInd]
@@ -126,7 +120,9 @@ def manualTKGUI():
             V = v[lowerAltInd : upperAltInd]
             TEMP = Temp[lowerAltInd : upperAltInd]
             BV2 = bv2[lowerAltInd : upperAltInd]
-            instance = microHodo(ALT, U, V, TEMP, BV2)
+            LAT = Lat[lowerAltInd : upperAltInd]
+            LONG = Long[lowerAltInd : upperAltInd]
+            instance = microHodo(ALT, U, V, TEMP, BV2, LAT, LONG)
             instance.addFileName(fileToBeInspected)
             instance.saveMicroHodoNoIndices()
             return
@@ -138,14 +134,10 @@ def manualTKGUI():
     
     
     
-       
-
     root = tkinter.Tk()
     root.wm_title("Manual Hodograph GUI")
     App(root)
     root.mainloop()
-
-
 
 
 
@@ -160,28 +152,44 @@ def doAnalysis(microHodoDir):
     print(os.path.exists(microHodoDir))
     
     hodo_list = []
+    parameterList = []
     for file in os.listdir(microHodoDir):
         path = os.path.join(microHodoDir, file)
         print('Analyzing micro-hodos in: {}'.format(file))
         
-        #print(os.getcwd())
-        #x = os.path.isfile(file)
-        #print(x)
+        
         df = np.genfromtxt(fname=path, delimiter=',', names=True)
         
         #instanceName = "{}-{}".format(min(df['Alt']), max(df['Alt']))
-        instance = microHodo(df['Alt'], df['u'], df['v'], df['temp'], df['bv2'])
+        instance = microHodo(df['Alt'], df['u'], df['v'], df['temp'], df['bv2'], df['lat'], df['long'])
         instance.addFileName(file)  #file name added to object attribute here to be used in labeling plots
         instance.addAltitudeCharacteristics()
         
         instance.fit_ellipse()
         
-        #print("Ellipse Properties:", eps)
-        instance.getParameters()
+        
+        params = instance.getParameters()
+        print("Wave Parameters: \n", params)
+        parameterList.append(params)
+        #print(parameterList)
+        
+        ###
+        
+        
+        
         hodo_list.append(instance)  #add micro-hodo to running list
         #print("Wave Parameters:", params)
     hodo_list.sort(key=lambda x: x.altOfDetection)  #sort list of hodographs on order of altitude  
-    print("HODOLIST", hodo_list)
+    #print("HODOLIST", hodo_list)
+    
+    parameterList = pd.DataFrame(parameterList, columns = ['Altitude of Detection', 'Lat', 'Long', 'Vert Wavelength', 'Horizontal Wave#', 'IntHorizPhase Speed', 'Axial Ratio L/S' ])
+    parameterList.sort_values(by='Altitude of Detection')
+ 
+    
+    
+    parameterList.to_csv(file + "params", index=False, na_rep='NaN')
+    parameterList.to_excel("params.xlsx", index=False)
+    
     return hodo_list     #list of micro-hodograph objects created 
     
 def plotBulkMicros(hodo_list, fname):
@@ -194,13 +202,13 @@ def plotBulkMicros(hodo_list, fname):
     numColumns = np.ceil(np.sqrt(totalPlots)).astype('int')
     numRows = np.ceil((totalPlots / numColumns)).astype('int')
     position = range(1, totalPlots + 1)
-    print(numRows)
-    print("Type; ", type(numRows))
+    #print(numRows)
+    #print("Type; ", type(numRows))
     
     i = 0   #counter for indexing micro-hodo objects
     #k=1 #counter for indexing subplots
     for hodo in hodo_list:
-        print("HODO ITERATION: ", hodo)
+        #print("HODO ITERATION: ", hodo)
         ax = bulkPlot.add_subplot(numRows, numColumns, position[i])
         ax.plot(hodo_list[i].u, hodo_list[i].v) 
         
@@ -284,7 +292,7 @@ def preprocessDataNoResample(file):
     
     #bv2 = mpcalc.brunt_vaisala_frequency_squared(Alt, potTemp)    #N^2
     bv2 = bruntViasalaFreqSquared(potentialTemperature, heightSamplingFreq)
-    print("BV2 ", bv2)
+    #print("BV2 ", bv2)
     
     
     #sampledAlt = Alt[::heightSamplingFreq] # find nth element in list
@@ -298,26 +306,26 @@ def preprocessDataNoResample(file):
     
     # run moving average over u,v comps
     altExtent = max(Alt) - minAlt    #NEED TO VERIFY THE CORRECT WINDOW SAMPLING SZE
-    print("Alt Extent")
-    print(altExtent)
+    #print("Alt Extent:", altExtent)
+    
     window = int((altExtent.magnitude / heightSamplingFreq / 4))    #removed choosing max between calculated window and 11,artifact from IDL code
     if (window%2) == 0:
         window = window-1
         
-    print("WINDOW SIZE")
-    print(window)
+    print("WINDOW SIZE:", window)
+    
     mask = np.ones(1100) / window
     
-    print("Mask")
-    print(mask.size)
-    print(mask)
+    #print("Mask")
+    #print(mask.size)
+    #print(mask)
     #uMean = np.convolve(u.magnitude, mask, 'same') * units.m/units.second
     uMean = signal.savgol_filter(u.magnitude, window, 3) * units.m/units.second
     vMean = signal.savgol_filter(v.magnitude, window, 3) * units.m/units.second
     tempMean = signal.savgol_filter(Temp.magnitude, window, 3) * units.degC
     
-    print("UMean")
-    print(uMean)
+    #print("UMean")
+    #print(uMean)
     #--------------------------------------------------------------------------------------
     plt.plot(uMean.magnitude, Alt.magnitude, label='Mean')
     
@@ -326,8 +334,8 @@ def preprocessDataNoResample(file):
     v -= vMean
     Temp -= tempMean
 
-    print("meanSmoothedData:")
-    print(np.mean(v))
+    #print("meanSmoothedData:")
+    #print(np.mean(v))
     
     #------------------------------------------------------------------------------------
     plt.plot(u.magnitude, Alt.magnitude, label='Smoothed')
@@ -339,7 +347,7 @@ def preprocessDataNoResample(file):
     
     
     
-       
+    #Uncomment to examine Brunt-Viasalla Freq. and Potential Temperature calculations  
     #print('bv2')
     #print(bv2)
     #print('pt')
@@ -364,16 +372,14 @@ def hodoPicker():
     print('Select Two Altitudes to Examine')
     altitudes =plt.ginput(2, timeout=0)
     alt1, alt2 = [i[1] for i in altitudes]
-    print("Alt 1, 2")
-    print(alt1, alt2)
+    #print("Alt 1, 2")
+    #print(alt1, alt2)
     alt1, alt2 = np.argmin(abs(Alt.magnitude - alt1)), np.argmin(abs(Alt.magnitude-alt2))
     upperIndex, lowerIndex = max(alt1, alt2), min(alt1, alt2)     #indices of upper,lower altitudes
     return upperIndex, lowerIndex
     
 def manualGUI():
     
-    
-
     fig5 = plt.figure('MANUAL GUI')
     ax = plt.axes([.25, .25, .6, .6])
     plt.subplots_adjust(left=0.2, bottom=0.2)
@@ -396,10 +402,6 @@ def manualGUI():
     t1 = axoutput.text(0, .5 , "Lower Altitude: {}".format(Alt[alt0]))
     saveButton = Button(axSave, "SaveMicro", color='lightgoldenrodyellow', hovercolor='0.975')
     axoutput.axis('off')
-    
-    
-   
-    
     
     
     
@@ -429,7 +431,9 @@ def manualGUI():
         V = v[altInd:altInd+winLength+1]
         TEMP = Temp[altInd:altInd+winLength+1]
         BV2 = bv2[altInd:altInd+winLength+1]
-        instance = microHodo(ALT, U, V, TEMP, BV2)
+        LAT = Lat[altInd:altInd+winLength+1]
+        LONG = Long[altInd:altInd+winLength+1]
+        instance = microHodo(ALT, U, V, TEMP, BV2, LAT, LONG)
         instance.addFileName(fileToBeInspected)
         instance.saveMicroHodoNoIndices()
         return
@@ -449,12 +453,14 @@ def manualGUI():
    
     
 class microHodo:
-    def __init__(self, ALT, U, V, TEMP, BV2):
+    def __init__(self, ALT, U, V, TEMP, BV2, LAT, LONG):
       self.alt = ALT#.magnitude
       self.u = U#.magnitude
       self.v = V#.magnitude
       self.temp = TEMP#.magnitude
       self.bv2 = BV2#.magnitude
+      self.lat = LAT
+      self.long = LONG
       
       
     def addFileName(self, fname):
@@ -500,13 +506,13 @@ class microHodo:
         
         
         #print("m: {}, lz: {}, h: {}, bv{}".format(self.m, self.lambda_z, intrinsicHorizPhaseSpeed, bvMean))
-        
-        return 
+        #return altitude of detection, latitude, longitude, vertical wavelength,horizontal wavenumber, intrinsic horizontal phase speed, axial ratio l/s
+        return  [self.altOfDetection, self.lat[0], self.long[0], self.lambda_z, k_h, intrinsicHorizPhaseSpeed, wf]
     def saveMicroHodoNoIndices(self):
         #used when the entire hodograph is to be saved
         wd = os.getcwd()
-        T = np.column_stack([self.alt.magnitude, self.u.magnitude, self.v.magnitude, self.temp.magnitude, self.bv2.magnitude])
-        T = pd.DataFrame(T, columns = ['Alt', 'u', 'v', 'temp', 'bv2'])
+        T = np.column_stack([self.alt.magnitude, self.u.magnitude, self.v.magnitude, self.temp.magnitude, self.bv2.magnitude, self.lat, self.long])
+        T = pd.DataFrame(T, columns = ['Alt', 'u', 'v', 'temp', 'bv2', 'lat','long'])
         #print("T")
         #print(T)
         
@@ -618,7 +624,8 @@ class microHodo:
         self.phi = phi
         return 
 
-def siftThroughUV():   #u, v, Alt in argument
+def siftThroughUV():   #This function is a replica of the original hodograph selector that this entire script is modeled after
+                       #This function produces two u/v vs altitude plots and the user can select altitude envelopes from either of them
 
     #plot Altitude vs. U,V in two subplots
     fig1 = plt.figure("U, V, hodo")
@@ -668,7 +675,7 @@ def run_(file):
     getFiles()
     preprocessDataNoResample(file)
     
-    if showMacroHodo:
+    if showVisualizations:
         macroHodo()
         
     if siftThruHodo:
@@ -685,7 +692,7 @@ def run_(file):
     #hodoPicker()
     
     
-    
+#Calls run_ method, which contains all other code decisions...   
 run_(fileToBeInspected)  
     
 
