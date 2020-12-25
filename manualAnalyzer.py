@@ -40,7 +40,7 @@ from tkinter.font import Font
 
 #Which functionality would you like to use?
 showVisualizations = False     # Displays macroscopic hodograph for flight
-siftThruHodo = False     # Use manual GUI to locate ellipse-like structures in hodograph
+siftThruHodo = True    # Use manual GUI to locate ellipse-like structures in hodograph
 doAnalysis = True     # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
 
 #variables that are specific to analysis: These might be changed regularly depending on launch location, etc.
