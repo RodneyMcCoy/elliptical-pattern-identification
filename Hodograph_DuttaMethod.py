@@ -569,7 +569,7 @@ class microHodo:
         print("STDev AR: ", sdAR)
         
         return np.mean(aas), np.std(aas), np.mean(bs), np.std(bs), np.mean(c_xs), np.std(c_xs), np.mean(c_ys), np.std(c_ys), np.mean(phis), np.std(phis)# return statistics
-
+"""
     def improveFit(self):
         uu, vv = np.asarray(self.u), np.asarray(self.v)
         #get initial estimate of parameters
@@ -630,7 +630,7 @@ class microHodo:
         self.v = vv
         a, b, c_x, c_y,phi = self.fit_ellipse() # get estimate of params
            
-
+"""
 def doAnalysis(microHodoDir):
     """ Extracts wave parameters from microHodographs; this function can be run on existing microhodograph files without needing to operate the GUI
     """
@@ -657,7 +657,7 @@ def doAnalysis(microHodoDir):
         instance.addAltitudeCharacteristics()
         
         #test an improved ellipse fit
-        instance.improveFit()
+        #instance.improveFit()
         
         #lets try to fit an ellipse to microhodograph
         instance.bootstrap_params(n_trials)
