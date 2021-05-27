@@ -179,13 +179,12 @@ def preprocessDataNoResample(file, path, spatialResolution):
     global tempBackground
 
     #for comparing rolling ave to savitsky golay
-    global uBackgroundRolling
-    global vBackgroundRolling
-    global tempBackgroundRolling
-    global uRolling
-    global vRolling
-    global tRolling
-
+    #global uBackgroundRolling
+    #global vBackgroundRolling
+    #global tempBackgroundRolling
+    #global uRolling
+    #global vRolling
+    #global tRolling
     
     #individual series for each variable, local
     Time = df['Time'].to_numpy()
