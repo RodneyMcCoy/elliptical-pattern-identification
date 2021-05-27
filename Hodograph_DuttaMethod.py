@@ -62,7 +62,7 @@ from skimage.measure import EllipseModel
 #Which functionality would you like to use?
 showVisualizations = False     # Displays macroscopic hodograph for flight
 siftThruHodo = False    # Use manual GUI to locate ellipse-like structures in hodograph
-analyze = True   # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
+analyze = False   # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
 location = "Tolten"     #[Tolten]/[Villarica]
 
 #variables that are specific to analysis: These might be changed regularly depending on flight location, file format, etc.
@@ -91,7 +91,6 @@ def preprocessDataNoResample(file, path):
         calculated, background wind removed
 
         Different background removal techniques used: rolling average, savitsky-golay filter, nth order polynomial fits
-
     """
  
     #indicate which file is in progress
@@ -218,26 +217,87 @@ def preprocessDataNoResample(file, path):
     vBackground = signal.savgol_filter(v.magnitude, window, 3, mode='mirror') * units.m/units.second
     tempBackground = signal.savgol_filter(Temp.magnitude, window, 3, mode='mirror') * units.degC
     
-    #detrend using polynomial fit
-    """
-    order = np.linspace(1,10)
-    for i in order:
-        backGround = np.polyfit(Alt.magnitude, Temp.magnitude, i)
-        perturbations = np.polyval(Alt.magnitude, backGround)
-        plt.figure("Various Perturbation Profiles")
-        legendLabel = str(i) + "Order"
-        plt.plot(perturbations, Alt, label=legendLabel)
-        plt.legend()
+    #detrend  temperature using polynomial fit
+    #Fig = plt.figure(1)
+    Fig, axs = plt.subplots(2,4,figsize=(6,6), num=1)   #figure for temperature
+    Fig2, axs2 = plt.subplots(2,4,figsize=(6,6), num=2)   #figure for wind
+    
+    axs = axs.flatten() #make subplots iteratble by single indice
+    axs2 = axs2.flatten()
+    temp_background = []
+    u_background = []
+    v_background = []
+    
+    for k in range(2,10):
+        i = k-2
         
-    plt.legend()
+        #temp
+        poly = np.polyfit(Alt.magnitude / 1000, Temp.magnitude, k)
+        fit = np.polyval(poly, Alt.magnitude / 1000)
+        temp_background.append(fit)
+        #plot
+        axs[i].plot(fit, Alt.magnitude / 1000, color='darkblue')
+        axs[i].plot(Temp.magnitude, Alt.magnitude / 1000)
+        axs[i].set_title("Order: " + str(k))
+        #axs[i].set_xlabel("Temperature (C)")
+        axs[i].set_ylabel("Altitude (km)")
+        axs[i].tick_params(top=True, right=True)
+        
+        #u
+        poly = np.polyfit(Alt.magnitude / 1000, u.magnitude, k)
+        fit = np.polyval(poly, Alt.magnitude / 1000)
+        u_background.append(fit)
+        #plot u
+        zonal, = axs2[i].plot(fit, Alt.magnitude / 1000, color='darkblue', label='Zonal')
+        axs2[i].plot(u.magnitude, Alt.magnitude / 1000, color='darkblue')
+        axs2[i].set_title("Order: " + str(k))
+        #axs[i].set_xlabel("Temperature (C)")
+        axs2[i].set_ylabel("Altitude (km)")
+        axs2[i].tick_params(top=True, right=True)
+        
+        #v
+        poly = np.polyfit(Alt.magnitude / 1000, v.magnitude, k)
+        fit = np.polyval(poly, Alt.magnitude / 1000)
+        v_background.append(fit)
+        #plot v
+        meridional, = axs2[i].plot(fit, Alt.magnitude / 1000, color='darkred', label='Meridional')
+        axs2[i].plot(v.magnitude, Alt.magnitude / 1000, color='darkred')
+        #axs2[i].set_title("Order: " + str(k))
+        #axs[i].set_xlabel("Temperature (C)")
+        #axs2[i].set_ylabel("Altitude (km)")
+        #axs2[i].tick_params(top=True, right=True)
+        
+        
+        
+    #Fig - hide labels and ticks, add notations
+    plt.figure(1)
+    Fig.add_subplot(111, frameon=False) #make hidden subplot to add xlabel
+    plt.tick_params(labelcolor='none', which='both', top=False, bottom=False, left=False, right=False) #which='both'
+    plt.xlabel("Temperature (C)")
+    Fig.suptitle("Temperature; Polynomial Fitted \n {}".format(file))
+    for ax in axs:
+        ax.label_outer()
+    
+    #Fig2 - hide labels and ticks, add notations
+    plt.figure(2)
+    Fig2.suptitle("Wind; Polynomial Fitted \n {}".format(file))
+    for ax in axs2:
+        ax.label_outer()
+    Fig2.add_subplot(111, frameon=False) #make hidden subplot to add xlabel
+    plt.tick_params(labelcolor='none', top=False, bottom=False, left=False, right=False) #which='both'
+    plt.xlabel("Winds (m/s)")
+    #handles, labels = axs2.get_legend_handles_labels()
+    #Fig2.legend(handles,labels, loc='lower center')
+    Fig2.legend(handles=[zonal, meridional], labels=['Zonal', 'Meridional'], loc='lower center', ncol=2)
     
     #subtract background
     u -= uBackgroundRolling 
     v -= vBackgroundRolling 
     Temp -= tempBackgroundRolling
     
+    
     return 
-"""
+
 
 def bruntViasalaFreqSquared(potTemp, heightSamplingFreq):
     """ replicated from Tom's script
@@ -963,17 +1023,19 @@ def run_(file, filePath):
     os.chdir(filePath)
     preprocessDataNoResample(file, flightData)
     
-    if showVisualizations:
-        macroHodo()
-        uvVisualize()
+    
         
     if siftThruHodo:
        manualTKGUI()
        
     if analyze:
         hodo_list= doAnalysis(microHodoDir)
-        plotBulkMicros(hodo_list, file)
         
+        if showVisualizations:
+            macroHodo()
+            uvVisualize()
+            plotBulkMicros(hodo_list, file)
+        return
     return
      
 #Calls run_ method  
