@@ -78,15 +78,18 @@ elif location == "Villarica":
     latitudeOfAnalysis = abs(-39.30697) * units.degree     #same, but for Villarica...
 
 g = 9.8                     #m * s^-2
-heightSamplingFreq = 5      #used in determining moving ave filter window
+heightSamplingFreq = 5      #used in interpolating data height-wise
 minAlt = 1000 * units.m     #minimun altitude of analysis
 p_0 = 1000 * units.hPa      #needed for potential temp calculatiion
 movingAveWindow = 11        #need to inquire about window size selection
 n_trials = 1000         #number of bootstrap iterations
 
+
 ##################################END OF USER INPUT######################
 
-def preprocessDataNoResample(file, path):
+def preprocessDataNoResample(file, path, spatialResolution):
+    #delete gloabal data variable as soon as troubleshooting is complete
+    global data
     """ prepare data for hodograph analysis. non numeric values & values > 999999 removed, brunt-viasala freq
         calculated, background wind removed
 
@@ -137,10 +140,28 @@ def preprocessDataNoResample(file, path):
 
     #drop rows with nans
     data = data.dropna(subset=['Time', 'T', 'Ws', 'Wd', 'Long.', 'Lat.', 'Alt'])
-
+    
+    #remove unneeded columns
+    data = data[['Time', 'Alt', 'T', 'P', 'Ws', 'Wd', 'Lat.', 'Long.']]
+    
+    #linearly interpolate data - such that it is spaced iniformly in space, heightwise - stolen from Keaton
+    #create index of heights with 1 m spacial resolution - from minAlt to maxAlt
+    heightIndex = pd.DataFrame({'Alt': np.arange(min(data['Alt']), max(data['Alt']))})
+    #right merge data with index to keep all heights
+    data= pd.merge(data, heightIndex, how='right', on='Alt')
+    #sort data by height
+    data = data.sort_values(by='Alt')
+    #linear interpolate the nans
+    missingDataLimit = 999  #more than 1km of data should be left as nans, will not be onsidered in analysis
+    data = data.interpolate(method='linear', limit=missingDataLimit)
+    #resample at height interval
+    keepIndex = np.arange(0, len(data['Alt']), spatialResolution)
+    data = data.iloc[keepIndex,:]
+    
     #change data container name, sounds silly but useful for troubleshooting data-cleaning bugs
+    global df
     df = data
-
+    #print(df)
     #make following vars availabale outside of function - convenient for time being, but consider changing in future
     global Time 
     global Pres 
@@ -150,7 +171,6 @@ def preprocessDataNoResample(file, path):
     global Long 
     global Lat 
     global Alt 
-    global Geopot 
     global potentialTemp
     global bv2
     global u, v 
@@ -166,17 +186,16 @@ def preprocessDataNoResample(file, path):
     global vRolling
     global tRolling
 
+    
     #individual series for each variable, local
     Time = df['Time'].to_numpy()
     Pres = df['P'].to_numpy() * units.hPa
     Temp = df['T'].to_numpy()  * units.degC
-    Hu = df['Hu'].to_numpy()
     Ws = df['Ws'].to_numpy() * units.m / units.second
     Wd = df['Wd'].to_numpy() * units.degree
     Long = df['Long.'].to_numpy()
     Lat = df['Lat.'].to_numpy()
     Alt = df['Alt'].to_numpy().astype(int) * units.meter
-    Geopot = df['Geopot'].to_numpy()
     
 
     #calculate brunt-viasala frequency **2 
@@ -194,28 +213,28 @@ def preprocessDataNoResample(file, path):
     # run moving average over u,v comps
     altExtent = max(Alt) - minAlt    #NEED TO VERIFY THE CORRECT WINDOW SAMPLING SZE
     print("Alt Extent:", altExtent)
-    window = int((altExtent.magnitude / (heightSamplingFreq * 4)))    # as done in Tom's code; arbitrary at best. removed choosing max between calculated window and 11,artifact from IDL code
-    if (window % 2) == 0:       #many filters require odd window
-        window = window-1
+    #window = int((altExtent.magnitude / (heightSamplingFreq * 4)))    # as done in Tom's code; arbitrary at best. removed choosing max between calculated window and 11,artifact from IDL code
+    #if (window % 2) == 0:       #many filters require odd window
+    #    window = window-1
         
 
     #################de-trend that matches keatons code############
     # Subtract rolling mean (assumed to be background wind)
-    N = int(len(Alt) / 4)
-    print("Window Size N: ", N)
+    #N = int(len(Alt) / 4)
+    #print("Window Size N: ", N)
     # Also, figure out what min_periods is really doing and make a reason for picking a good value
-    uBackgroundRolling = pd.Series(u.magnitude).rolling(window=N, min_periods=int(N/2), center=True).mean().to_numpy() * units.m/units.second
+    #uBackgroundRolling = pd.Series(u.magnitude).rolling(window=N, min_periods=int(N/2), center=True).mean().to_numpy() * units.m/units.second
     #uRolling = u - (uBackgroundRolling.to_numpy() * units.m/units.second)
-    vBackgroundRolling = pd.Series(v.magnitude).rolling(window=N, min_periods=int(N/2), center=True).mean().to_numpy() * units.m/units.second
+    #vBackgroundRolling = pd.Series(v.magnitude).rolling(window=N, min_periods=int(N/2), center=True).mean().to_numpy() * units.m/units.second
     #vRolling = v - (vBackgroundRolling.to_numpy() * units.m/units.second)
-    tempBackgroundRolling = pd.Series(Temp.magnitude).rolling(window=N, min_periods=int(N / 2), center=True).mean().to_numpy() * units.degC
+    #tempBackgroundRolling = pd.Series(Temp.magnitude).rolling(window=N, min_periods=int(N / 2), center=True).mean().to_numpy() * units.degC
     #tRolling = Temp - (tempBackgroundRolling.to_numpy() * units.degC)
     ###################end de-trend that matches keatons code###########
     
     #de-trend u, v, temp series; NEED TO RESEARCH MORE, rolling average vs. fft vs. polynomial fit vs. others?
-    uBackground = signal.savgol_filter(u.magnitude, window, 3, mode='mirror') * units.m/units.second        #savitsky-golay filter fits polynomial to moving window
-    vBackground = signal.savgol_filter(v.magnitude, window, 3, mode='mirror') * units.m/units.second
-    tempBackground = signal.savgol_filter(Temp.magnitude, window, 3, mode='mirror') * units.degC
+    #uBackground = signal.savgol_filter(u.magnitude, window, 3, mode='mirror') * units.m/units.second        #savitsky-golay filter fits polynomial to moving window
+    #vBackground = signal.savgol_filter(v.magnitude, window, 3, mode='mirror') * units.m/units.second
+    #tempBackground = signal.savgol_filter(Temp.magnitude, window, 3, mode='mirror') * units.degC
     
     #detrend  temperature using polynomial fit
     #Fig = plt.figure(1)
@@ -291,13 +310,32 @@ def preprocessDataNoResample(file, path):
     Fig2.legend(handles=[zonal, meridional], labels=['Zonal', 'Meridional'], loc='lower center', ncol=2)
     
     #subtract background
-    u -= uBackgroundRolling 
-    v -= vBackgroundRolling 
-    Temp -= tempBackgroundRolling
+    #u -= uBackgroundRolling 
+    #v -= vBackgroundRolling 
+    #Temp -= tempBackgroundRolling
     
+    #subtract fits to produce various perturbation profiles
+    uButter = []
+    vButter = []
+    tempButter = []
     
-    return 
-
+    for i, element in enumerate(temp_background):
+        pert = np.subtract(Temp.magnitude, temp_background[i])
+        tempButter.append(pert)
+        pert = np.subtract(u.magnitude, u_background[i])
+        uButter.append(pert)
+        pert = np.subtract(v.magnitude, v_background[i])
+        vButter.append(pert)
+        
+    
+    #plot to double check subtraction
+    Fig, axs = plt.subplots(2,2,figsize=(6,6), num=3)   #figure for temperature
+    for i,element in enumerate(u_background):
+        axs[0,0].plot(uButter[i], Alt.magnitude, linewidth=0.5)
+        axs[1,0].plot(vButter[i], Alt.magnitude, linewidth=0.5)
+        
+    #filter using 3rd order butterworth filter
+   
 
 def bruntViasalaFreqSquared(potTemp, heightSamplingFreq):
     """ replicated from Tom's script
@@ -1021,7 +1059,7 @@ def run_(file, filePath):
 
     # set location of flight data as surrent working directory
     os.chdir(filePath)
-    preprocessDataNoResample(file, flightData)
+    preprocessDataNoResample(file, flightData, heightSamplingFreq)
     
     
         
