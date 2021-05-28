@@ -78,16 +78,18 @@ elif location == "Villarica":
     latitudeOfAnalysis = abs(-39.30697) * units.degree     #same, but for Villarica...
 
 g = 9.8                     #m * s^-2
-heightSamplingFreq = 5      #used in interpolating data height-wise
+heightSamplingFreq = 1/5      #1/m used in interpolating data height-wise
 minAlt = 1000 * units.m     #minimun altitude of analysis
 p_0 = 1000 * units.hPa      #needed for potential temp calculatiion
 movingAveWindow = 11        #need to inquire about window size selection
 n_trials = 1000         #number of bootstrap iterations
-
-
+#for butterworth filter
+lowcut = 500  #m - lower vertical wavelength cutoff for Butterworth bandpass filter
+highcut = 2000  #m - upper vertical wavelength cutoff for Butterworth bandpass filter
+order = 3   #Dutta(2017)
 ##################################END OF USER INPUT######################
 
-def preprocessDataNoResample(file, path, spatialResolution):
+def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, order):
     #delete gloabal data variable as soon as troubleshooting is complete
     global data
     """ prepare data for hodograph analysis. non numeric values & values > 999999 removed, brunt-viasala freq
@@ -245,7 +247,7 @@ def preprocessDataNoResample(file, path, spatialResolution):
     temp_background = []
     u_background = []
     v_background = []
-    
+    """
     for k in range(2,10):
         i = k-2
         
@@ -314,27 +316,92 @@ def preprocessDataNoResample(file, path, spatialResolution):
     #Temp -= tempBackgroundRolling
     
     #subtract fits to produce various perturbation profiles
-    uButter = []
-    vButter = []
-    tempButter = []
+    tempPert = []
+    uPert = []
+    vPert = []
     
     for i, element in enumerate(temp_background):
         pert = np.subtract(Temp.magnitude, temp_background[i])
-        tempButter.append(pert)
+        tempPert.append(pert)
         pert = np.subtract(u.magnitude, u_background[i])
-        uButter.append(pert)
+        uPert.append(pert)
         pert = np.subtract(v.magnitude, v_background[i])
-        vButter.append(pert)
+        vPert.append(pert)
         
     
     #plot to double check subtraction
     Fig, axs = plt.subplots(2,2,figsize=(6,6), num=3)   #figure for temperature
     for i,element in enumerate(u_background):
-        axs[0,0].plot(uButter[i], Alt.magnitude, linewidth=0.5)
-        axs[1,0].plot(vButter[i], Alt.magnitude, linewidth=0.5)
-        
-    #filter using 3rd order butterworth filter
-   
+        axs[0,0].plot(uPert[i], Alt.magnitude, linewidth=0.5)
+        axs[1,0].plot(vPert[i], Alt.magnitude, linewidth=0.5)   
+    
+    ###############################################################
+    ###############################################################
+    """
+    #filter using 3rd order butterworth - fs=samplerate (1/m)
+    freq1 = 1/lambda1    #find cutoff freq 1/m
+    freq2 =  1/lambda2    #find cutoff freq 1/m
+    
+    # Plot the frequency response for a few different orders.
+    b, a = butter_bandpass(freq1, freq2, heightSamplingFreq, order)
+    w, h = signal.freqz(b, a, worN=5000)
+    plt.figure(4)
+    plt.plot(w/np.pi, abs(h))
+    plt.plot([0, 1], [np.sqrt(0.5), np.sqrt(0.5)],'--', label='sqrt(0.5)')
+    plt.xlabel('Normalized Frequency (x Pi rad/sample') #1/m ?
+    plt.ylabel('Gain')
+    plt.xlim([0,.1])
+    plt.grid(True)
+    plt.legend(loc='best')
+
+    # Filter a noisy signal.
+    #T = 0.05
+    #nsamples = int(T * fs)
+    #t = np.linspace(0, T, nsamples, endpoint=False)
+    #a = 0.02
+    #f0 = 600.0
+    #x = 0.1 * np.sin(2 * np.pi * 1.2 * np.sqrt(t))
+    #x += 0.01 * np.cos(2 * np.pi * 312 * t + 0.1)
+    #x += a * np.cos(2 * np.pi * f0 * t + .11)
+    #x += 0.03 * np.cos(2 * np.pi * 2000 * t)
+    #plt.figure(2)
+    #plt.clf()
+    #plt.plot(t, x, label='Noisy signal')
+
+    #y = butter_bandpass_filter(x, lowcut, highcut, fs, order=6)
+    #plt.plot(t, y, label='Filtered signal (%g Hz)' % f0)
+    #plt.xlabel('time (seconds)')
+    #plt.hlines([-a, a], 0, T, linestyles='--')
+    #plt.grid(True)
+    #plt.axis('tight')
+    #plt.legend(loc='upper left')
+
+    #######
+    ###########
+    ##########
+
+def butter_bandpass(lowcut, highcut, fs, order):
+    """
+        Used for plotting the frequency response of Butterworth
+    """
+    nyq = 0.5 * fs
+    low = lowcut / nyq
+    high = highcut / nyq
+    b, a = signal.butter(order, [low, high], btype='bandpass')
+    return b, a
+
+
+def butter_bandpass_filter(data, lowcut, highcut, fs, order):
+    """
+        Applies Butterworth filter to perturbation profiles
+    """
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+    y = lfilter(b, a, data)
+    return y
+
+
+
+  
 
 def bruntViasalaFreqSquared(potTemp, heightSamplingFreq):
     """ replicated from Tom's script
@@ -1058,7 +1125,7 @@ def run_(file, filePath):
 
     # set location of flight data as surrent working directory
     os.chdir(filePath)
-    preprocessDataNoResample(file, flightData, heightSamplingFreq)
+    preprocessDataResample(file, flightData, heightSamplingFreq, lowcut, highcut, order)
     
     
         
