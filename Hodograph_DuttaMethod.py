@@ -78,7 +78,8 @@ elif location == "Villarica":
     latitudeOfAnalysis = abs(-39.30697) * units.degree     #same, but for Villarica...
 
 g = 9.8                     #m * s^-2
-heightSamplingFreq = 1/5      #1/m used in interpolating data height-wise
+spatialResolution = 5
+heightSamplingFreq = 1/spatialResolution      #1/m used in interpolating data height-wise
 minAlt = 1000 * units.m     #minimun altitude of analysis
 p_0 = 1000 * units.hPa      #needed for potential temp calculatiion
 movingAveWindow = 11        #need to inquire about window size selection
@@ -159,6 +160,7 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     #resample at height interval
     keepIndex = np.arange(0, len(data['Alt']), spatialResolution)
     data = data.iloc[keepIndex,:]
+    data.reset_index(drop=True, inplace=True)
     
     #change data container name, sounds silly but useful for troubleshooting data-cleaning bugs
     global df
@@ -198,19 +200,20 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     Lat = df['Lat.'].to_numpy()
     Alt = df['Alt'].to_numpy().astype(int) * units.meter
     
-
+    
     #calculate brunt-viasala frequency **2 
     tempK = Temp.to('kelvin')
+    
     potentialTemperature =  tempK * (p_0 / Pres) ** (2/7)    #https://glossary.ametsoc.org/wiki/Potential_temperature   
     bv2 = mpcalc.brunt_vaisala_frequency_squared(Alt, potentialTemperature).magnitude    #N^2 
     #bv2 = bruntViasalaFreqSquared(potentialTemperature, heightSamplingFreq)     #Maybe consider using metpy version of N^2 ? Height sampling is not used in hodo method, why allow it to affect bv ?
-
-
+    
+    
     #convert wind from polar to cartesian c.s.
     u, v = mpcalc.wind_components(Ws, Wd)   #raw u,v components - no different than using trig fuctions
-    
+    print("Size of u: ", len(u))
     #subtract nth order polynomials to find purturbation profile
-
+    
     # run moving average over u,v comps
     altExtent = max(Alt) - minAlt    #NEED TO VERIFY THE CORRECT WINDOW SAMPLING SZE
     print("Alt Extent:", altExtent)
@@ -247,7 +250,7 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     temp_background = []
     u_background = []
     v_background = []
-    """
+    
     for k in range(2,10):
         i = k-2
         
@@ -255,6 +258,7 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
         poly = np.polyfit(Alt.magnitude / 1000, Temp.magnitude, k)
         fit = np.polyval(poly, Alt.magnitude / 1000)
         temp_background.append(fit)
+        
         #plot
         axs[i].plot(fit, Alt.magnitude / 1000, color='darkblue')
         axs[i].plot(Temp.magnitude, Alt.magnitude / 1000)
@@ -317,6 +321,7 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     
     #subtract fits to produce various perturbation profiles
     tempPert = []
+    global uPert
     uPert = []
     vPert = []
     
@@ -337,10 +342,10 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     
     ###############################################################
     ###############################################################
-    """
+    
     #filter using 3rd order butterworth - fs=samplerate (1/m)
-    freq1 = 1/lambda1    #find cutoff freq 1/m
-    freq2 =  1/lambda2    #find cutoff freq 1/m
+    freq2 = 1/lambda1    #find cutoff freq 1/m
+    freq1 =  1/lambda2    #find cutoff freq 1/m
     
     # Plot the frequency response for a few different orders.
     b, a = butter_bandpass(freq1, freq2, heightSamplingFreq, order)
@@ -355,27 +360,19 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     plt.legend(loc='best')
 
     # Filter a noisy signal.
-    #T = 0.05
-    #nsamples = int(T * fs)
-    #t = np.linspace(0, T, nsamples, endpoint=False)
-    #a = 0.02
-    #f0 = 600.0
-    #x = 0.1 * np.sin(2 * np.pi * 1.2 * np.sqrt(t))
-    #x += 0.01 * np.cos(2 * np.pi * 312 * t + 0.1)
-    #x += a * np.cos(2 * np.pi * f0 * t + .11)
-    #x += 0.03 * np.cos(2 * np.pi * 2000 * t)
-    #plt.figure(2)
-    #plt.clf()
-    #plt.plot(t, x, label='Noisy signal')
+    vButter = []
+    for i,element in enumerate(vPert):
 
-    #y = butter_bandpass_filter(x, lowcut, highcut, fs, order=6)
-    #plt.plot(t, y, label='Filtered signal (%g Hz)' % f0)
-    #plt.xlabel('time (seconds)')
-    #plt.hlines([-a, a], 0, T, linestyles='--')
-    #plt.grid(True)
-    #plt.axis('tight')
-    #plt.legend(loc='upper left')
-
+        filt = butter_bandpass_filter(vPert[i], freq1, freq2, 1/5, order)
+        vButter.append(filt)
+        #axs[1,1].plot(vPert[0], Alt.magnitude)
+        axs[1,1].plot(vButter[i], Alt.magnitude, label='Filtered signal ', linewidth=0.5)
+        #plt.xlabel('time (seconds)')
+        #plt.hlines([-a, a], 0, T, linestyles='--')
+        #plt.grid(True)
+        #plt.axis('tight')
+        #plt.legend(loc='upper left')
+    
     #######
     ###########
     ##########
@@ -396,7 +393,7 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order):
         Applies Butterworth filter to perturbation profiles
     """
     b, a = butter_bandpass(lowcut, highcut, fs, order=order)
-    y = lfilter(b, a, data)
+    y = signal.lfilter(b, a, data)
     return y
 
 
@@ -1125,7 +1122,7 @@ def run_(file, filePath):
 
     # set location of flight data as surrent working directory
     os.chdir(filePath)
-    preprocessDataResample(file, flightData, heightSamplingFreq, lowcut, highcut, order)
+    preprocessDataResample(file, flightData, spatialResolution, lowcut, highcut, order)
     
     
         
