@@ -378,7 +378,6 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
         #plt.axis('tight')
         #plt.legend(loc='upper left')
     
-    #######
     ###########
     ##########
 
