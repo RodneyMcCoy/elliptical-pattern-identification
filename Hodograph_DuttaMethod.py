@@ -335,10 +335,10 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
         
     
     #plot to double check subtraction
-    Fig, axs = plt.subplots(2,2,figsize=(6,6), num=3)   #figure for temperature
+    Fig, axs = plt.subplots(2,2,figsize=(6,6), num=3, sharey=True)   #figure for u,v butterworth filter
     for i,element in enumerate(u_background):
-        axs[0,0].plot(uPert[i], Alt.magnitude, linewidth=0.5)
-        axs[1,0].plot(vPert[i], Alt.magnitude, linewidth=0.5)   
+        axs[0,0].plot(uPert[i], Alt.magnitude/1000, linewidth=0.5)
+        axs[1,0].plot(vPert[i], Alt.magnitude/1000, linewidth=0.5)   
     
     ###############################################################
     ###############################################################
@@ -360,13 +360,18 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     plt.legend(loc='best')
 
     # Filter a noisy signal.
+    uButter = []
     vButter = []
+    
     for i,element in enumerate(vPert):
-
-        filt = butter_bandpass_filter(vPert[i], freq1, freq2, 1/5, order)
-        vButter.append(filt)
+        
+        filtU = butter_bandpass_filter(uPert[i],freq1, freq2, heightSamplingFreq, order)
+        uButter.append(filtU)
+        filtV = butter_bandpass_filter(vPert[i], freq1, freq2, 1/5, order)
+        vButter.append(filtV)
         #axs[1,1].plot(vPert[0], Alt.magnitude)
-        axs[1,1].plot(vButter[i], Alt.magnitude, label='Filtered signal ', linewidth=0.5)
+        axs[1,1].plot(vButter[i], Alt.magnitude/1000, linewidth=0.5)
+        axs[0,1].plot(uButter[i], Alt.magnitude/1000, linewidth=0.5)
         #plt.xlabel('time (seconds)')
         #plt.hlines([-a, a], 0, T, linestyles='--')
         #plt.grid(True)
