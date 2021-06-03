@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-
-***FOR LAUREN's USE - TO BE USED FOR FINDING HODOGRAPHS ONLY***
-***DO NOT USE FOR EXTRACTING WAVE PARAMETERS!!!***
-
-
+Methods adopted form Dutta (2017)
 
 Manual Hodograph Analyzer
 Include this script in the same folder as the input and output directories, or else specify their file path
@@ -22,7 +18,7 @@ To Do:
     
 
 Malachi Mooney-Rivkin
-Last Edit: 1/21/2021
+Last Edit: 6/2/2021
 Idaho Space Grant Consortium
 moon8435@vandals.uidaho.edu
 """
@@ -32,6 +28,7 @@ import os
 from io import StringIO
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 #for ellipse fitting
 from math import atan2
@@ -42,7 +39,6 @@ from scipy import signal
 
 #metpy related dependencies - consider removing entirely
 import metpy.calc as mpcalc
-import matplotlib.pyplot as plt
 from metpy.units import units
 
 #tk gui
@@ -87,7 +83,7 @@ n_trials = 1000         #number of bootstrap iterations
 #for butterworth filter
 lowcut = 500  #m - lower vertical wavelength cutoff for Butterworth bandpass filter
 highcut = 2000  #m - upper vertical wavelength cutoff for Butterworth bandpass filter
-order = 3   #Dutta(2017)
+order = 3   #Butterworth filter order - Dutta(2017)
 ##################################END OF USER INPUT######################
 
 def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, order):
@@ -207,7 +203,6 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     potentialTemperature =  tempK * (p_0 / Pres) ** (2/7)    #https://glossary.ametsoc.org/wiki/Potential_temperature   
     bv2 = mpcalc.brunt_vaisala_frequency_squared(Alt, potentialTemperature).magnitude    #N^2 
     #bv2 = bruntViasalaFreqSquared(potentialTemperature, heightSamplingFreq)     #Maybe consider using metpy version of N^2 ? Height sampling is not used in hodo method, why allow it to affect bv ?
-    
     
     #convert wind from polar to cartesian c.s.
     u, v = mpcalc.wind_components(Ws, Wd)   #raw u,v components - no different than using trig fuctions
