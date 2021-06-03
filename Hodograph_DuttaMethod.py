@@ -81,8 +81,8 @@ p_0 = 1000 * units.hPa      #needed for potential temp calculatiion
 movingAveWindow = 11        #need to inquire about window size selection
 n_trials = 1000         #number of bootstrap iterations
 #for butterworth filter
-lowcut = 500  #m - lower vertical wavelength cutoff for Butterworth bandpass filter
-highcut = 2000  #m - upper vertical wavelength cutoff for Butterworth bandpass filter
+lowcut = 1500  #m - lower vertical wavelength cutoff for Butterworth bandpass filter
+highcut = 4000  #m - upper vertical wavelength cutoff for Butterworth bandpass filter
 order = 3   #Butterworth filter order - Dutta(2017)
 ##################################END OF USER INPUT######################
 
@@ -330,11 +330,25 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
         
     
     #plot to double check subtraction
-    Fig, axs = plt.subplots(2,2,figsize=(6,6), num=3, sharey=True)   #figure for u,v butterworth filter
+    Fig, axs = plt.subplots(2,2,figsize=(6,6), num=3, sharey=True)#, sharex=True)   #figure for u,v butterworth filter
     for i,element in enumerate(u_background):
-        axs[0,0].plot(uPert[i], Alt.magnitude/1000, linewidth=0.5)
+        axs[0,0].plot(uPert[i], Alt.magnitude/1000, linewidth=0.5, label="Order: {}".format(str(i+2)))
         axs[1,0].plot(vPert[i], Alt.magnitude/1000, linewidth=0.5)   
-    
+   
+    Fig.legend()
+    Fig.suptitle("Wind Components; Background Removed, Filtered \n {}".format(file))
+    axs[0,0].set_xlabel("Zonal Wind (m/s)")
+    axs[1,0].set_xlabel("Meridional Wind (m/s)")
+    axs[0,1].set_xlabel("Filtered Zonal Wind (m/s)")
+    axs[0,1].set_xlim([-10,10])
+    axs[1,1].set_xlim([-10,10])
+    axs[0,0].set_xlim([-20,35])
+    axs[1,0].set_xlim([-20,35])
+    axs[1,1].set_xlabel("Filtered Meridional Wind (m/s)")
+    axs[0,0].set_ylabel("Altitude (km)")
+    axs[1,0].set_ylabel("Altitude (km)")
+    axs[0,0].tick_params(axis='x',labelbottom=False) # labels along the bottom edge are off
+    axs[0,1].tick_params(axis='x',labelbottom=False) # labels along the bottom edge are off
     ###############################################################
     ###############################################################
     
@@ -347,11 +361,12 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     w, h = signal.freqz(b, a, worN=5000)
     plt.figure(4)
     plt.plot(w/np.pi, abs(h))
-    plt.plot([0, 1], [np.sqrt(0.5), np.sqrt(0.5)],'--', label='sqrt(0.5)')
-    plt.xlabel('Normalized Frequency (x Pi rad/sample') #1/m ?
+    plt.plot([0, 1], [np.sqrt(0.5), np.sqrt(0.5)],'--', label='sqrt(1/2)')
+    plt.xlabel('Normalized Frequency (x Pi rad/sample) \n [Nyquist Frequency = 1]') #1/m ?
     plt.ylabel('Gain')
     plt.xlim([0,.1])
     plt.grid(True)
+    plt.title("Frequency Response of 3rd Order Butterworth Filter \n Vertical Cut-off Wavelengths: 1.5 - 4 km")
     plt.legend(loc='best')
 
     # Filter a noisy signal.
