@@ -390,7 +390,7 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     
     #######
     ###########
-    ##########
+    #########
 
 def butter_bandpass(lowcut, highcut, fs, order):
     """
