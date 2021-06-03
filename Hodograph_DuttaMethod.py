@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-
-***FOR LAUREN's USE - TO BE USED FOR FINDING HODOGRAPHS ONLY***
-***DO NOT USE FOR EXTRACTING WAVE PARAMETERS!!!***
-
-
+Methods adopted form Dutta (2017)
 
 Manual Hodograph Analyzer
 Include this script in the same folder as the input and output directories, or else specify their file path
@@ -22,7 +18,7 @@ To Do:
     
 
 Malachi Mooney-Rivkin
-Last Edit: 1/21/2021
+Last Edit: 6/2/2021
 Idaho Space Grant Consortium
 moon8435@vandals.uidaho.edu
 """
@@ -32,6 +28,7 @@ import os
 from io import StringIO
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 #for ellipse fitting
 from math import atan2
@@ -42,7 +39,6 @@ from scipy import signal
 
 #metpy related dependencies - consider removing entirely
 import metpy.calc as mpcalc
-import matplotlib.pyplot as plt
 from metpy.units import units
 
 #tk gui
@@ -85,9 +81,9 @@ p_0 = 1000 * units.hPa      #needed for potential temp calculatiion
 movingAveWindow = 11        #need to inquire about window size selection
 n_trials = 1000         #number of bootstrap iterations
 #for butterworth filter
-lowcut = 500  #m - lower vertical wavelength cutoff for Butterworth bandpass filter
-highcut = 2000  #m - upper vertical wavelength cutoff for Butterworth bandpass filter
-order = 3   #Dutta(2017)
+lowcut = 1500  #m - lower vertical wavelength cutoff for Butterworth bandpass filter
+highcut = 4000  #m - upper vertical wavelength cutoff for Butterworth bandpass filter
+order = 3   #Butterworth filter order - Dutta(2017)
 ##################################END OF USER INPUT######################
 
 def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, order):
@@ -207,7 +203,6 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     potentialTemperature =  tempK * (p_0 / Pres) ** (2/7)    #https://glossary.ametsoc.org/wiki/Potential_temperature   
     bv2 = mpcalc.brunt_vaisala_frequency_squared(Alt, potentialTemperature).magnitude    #N^2 
     #bv2 = bruntViasalaFreqSquared(potentialTemperature, heightSamplingFreq)     #Maybe consider using metpy version of N^2 ? Height sampling is not used in hodo method, why allow it to affect bv ?
-    
     
     #convert wind from polar to cartesian c.s.
     u, v = mpcalc.wind_components(Ws, Wd)   #raw u,v components - no different than using trig fuctions
@@ -335,11 +330,25 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
         
     
     #plot to double check subtraction
-    Fig, axs = plt.subplots(2,2,figsize=(6,6), num=3, sharey=True)   #figure for u,v butterworth filter
+    Fig, axs = plt.subplots(2,2,figsize=(6,6), num=3, sharey=True)#, sharex=True)   #figure for u,v butterworth filter
     for i,element in enumerate(u_background):
-        axs[0,0].plot(uPert[i], Alt.magnitude/1000, linewidth=0.5)
+        axs[0,0].plot(uPert[i], Alt.magnitude/1000, linewidth=0.5, label="Order: {}".format(str(i+2)))
         axs[1,0].plot(vPert[i], Alt.magnitude/1000, linewidth=0.5)   
-    
+   
+    Fig.legend()
+    Fig.suptitle("Wind Components; Background Removed, Filtered \n {}".format(file))
+    axs[0,0].set_xlabel("Zonal Wind (m/s)")
+    axs[1,0].set_xlabel("Meridional Wind (m/s)")
+    axs[0,1].set_xlabel("Filtered Zonal Wind (m/s)")
+    axs[0,1].set_xlim([-10,10])
+    axs[1,1].set_xlim([-10,10])
+    axs[0,0].set_xlim([-20,35])
+    axs[1,0].set_xlim([-20,35])
+    axs[1,1].set_xlabel("Filtered Meridional Wind (m/s)")
+    axs[0,0].set_ylabel("Altitude (km)")
+    axs[1,0].set_ylabel("Altitude (km)")
+    axs[0,0].tick_params(axis='x',labelbottom=False) # labels along the bottom edge are off
+    axs[0,1].tick_params(axis='x',labelbottom=False) # labels along the bottom edge are off
     ###############################################################
     ###############################################################
     
@@ -352,11 +361,12 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     w, h = signal.freqz(b, a, worN=5000)
     plt.figure(4)
     plt.plot(w/np.pi, abs(h))
-    plt.plot([0, 1], [np.sqrt(0.5), np.sqrt(0.5)],'--', label='sqrt(0.5)')
-    plt.xlabel('Normalized Frequency (x Pi rad/sample') #1/m ?
+    plt.plot([0, 1], [np.sqrt(0.5), np.sqrt(0.5)],'--', label='sqrt(1/2)')
+    plt.xlabel('Normalized Frequency (x Pi rad/sample) \n [Nyquist Frequency = 1]') #1/m ?
     plt.ylabel('Gain')
     plt.xlim([0,.1])
     plt.grid(True)
+    plt.title("Frequency Response of 3rd Order Butterworth Filter \n Vertical Cut-off Wavelengths: 1.5 - 4 km")
     plt.legend(loc='best')
 
     # Filter a noisy signal.
@@ -379,7 +389,7 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
         #plt.legend(loc='upper left')
     
     ###########
-    ##########
+    #########
 
 def butter_bandpass(lowcut, highcut, fs, order):
     """
