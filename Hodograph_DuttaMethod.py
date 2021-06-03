@@ -350,7 +350,6 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     axs[0,0].tick_params(axis='x',labelbottom=False) # labels along the bottom edge are off
     axs[0,1].tick_params(axis='x',labelbottom=False) # labels along the bottom edge are off
     ###############################################################
-    ###############################################################
     
     #filter using 3rd order butterworth - fs=samplerate (1/m)
     freq2 = 1/lambda1    #find cutoff freq 1/m
