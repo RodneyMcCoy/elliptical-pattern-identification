@@ -410,9 +410,6 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order):
     return y
 
 
-
-  
-
 def bruntViasalaFreqSquared(potTemp, heightSamplingFreq):
     """ replicated from Tom's script
     """
@@ -680,6 +677,9 @@ class microHodo:
         return a, b, centre[0], centre[1],phi
     
     def bootstrap_params(self, n_trials):
+        """
+        Iterate through a variety of random samplings, testing the ellipse fit of each sample
+        """
         uu, vv = np.asarray(self.u), np.asarray(self.v)
         #arrays to store parameters of all fits
         aas, bs, c_xs, c_ys, phis = np.zeros(n_trials), np.zeros(n_trials), np.zeros(n_trials), np.zeros(n_trials), np.zeros(n_trials)
