@@ -14,6 +14,7 @@ from io import StringIO
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.dates import DateFormatter
 
 #for ellipse fitting
 from math import atan2
@@ -46,7 +47,8 @@ fileToBeInspected = 'T26_1630_12142020_MT2.txt'                                 
 microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory\Tolten\T26_all"  
 #microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory\Tolten\T28"              #location where selections from GUI ard. This is also the location where do analysis looks for micro hodos to analysis
 waveParamDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory"     #location where wave parameter files are to be saved
-
+flightTimesDir = r"C:\Users\Malachi\OneDrive - University of Idaho\%SummerInternship2020\hodographAnalysis\Tolten"
+flightTimes = r"Tolten_FlightTimes.csv"
 
 
 ##################################END OF USER INPUT######################
@@ -188,7 +190,7 @@ def f(x,y):
     q = 2
     return np.sin(x) * np.sin(y)
 
-
+"""
 def constructBackGroundFFT(directory):
     for file in os.listdir(directory):
         #print(file)
@@ -222,8 +224,59 @@ def constructBackGroundFFT(directory):
     #ax.contourf(xv,yv,z)
     #xy_fft = np.fft.fft2(xy)
     
+    return
+"""
+def constructContourPlot(directory, times, timesPath):
+    
+    #retrieve flight times/dates from file; combine date, time columns into datetime object
+    schedule = pd.read_csv(os.path.join(timesPath, times), skiprows=[1], parse_dates=[[2,3]])
+    print(schedule)\
+    
+    #plot time series to confirm functionality
+    F, A = plt.subplots()
+    A.plot(schedule["Date_Time"], schedule["Number"])
+    A.set_xlabel("Time [UTC]")
+    date_form = DateFormatter("%H:%M")
+    A.xaxis.set_major_formatter(date_form)
+    
+    
+    
+    for file in os.listdir(directory):
+        print(file)
+        #print(type(file ))
+        
+        #get starting time of flight
+        num = file.split("_")[0]    #get flight initial and number from file name
+        #num = num[1:]   #remove flight initial - this results in flight number 
+        num = [x for x in num if x.isdigit()]
+        num = int("".join(num))
+        print(type(num))
+        print("num: ", num)
+        startTime = schedule.loc[schedule["Number"] == num, 'Date_Time']
+        print(startTime)
+        
+        #assign proper timestamp to each data entry in file
+        
+    
+    
+    """    
+    print("HERE")
+    xx = np.linspace(0,10*np.pi)
+    yy = np.linspace(0,5*np.pi)
+    xv, yv = np.meshgrid(xx, yy)
+    print("length meshgrid: ", len(xv), "Length y:", len(yv))
+    global z
+    z = f(xv,yv)
+    print(z)
+    plt.imshow(z, interpolation='nearest')
+    
+    fig, ax = plt.subplots()
+    xy = np.column_stack([xv,yv,z])
+    ax.contourf(xv,yv,z)
+    xy_fft = np.fft.fft2(xy)
+    """
     
     return
-
 #Run data to construct background
-constructBackGroundFFT(flightData)
+constructContourPlot(flightData, flightTimes, flightTimesDir)
+#constructBackGroundFFT(flightData)

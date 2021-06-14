@@ -57,8 +57,8 @@ from skimage.measure import EllipseModel
 
 #Which functionality would you like to use?
 showVisualizations = False     # Displays macroscopic hodograph for flight
-siftThruHodo = False    # Use manual GUI to locate ellipse-like structures in hodograph
-analyze = False   # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
+siftThruHodo = True    # Use manual GUI to locate ellipse-like structures in hodograph
+analyze = True   # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
 location = "Tolten"     #[Tolten]/[Villarica]
 
 #variables that are specific to analysis: These might be changed regularly depending on flight location, file format, etc.
@@ -388,6 +388,10 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
         #plt.legend(loc='upper left')
     
     ###########
+    
+    #re define u,v
+    u = uButter[4]
+    v = vButter[4]
     #########
 
 def butter_bandpass(lowcut, highcut, fs, order):
