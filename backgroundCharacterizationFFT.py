@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.dates import DateFormatter
+from datetime import timedelta
 
 #for ellipse fitting
 from math import atan2
@@ -51,79 +52,20 @@ flightTimesDir = r"C:\Users\Malachi\OneDrive - University of Idaho\%SummerIntern
 flightTimes = r"Tolten_FlightTimes.csv"
 
 
+p_0 = 1000 * units.hPa
+spatialResolution = 5
 ##################################END OF USER INPUT######################
 
 def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, order):
     #delete gloabal data variable as soon as troubleshooting is complete
-    global data
     """ prepare data for hodograph analysis. non numeric values & values > 999999 removed, brunt-viasala freq
         calculated, background wind removed
 
         Different background removal techniques used: rolling average, savitsky-golay filter, nth order polynomial fits
     """
  
-    #indicate which file is in progress
-    print("Analyzing: {}".format(file))
-    
-    # Open file
-    contents = ""
-    f = open(os.path.join(path, file), 'r')
-    print("\nOpening file "+file+":")
-    for line in f:  # Iterate through file, line by line
-        if line.rstrip() == "Profile Data:":
-            contents = f.read()  # Read in rest of file, discarding header
-            print("File contains GRAWMET profile data")
-            break
-    f.close()  # Need to close opened file
-
-
-    # Read in the data and perform cleaning
-    # Need to remove space so Virt. Temp reads as one column, not two
-    contents = contents.replace("Virt. Temp", "Virt.Temp")
-    # Break file apart into separate lines
-    contents = contents.split("\n")
-    contents.pop(1)  # Remove units so that we can read table
-    index = -1  # Used to look for footer
-    for i in range(0, len(contents)):  # Iterate through lines
-        if contents[i].strip() == "Tropopauses:":
-            index = i  # Record start of footer
-    if index >= 0:  # Remove footer, if found
-        contents = contents[:index]
-    contents = "\n".join(contents)  # Reassemble string
-
-    # format flight data in dataframe
-    data = pd.read_csv(StringIO(contents), delim_whitespace=True)
-    
-    #turn strings into numeric data types, non numerics turned to nans
-    data = data.apply(pd.to_numeric, errors='coerce') 
-
-    # replace all numbers greater than 999999 with nans
-    data = data.where(data < 999999, np.nan)    
-
-    #truncate data at greatest alt
-    data = data[0 : np.where(data['Alt']== data['Alt'].max())[0][0]+1]  
-    print("Maximum Altitude: {}".format(max(data['Alt'])))
-
-    #drop rows with nans
-    data = data.dropna(subset=['Time', 'T', 'Ws', 'Wd', 'Long.', 'Lat.', 'Alt'])
-    
-    #remove unneeded columns
-    data = data[['Time', 'Alt', 'T', 'P', 'Ws', 'Wd', 'Lat.', 'Long.']]
-    
-    #linearly interpolate data - such that it is spaced iniformly in space, heightwise - stolen from Keaton
-    #create index of heights with 1 m spacial resolution - from minAlt to maxAlt
-    heightIndex = pd.DataFrame({'Alt': np.arange(min(data['Alt']), max(data['Alt']))})
-    #right merge data with index to keep all heights
-    data= pd.merge(data, heightIndex, how='right', on='Alt')
-    #sort data by height
-    data = data.sort_values(by='Alt')
-    #linear interpolate the nans
-    missingDataLimit = 999  #more than 1km of data should be left as nans, will not be onsidered in analysis
-    data = data.interpolate(method='linear', limit=missingDataLimit)
-    #resample at height interval
-    keepIndex = np.arange(0, len(data['Alt']), spatialResolution)
-    data = data.iloc[keepIndex,:]
-    data.reset_index(drop=True, inplace=True)
+    data = openFile(file, path)
+    data = interpolateVertically(data)
     
     #change data container name, sounds silly but useful for troubleshooting data-cleaning bugs
     global df
@@ -179,6 +121,75 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     
         
     return 
+def openFile(file, path):
+    """
+    open profile, package necessary data in dataframe
+    """
+    #indicate which file is in progress
+    #print("Analyzing: {}".format(file))
+    
+    # Open file
+    contents = ""
+    f = open(os.path.join(path, file), 'r')
+    print("\nOpening file "+file+":")
+    for line in f:  # Iterate through file, line by line
+        if line.rstrip() == "Profile Data:":
+            contents = f.read()  # Read in rest of file, discarding header
+            print("File contains GRAWMET profile data")
+            break
+    f.close()  # Need to close opened file
+
+
+    # Read in the data and perform cleaning
+    # Need to remove space so Virt. Temp reads as one column, not two
+    contents = contents.replace("Virt. Temp", "Virt.Temp")
+    # Break file apart into separate lines
+    contents = contents.split("\n")
+    contents.pop(1)  # Remove units so that we can read table
+    index = -1  # Used to look for footer
+    for i in range(0, len(contents)):  # Iterate through lines
+        if contents[i].strip() == "Tropopauses:":
+            index = i  # Record start of footer
+    if index >= 0:  # Remove footer, if found
+        contents = contents[:index]
+    contents = "\n".join(contents)  # Reassemble string
+
+    # format flight data in dataframe
+    data = pd.read_csv(StringIO(contents), delim_whitespace=True)
+    
+    #turn strings into numeric data types, non numerics turned to nans
+    data = data.apply(pd.to_numeric, errors='coerce') 
+
+    # replace all numbers greater than 999999 with nans
+    data = data.where(data < 999999, np.nan)    
+
+    #truncate data at greatest alt
+    data = data[0 : np.where(data['Alt']== data['Alt'].max())[0][0]+1]  
+    print("Maximum Altitude: {}".format(max(data['Alt'])))
+
+    #drop rows with nans
+    data = data.dropna(subset=['Time', 'T', 'Ws', 'Wd', 'Long.', 'Lat.', 'Alt'])
+    
+    #remove unneeded columns
+    data = data[['Time', 'Alt', 'T', 'P', 'Ws', 'Wd', 'Lat.', 'Long.']]
+    return data
+
+def interpolateVertically(data):
+    #linearly interpolate data - such that it is spaced iniformly in space, heightwise - stolen from Keaton
+    #create index of heights with 1 m spacial resolution - from minAlt to maxAlt
+    heightIndex = pd.DataFrame({'Alt': np.arange(min(data['Alt']), max(data['Alt']))})
+    #right merge data with index to keep all heights
+    data= pd.merge(data, heightIndex, how='right', on='Alt')
+    #sort data by height
+    data = data.sort_values(by='Alt')
+    #linear interpolate the nans
+    missingDataLimit = 999  #more than 1km of data should be left as nans, will not be onsidered in analysis
+    data = data.interpolate(method='linear', limit=missingDataLimit)
+    #resample at height interval
+    keepIndex = np.arange(0, len(data['Alt']), spatialResolution)
+    data = data.iloc[keepIndex,:]
+    data.reset_index(drop=True, inplace=True)
+    return data
 
 def f(x,y):
     """
@@ -233,14 +244,14 @@ def constructContourPlot(directory, times, timesPath):
     print(schedule)\
     
     #plot time series to confirm functionality
-    F, A = plt.subplots()
-    A.plot(schedule["Date_Time"], schedule["Number"])
-    A.set_xlabel("Time [UTC]")
-    date_form = DateFormatter("%H:%M")
-    A.xaxis.set_major_formatter(date_form)
+    #F, A = plt.subplots()
+    #A.plot(schedule["Date_Time"], schedule["Number"])
+    #A.set_xlabel("Time [UTC]")
+    #date_form = DateFormatter("%H:%M")
+    #A.xaxis.set_major_formatter(date_form)
     
-    
-    
+    global bulkData
+    bulkData = pd.DataFrame()
     for file in os.listdir(directory):
         print(file)
         #print(type(file ))
@@ -250,12 +261,42 @@ def constructContourPlot(directory, times, timesPath):
         #num = num[1:]   #remove flight initial - this results in flight number 
         num = [x for x in num if x.isdigit()]
         num = int("".join(num))
-        print(type(num))
-        print("num: ", num)
-        startTime = schedule.loc[schedule["Number"] == num, 'Date_Time']
-        print(startTime)
         
-        #assign proper timestamp to each data entry in file
+        if num < 10: #temporarily use first 5 profiles
+            
+            #print(type(num))
+            #print("num: ", num)
+            startTime = schedule.loc[schedule["Number"] == num, 'Date_Time'].values[0]
+            print("Start Time: ", startTime)
+            print("Start Time Type: ", type(startTime))
+            
+            
+            #assign proper timestamp to each data entry in file
+            data = openFile(file, directory)
+            data["Time"] = pd.to_timedelta(data["Time"], unit='seconds')    #convert seconds into timedelta type
+            data["Time"] = data["Time"] + startTime
+            #print(data)
+            #add to time series of all profiles
+            bulkData = bulkData.append(data, ignore_index=True) #ignore index necessary?
+            
+            #print("Time Type: ", type(data["Time"]))
+        
+    print("BULK DATAFRAME")
+    print(bulkData)
+    #sort time series chronologically
+    bulkData.sort_values(by=['Time'], inplace=True)
+    bulkData['Time'] = pd.to_datetime(bulkData['Time'])
+    print("Bulk Data - chronological")
+    print(bulkData)
+    print("bulktime type: ", type(bulkData['Time'].iloc[1]))
+    print("\n")
+    
+    fig, ax = plt.subplots()
+    ax.tricontourf(bulkData['Time'],bulkData['Alt'],bulkData['T'])
+    #ax.scatter(bulkData['Time'],bulkData['T'])
+    ax.set_xlabel("Time [UTC]")
+    date_form = DateFormatter("%H:%M")
+    ax.xaxis.set_major_formatter(date_form)
         
     
     
@@ -279,4 +320,5 @@ def constructContourPlot(directory, times, timesPath):
     return
 #Run data to construct background
 constructContourPlot(flightData, flightTimes, flightTimesDir)
+#preprocessDataResample(fileToBeInspected, flightData, 5, 1, 1, 3)
 #constructBackGroundFFT(flightData)

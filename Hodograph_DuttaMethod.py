@@ -1045,7 +1045,7 @@ def manualTKGUI():
             self.altSpinner = tkinter.Spinbox(root, command=self.update, values=Alt.magnitude.tolist(), repeatinterval=1, font=Font(family='Helvetica', size=25, weight='normal'))
             self.altSpinner.place(relx=.05, rely=.12, relheight=.05, relwidth=.15)  #originally followed above line
             #self.winSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.win, from_=5, to=1000, font=Font(family='Helvetica', size=25, weight='normal')).place(relx=.05, rely=.22, relheight=.05, relwidth=.15)
-            self.winSpinner = tkinter.Spinbox(root, command=self.update, from_=5, to=1000, repeatinterval=1, font=Font(family='Helvetica', size=25, weight='normal'))
+            self.winSpinner = tkinter.Spinbox(root, command=self.update, from_=5, to=10000, repeatinterval=1, font=Font(family='Helvetica', size=25, weight='normal'))
             self.winSpinner.place(relx=.05, rely=.22, relheight=.05, relwidth=.15)  #originally followed above line
             self.altLabel = tkinter.Label(root, text="Select Lower Altitude (m):", font=Font(family='Helvetica', size=18, weight='normal')).place(relx=.05, rely=.09)
             self.winLabel = tkinter.Label(root, text="Select Alt. Window (# data points):", font=Font(family='Helvetica', size=18, weight='normal')).place(relx=.05, rely=.19)
