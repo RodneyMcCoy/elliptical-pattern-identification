@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 """
 Background removal process invlving 2D-FFT
 
@@ -15,6 +16,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.dates import DateFormatter
+import datetime
 from datetime import timedelta
 
 #for ellipse fitting
@@ -37,12 +39,27 @@ from tkinter.font import Font
 from tkinter import ttk
 
 #skimage ellipse fitting
-from skimage.measure import EllipseModel
+#from skimage.measure import EllipseModel
+
+#interpolation
+from scipy.interpolate import griddata
+
+#fft
+import scipy.fft 
 
 
 ###############################BEGINING OF USER INPUT##########################
 
 #variables that are specific to analysis: These might be changed regularly depending on flight location, file format, etc.
+flightData = r"C:\Users\M\OneDrive - University of Idaho\%SummerInternship2020\%%CHIILE_Analysis_Backups\ChilePythonEnvironment_01112021\ChileData_012721\Tolten_01282021"             #flight data directory
+fileToBeInspected = 'T26_1630_12142020_MT2.txt'                                                 #specific flight profile to be searched through manually
+microHodoDir = r"C:\Users\M\OneDrive - University of Idaho\workingChileDirectory\Tolten\T26_all"  
+#microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory\Tolten\T28"              #location where selections from GUI ard. This is also the location where do analysis looks for micro hodos to analysis
+waveParamDir = r"C:\Users\M\OneDrive - University of Idaho\workingChileDirectory"     #location where wave parameter files are to be saved
+flightTimesDir = r"C:\Users\M\OneDrive - University of Idaho\%SummerInternship2020\hodographAnalysis\Tolten"
+flightTimes = r"Tolten_FlightTimes.csv"
+
+r"""
 flightData = r"C:\Users\Malachi\OneDrive - University of Idaho\%SummerInternship2020\%%CHIILE_Analysis_Backups\ChilePythonEnvironment_01112021\ChileData_012721\Tolten_01282021"             #flight data directory
 fileToBeInspected = 'T26_1630_12142020_MT2.txt'                                                 #specific flight profile to be searched through manually
 microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory\Tolten\T26_all"  
@@ -50,7 +67,7 @@ microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDir
 waveParamDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory"     #location where wave parameter files are to be saved
 flightTimesDir = r"C:\Users\Malachi\OneDrive - University of Idaho\%SummerInternship2020\hodographAnalysis\Tolten"
 flightTimes = r"Tolten_FlightTimes.csv"
-
+"""
 
 p_0 = 1000 * units.hPa
 spatialResolution = 5
@@ -191,15 +208,18 @@ def interpolateVertically(data):
     data.reset_index(drop=True, inplace=True)
     return data
 
-def f(x,y):
+def f(t,y):
     """
     invent function to test plotting with
     """
-    t=3
-    w=1
-    p = 1 #1 #5 #2 #5
-    q = 2
-    return np.sin(x) * np.sin(y)
+    f_t = 1   #hz
+    f_y = 2 #hz
+    f_noise_height = 20 #Hz
+    f_noise_time = 10 #Hz
+    signal = np.sin(f_t*2*np.pi*t) * np.sin(f_y*2*np.pi*y)
+    noise = .1 * (np.sin(f_noise_time*2*np.pi*t) * np.sin(f_noise_height*2*np.pi*y))
+    plt.contourf(signal, levels=100)
+    return signal + noise
 
 """
 def constructBackGroundFFT(directory):
@@ -239,6 +259,8 @@ def constructBackGroundFFT(directory):
 """
 def constructContourPlot(directory, times, timesPath):
     
+    global x,y,z, xi, yi, zi, points, knownPoints, knownValues, grid, Xi, Yi, xi, yi, points, epoch, z_fft, z_filtered
+    
     #retrieve flight times/dates from file; combine date, time columns into datetime object
     schedule = pd.read_csv(os.path.join(timesPath, times), skiprows=[1], parse_dates=[[2,3]])
     print(schedule)\
@@ -250,7 +272,7 @@ def constructContourPlot(directory, times, timesPath):
     #date_form = DateFormatter("%H:%M")
     #A.xaxis.set_major_formatter(date_form)
     
-    global bulkData
+    global bulkData     # useful for troubleshooting
     bulkData = pd.DataFrame()
     for file in os.listdir(directory):
         print(file)
@@ -262,7 +284,7 @@ def constructContourPlot(directory, times, timesPath):
         num = [x for x in num if x.isdigit()]
         num = int("".join(num))
         
-        if num < 10: #temporarily use first 5 profiles
+        if num < 5: #temporarily use first 4 profiles
             
             #print(type(num))
             #print("num: ", num)
@@ -273,49 +295,254 @@ def constructContourPlot(directory, times, timesPath):
             
             #assign proper timestamp to each data entry in file
             data = openFile(file, directory)
+            data = interpolateVertically(data)
+        
+            
             data["Time"] = pd.to_timedelta(data["Time"], unit='seconds')    #convert seconds into timedelta type
             data["Time"] = data["Time"] + startTime
             #print(data)
             #add to time series of all profiles
             bulkData = bulkData.append(data, ignore_index=True) #ignore index necessary?
-            
+            global trouble     # useful for troubleshooting
+            trouble = data
             #print("Time Type: ", type(data["Time"]))
-        
+            
+            
     print("BULK DATAFRAME")
     print(bulkData)
+    
     #sort time series chronologically
     bulkData.sort_values(by=['Time'], inplace=True)
-    bulkData['Time'] = pd.to_datetime(bulkData['Time'])
+    #bulkData['Time'] = pd.to_datetime(bulkData['Time'])
     print("Bulk Data - chronological")
     print(bulkData)
     print("bulktime type: ", type(bulkData['Time'].iloc[1]))
     print("\n")
     
+    #convert datetime to seconds since start of first launch
+    bulkData['Time'] = bulkData['Time'] - bulkData['Time'].min()
+    bulkData['Time'] = bulkData['Time'].dt.total_seconds()
+    print("new time data type:",type(bulkData['Time'][0]))
+    
+    #interpolate bulk data onto grid -----------------------------------------------------------------
+    ngridy = 1000   #need to decide on grid spacing
+    ngridt = 1000
+    grid = bulkData[['Time', 'Alt', 'T']]
+    grid = grid.dropna()
+    x = grid['Time']
+    y = grid['Alt']
+    knownPoints = (x,y)
+    knownValues = grid['T']
+    print("Size of knownvals: ",np.size(knownValues))
+    print("Size of x: ",np.size(x))
+    print("Size of y: ",np.size(y))
+
+    # Create grid values first.
+    xi = np.linspace(min(bulkData['Time']), max(bulkData['Time']), ngridt)
+    yi = np.linspace(min(y), max(y), ngridy)
+    
+    #cordinates of grid
+    Xi, Yi = np.meshgrid(xi, yi)
+    points = (Xi,Yi)
+    
+    #interpolate onto grid
+    #this method is effective
+    #zi = scipy.interpolate.griddata(knownPoints, knownValues, points, method='linear')
+    zi = scipy.interpolate.griddata(knownPoints, knownValues, points, method='linear', fill_value='extrapolate')
+    #print("Starting INTERPOLATION")
+    #f = scipy.interpolate.interp2d(x, y, knownValues, bounds_error=False)
+    #print("Still working on INTERPOLATION")
+    #zi = f(xi,yi)
+    #print("FINISHED INTERPOLATION")
+    #print(zi)
+
+
+    global notnanIndices, zi2, knownPoints2, knownValues2
+    #notnanIndices = np.argwhere(~np.isnan(zi))
+    #knownPoints2 = (pd.Series(notnanIndices[:,0]), pd.Series(notnanIndices[:,1]))
+    #xIndices = knownPoints2[0]
+    #yIndices = knownPoints2[1]
+
+    #knownValues2  = zi[xIndices,yIndices]
+    
+    #zi2 = scipy.interpolate.griddata(knownPoints2, knownValues2, points, method='nearest')
+    #indices of nans zi
+    
+    #replace nans with zeros
+    #zi = np.nan_to_num(zi)
+    
+    #construct background
+    #xy = np.column_stack([z, xv,yv])
+    """
+    #apply 2d fft
+    print("zi type: ", type(zi))
+    z_fft = scipy.fft.fft2(zi)
+    #z_shift = scipy.fft.fftshift(z_fft)
+    print("fft signal type: ", type(z_fft))
+    #shift fft
+    #xy_fft = scipy.fft.fftshift(xy_fft)
+    """
+    #figure = plt.figure("Raw Signal")
+    #plt.contourf(zi, levels=100)
+    """
+    #magnitude f 2d fft
+    s_mag = np.abs(z_fft)
+    
+    timestep = (max(x)-min(x))/ngridt    #s/sample
+    heightstep = (max(x)-min(x))/ngridy    #m/sample
+    #calculate frequency compnents of each bin
+    FreqCompTime = np.fft.fftfreq(zi.shape[0],d=timestep)
+    FreqCompHeight = np.fft.fftfreq(zi.shape[1],d=heightstep)
+    
+    #block high freq in height
+    #cutoff_height = 1/10    #wavelength [m] (1/f)
+    cutoff_height = 35000
+    #cutoff_time = 1/10  #wavelength [s] (1/f)
+    cutoff_time = 60*60*24  #wavelength [s] (1/f)
+    
+    z_filtered = z_fft.copy()
+    z_filtered.T[abs(FreqCompTime) >= 1/cutoff_time] = 0
+    z_filtered.T
+    z_filtered[abs(FreqCompHeight) >= 1/cutoff_height] = 0
+    
+    #invert fft
+    z_filtered = scipy.fft.ifft2(z_filtered)
+    
+    #plotting
+    #filtered 
+    figure = plt.figure("Filtered Image")
+    plt.contourf(Xi, Yi, z_filtered, levels=50)
+    """
+    """
+    fig, (ax0, ax1, ax2) = plt.subplots(1,3)
+    ax0.contourf(xv,yv,z, levels=100)
+    
+    #magnitude
+    ax1.plot(s_mag)
+    ax1.set_title("magnitude")
+    """
+    #create figure for plotting interpolated data
+    contour, ax1 = plt.subplots()
+    ax1.contour(Xi, Yi, zi, linewidths=0.5, colors='k')
+    cntr1 = ax1.contourf(xi, yi, zi, levels=100, cmap='rainbow')
+    contour.colorbar(cntr1, ax=ax1)
+    ax1.set_xlabel("Time (UTC) [ns - needs changed]")
+    ax1.set_ylabel("Altitude (m)")
+    #contour.colorbar(cntr1, ax=ax1)
+    ax1.plot(x,y, 'ko', ms=.005)
+    ax1.set_title("Contour Map Temp vs Alt vs Time")
+    #ax1.set_title('grid and contour (%d points, %d grid points)' %(npts, ngridx * ngridy))
+    plt.show()
+    
+    #create figure for background
+    #fig, ax = plt.subplots()
+    #cntr1 = ax.contourf(Xi, Yi, z_filtered, levels=100, cmap='rainbow')
+    #fig.colorbar(cntr1, ax=ax)
+    
+    #view convex hull
+    """
+    from scipy.spatial import ConvexHull, convex_hull_plot_2d
+    points = points = np.column_stack((x,y))
+    global hull
+    hull = ConvexHull(points)
+    
+    #plt.plot(points[:,0], points[:,1], 'o')
+    for simplex in hull.simplices:
+        ax1.plot(points[simplex, 0], points[simplex, 1], 'k-')
+        
+    fig3, ax3 = plt.subplots()
+    ax3.imshow(zi)
+    fig3.show()
+    ####
+    
+    
+    
     fig, ax = plt.subplots()
     ax.tricontourf(bulkData['Time'],bulkData['Alt'],bulkData['T'])
-    #ax.scatter(bulkData['Time'],bulkData['T'])
+    #ax.scatter(bulkData['Time'],bulkData['Alt'])
     ax.set_xlabel("Time [UTC]")
     date_form = DateFormatter("%H:%M")
     ax.xaxis.set_major_formatter(date_form)
         
     
-    
-    """    
-    print("HERE")
-    xx = np.linspace(0,10*np.pi)
-    yy = np.linspace(0,5*np.pi)
+    """
+    ###############################################################
+    """
+    #experiment to learn how to apply 2D FFT
+    global xy_fft, FreqCompHeight, FreqCompTime, s_mag
+
+    #invent some data
+
+    xx = np.linspace(0,3, 100)
+    yy = np.linspace(0,1.5, 100)
+    #samplesx = xx.size[0]
+    #samplesy = yy.size[1]
     xv, yv = np.meshgrid(xx, yy)
     print("length meshgrid: ", len(xv), "Length y:", len(yv))
     global z
     z = f(xv,yv)
-    print(z)
-    plt.imshow(z, interpolation='nearest')
+    xy = np.column_stack([z, xv,yv])
     
-    fig, ax = plt.subplots()
-    xy = np.column_stack([xv,yv,z])
-    ax.contourf(xv,yv,z)
-    xy_fft = np.fft.fft2(xy)
+    #apply 2d fft
+    z_fft = scipy.fft.fft2(z)
+    #z_shift = scipy.fft.fftshift(z_fft)
+    print("fft signal type: ", type(z_fft))
+    #shift fft
+    #xy_fft = scipy.fft.fftshift(xy_fft)
+    figure = plt.figure("Raw Signal")
+    plt.contourf(z, levels=100)
+    
+    #magnitude f 2d fft
+    s_mag = np.abs(z_fft)
+    
+    timestep = 3/100    #s/sample
+    heightstep = 1.5/100    #m/sample
+    #calculate frequency compnents of each bin
+    FreqCompTime = np.fft.fftfreq(z.shape[0],d=timestep)
+    FreqCompHeight = np.fft.fftfreq(z.shape[1],d=heightstep)
+    
+    #block high freq in height
+    #cutoff_height = 1/10    #wavelength [m] (1/f)
+    cutoff_height = 1/20
+    #cutoff_time = 1/10  #wavelength [s] (1/f)
+    cutoff_time = 1/20  #wavelength [s] (1/f)
+    
+    z_filtered = z_fft.copy()
+    z_filtered.T[abs(FreqCompTime) >= 1/cutoff_time] = 0
+    z_filtered.T
+    z_filtered[abs(FreqCompHeight) >= 1/cutoff_height] = 0
+    
+    #invert fft
+    z_filtered = scipy.fft.ifft2(z_filtered)
+    
+    #plotting
+    #filtered 
+    figure = plt.figure("Filtered Image")
+    plt.contourf(z_filtered, levels=100)
+    #original data
+    #figure = plt.figure("Raw Image")
+    #plt.contourf(z, levels=100)
+    fig, (ax0, ax1, ax2) = plt.subplots(1,3)
+    ax0.contourf(xv,yv,z, levels=100)
+    
+    #magnitude
+    ax1.plot(s_mag)
+    ax1.set_title("magnitude")
+    
+    #filtered height
+    ax2.plot(z_filtered)
+    #fft (time)
+    #ax2.plot(s_mag.T)
+    #shifted data
+    #ax2.contourf(fft_shift)
+    
+    #frequency content
+    #plt.figure("FFT")
+    #plt.plot(xy_fft)
+      
+    #end experiment
     """
+    ###########################################################
     
     return
 #Run data to construct background
