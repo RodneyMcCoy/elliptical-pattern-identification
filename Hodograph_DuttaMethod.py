@@ -56,15 +56,15 @@ from skimage.measure import EllipseModel
 ###############################BEGINING OF USER INPUT##########################
 
 #Which functionality would you like to use?
-showVisualizations = False     # Displays macroscopic hodograph for flight
-siftThruHodo = True    # Use manual GUI to locate ellipse-like structures in hodograph
+showVisualizations = True     # Displays macroscopic hodograph for flight
+siftThruHodo = False    # Use manual GUI to locate ellipse-like structures in hodograph
 analyze = True   # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
 location = "Tolten"     #[Tolten]/[Villarica]
 
 #variables that are specific to analysis: These might be changed regularly depending on flight location, file format, etc.
 flightData = r"C:\Users\Malachi\OneDrive - University of Idaho\%SummerInternship2020\%%CHIILE_Analysis_Backups\ChilePythonEnvironment_01112021\ChileData_012721\Tolten_01282021"             #flight data directory
-fileToBeInspected = 'T26_1630_12142020_MT2.txt'                                                 #specific flight profile to be searched through manually
-microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory\Tolten\T26_all"  
+fileToBeInspected = 'T36_0230_121520_Artemis_Rerun_CLEAN.txt'                                                 #specific flight profile to be searched through manually
+microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory\T36_hodographs"  
 #microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory\Tolten\T28"              #location where selections from GUI ard. This is also the location where do analysis looks for micro hodos to analysis
 waveParamDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory"     #location where wave parameter files are to be saved
 
@@ -81,9 +81,13 @@ p_0 = 1000 * units.hPa      #needed for potential temp calculatiion
 movingAveWindow = 11        #need to inquire about window size selection
 n_trials = 1000         #number of bootstrap iterations
 #for butterworth filter
-lowcut = 1500  #m - lower vertical wavelength cutoff for Butterworth bandpass filter
+lowcut = 500  #m - lower vertical wavelength cutoff for Butterworth bandpass filter
 highcut = 4000  #m - upper vertical wavelength cutoff for Butterworth bandpass filter
 order = 3   #Butterworth filter order - Dutta(2017)
+#modes for data preprocessing
+backgroundPolyOrder = 3
+applyButterworth = False
+tropopause = 11427  #m
 ##################################END OF USER INPUT######################
 
 def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, order):
@@ -136,6 +140,10 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     #truncate data at greatest alt
     data = data[0 : np.where(data['Alt']== data['Alt'].max())[0][0]+1]  
     print("Maximum Altitude: {}".format(max(data['Alt'])))
+    
+    #Truncate data below tropopause
+    data = data[data['Alt'] >= tropopause] 
+    print("Minimum Altitude: {}".format(min(data['Alt'])))
 
     #drop rows with nans
     data = data.dropna(subset=['Time', 'T', 'Ws', 'Wd', 'Long.', 'Lat.', 'Alt'])
@@ -143,20 +151,23 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     #remove unneeded columns
     data = data[['Time', 'Alt', 'T', 'P', 'Ws', 'Wd', 'Lat.', 'Long.']]
     
-    #linearly interpolate data - such that it is spaced iniformly in space, heightwise - stolen from Keaton
-    #create index of heights with 1 m spacial resolution - from minAlt to maxAlt
-    heightIndex = pd.DataFrame({'Alt': np.arange(min(data['Alt']), max(data['Alt']))})
-    #right merge data with index to keep all heights
-    data= pd.merge(data, heightIndex, how='right', on='Alt')
-    #sort data by height
-    data = data.sort_values(by='Alt')
-    #linear interpolate the nans
-    missingDataLimit = 999  #more than 1km of data should be left as nans, will not be onsidered in analysis
-    data = data.interpolate(method='linear', limit=missingDataLimit)
-    #resample at height interval
-    keepIndex = np.arange(0, len(data['Alt']), spatialResolution)
-    data = data.iloc[keepIndex,:]
-    data.reset_index(drop=True, inplace=True)
+    if applyButterworth:
+        #linear interpolation only needs to occur if butterworth is applied
+        
+        #linearly interpolate data - such that it is spaced iniformly in space, heightwise - stolen from Keaton
+        #create index of heights with 1 m spacial resolution - from minAlt to maxAlt
+        heightIndex = pd.DataFrame({'Alt': np.arange(min(data['Alt']), max(data['Alt']))})
+        #right merge data with index to keep all heights
+        data= pd.merge(data, heightIndex, how='right', on='Alt')
+        #sort data by height
+        data = data.sort_values(by='Alt')
+        #linear interpolate the nans
+        missingDataLimit = 999  #more than 1km of data should be left as nans, will not be onsidered in analysis
+        data = data.interpolate(method='linear', limit=missingDataLimit)
+        #resample at height interval
+        keepIndex = np.arange(0, len(data['Alt']), spatialResolution)
+        data = data.iloc[keepIndex,:]
+        data.reset_index(drop=True, inplace=True)
     
     #change data container name, sounds silly but useful for troubleshooting data-cleaning bugs
     global df
@@ -206,12 +217,12 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     
     #convert wind from polar to cartesian c.s.
     u, v = mpcalc.wind_components(Ws, Wd)   #raw u,v components - no different than using trig fuctions
-    print("Size of u: ", len(u))
+    #print("Size of u: ", len(u))
     #subtract nth order polynomials to find purturbation profile
     
     # run moving average over u,v comps
-    altExtent = max(Alt) - minAlt    #NEED TO VERIFY THE CORRECT WINDOW SAMPLING SZE
-    print("Alt Extent:", altExtent)
+    #altExtent = max(Alt) - minAlt    #NEED TO VERIFY THE CORRECT WINDOW SAMPLING SZE
+    #print("Alt Extent:", altExtent)
     #window = int((altExtent.magnitude / (heightSamplingFreq * 4)))    # as done in Tom's code; arbitrary at best. removed choosing max between calculated window and 11,artifact from IDL code
     #if (window % 2) == 0:       #many filters require odd window
     #    window = window-1
@@ -246,11 +257,14 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     u_background = []
     v_background = []
     
+    print("Polynomial coefficients: ")
     for k in range(2,10):
         i = k-2
         
         #temp
         poly = np.polyfit(Alt.magnitude / 1000, Temp.magnitude, k)
+        if i==0:
+            print(poly)
         fit = np.polyval(poly, Alt.magnitude / 1000)
         temp_background.append(fit)
         
@@ -264,6 +278,7 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
         
         #u
         poly = np.polyfit(Alt.magnitude / 1000, u.magnitude, k)
+    
         fit = np.polyval(poly, Alt.magnitude / 1000)
         u_background.append(fit)
         #plot u
@@ -350,48 +365,57 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     axs[0,0].tick_params(axis='x',labelbottom=False) # labels along the bottom edge are off
     axs[0,1].tick_params(axis='x',labelbottom=False) # labels along the bottom edge are off
     ###############################################################
-    
-    #filter using 3rd order butterworth - fs=samplerate (1/m)
-    freq2 = 1/lambda1    #find cutoff freq 1/m
-    freq1 =  1/lambda2    #find cutoff freq 1/m
-    
-    # Plot the frequency response for a few different orders.
-    b, a = butter_bandpass(freq1, freq2, heightSamplingFreq, order)
-    w, h = signal.freqz(b, a, worN=5000)
-    plt.figure(4)
-    plt.plot(w/np.pi, abs(h))
-    plt.plot([0, 1], [np.sqrt(0.5), np.sqrt(0.5)],'--', label='sqrt(1/2)')
-    plt.xlabel('Normalized Frequency (x Pi rad/sample) \n [Nyquist Frequency = 1]') #1/m ?
-    plt.ylabel('Gain')
-    plt.xlim([0,.1])
-    plt.grid(True)
-    plt.title("Frequency Response of 3rd Order Butterworth Filter \n Vertical Cut-off Wavelengths: 1.5 - 4 km")
-    plt.legend(loc='best')
-
-    # Filter a noisy signal.
-    uButter = []
-    vButter = []
-    
-    for i,element in enumerate(vPert):
+    if applyButterworth:
+        #filter using 3rd order butterworth - fs=samplerate (1/m)
+        freq2 = 1/lambda1    #find cutoff freq 1/m
+        freq1 =  1/lambda2    #find cutoff freq 1/m
         
-        filtU = butter_bandpass_filter(uPert[i],freq1, freq2, heightSamplingFreq, order)
-        uButter.append(filtU)
-        filtV = butter_bandpass_filter(vPert[i], freq1, freq2, 1/5, order)
-        vButter.append(filtV)
-        #axs[1,1].plot(vPert[0], Alt.magnitude)
-        axs[1,1].plot(vButter[i], Alt.magnitude/1000, linewidth=0.5)
-        axs[0,1].plot(uButter[i], Alt.magnitude/1000, linewidth=0.5)
-        #plt.xlabel('time (seconds)')
-        #plt.hlines([-a, a], 0, T, linestyles='--')
-        #plt.grid(True)
-        #plt.axis('tight')
-        #plt.legend(loc='upper left')
+        # Plot the frequency response for a few different orders.
+        b, a = butter_bandpass(freq1, freq2, heightSamplingFreq, order)
+        w, h = signal.freqz(b, a, worN=5000)
+        plt.figure(4)
+        plt.plot(w/np.pi, abs(h))
+        plt.plot([0, 1], [np.sqrt(0.5), np.sqrt(0.5)],'--', label='sqrt(1/2)')
+        plt.xlabel('Normalized Frequency (x Pi rad/sample) \n [Nyquist Frequency = 1]') #1/m ?
+        plt.ylabel('Gain')
+        plt.xlim([0,.1])
+        plt.grid(True)
+        plt.title("Frequency Response of 3rd Order Butterworth Filter \n Vertical Cut-off Wavelengths: 0.5 - 4 km")
+        plt.legend(loc='best')
     
-    ###########
+        # Filter a noisy signal.
+        uButter = []
+        vButter = []
+        tempButter = []
+        for i,element in enumerate(vPert):
+            
+            filtU = butter_bandpass_filter(uPert[i],freq1, freq2, heightSamplingFreq, order)
+            uButter.append(filtU)
+            filtV = butter_bandpass_filter(vPert[i], freq1, freq2, 1/5, order)
+            vButter.append(filtV)
+            filtTemp = butter_bandpass_filter(tempPert[i],freq1, freq2, heightSamplingFreq, order)
+            tempButter.append(filtTemp)
+            #axs[1,1].plot(vPert[0], Alt.magnitude)
+            axs[1,1].plot(vButter[i], Alt.magnitude/1000, linewidth=0.5)
+            axs[0,1].plot(uButter[i], Alt.magnitude/1000, linewidth=0.5)
+            #plt.xlabel('time (seconds)')
+            #plt.hlines([-a, a], 0, T, linestyles='--')
+            #plt.grid(True)
+            #plt.axis('tight')
+            #plt.legend(loc='upper left')
     
-    #re define u,v
-    u = uButter[4]
-    v = vButter[4]
+    
+    
+        #re define u,v
+        #u = uButter[4]
+        #v = vButter[4]
+        #Temp = tempButter[4]
+        print("Butterworth Filter Applied")
+    
+    polyIndice = backgroundPolyOrder - 2
+    u = uPert[polyIndice] * units.m / units.second
+    v = vPert[polyIndice] * units.m / units.second
+    Temp = tempPert[polyIndice] * units.degC
     #########
 
 def butter_bandpass(lowcut, highcut, fs, order):
@@ -446,132 +470,14 @@ class microHodo:
         self.lowerAlt = min(self.alt).astype('int')
         self.upperAlt = max(self.alt).astype('int')
       
-    def getParameters(self):
-
-        #Altitude of detection - mean
-        self.altOfDetection = np.mean(self.alt)     # (meters)
-
-        #Latitude of Detection - mean
-        self.latOfDetection = np.mean(self.lat)     # (decimal degrees) 
-
-        #Longitude of Detection - mean
-        self.longOfDetection = np.mean(self.long)     # (decimal degrees)
-
-        #Date/Time of Detection - mean - needs to be added!
-        
-        #Axial ratio
-        wf = (2 * self.a) / (2 * self.b)    #long axis / short axis
-        
-
-        #Vertical wavelength
-        self.lambda_z = self.alt[-1] - self.alt[0]       # (meters) -- Toms script multiplies altitude of envelope by two? 
-        self.m = 2 * np.pi / self.lambda_z      # vertical wavenumber (rad/meters)
-
-        #Horizontal wavelength
-        bv2Mean = np.mean(self.bv2)
-        coriolisFreq = mpcalc.coriolis_parameter(latitudeOfAnalysis)
-        
-        k_h = np.sqrt((coriolisFreq.magnitude**2 * self.m**2) / abs(bv2Mean) * (wf**2 - 1)) #horizontal wavenumber (1/meter)
-        self.lambda_h = 1 / k_h     #horizontal wavelength (meter)
-
-        #Propogation Direction (Marlton 2016) 
-        
-        #rot = np.array([[np.cos(self.phi), -np.sin(self.phi)], [np.sin(self.phi), np.cos(self.phi)]])       #2d rotation matrix - containinng angle of fitted elipse - as used in Toms script
-        rot = np.array([[np.cos(-self.phi), -np.sin(-self.phi)], [np.sin(-self.phi), np.cos(-self.phi)]])       #2d rotation matrix - containinng  negative angle of fitted elipse
-        uv = np.array([self.u, self.v])       #zonal and meridional components
-        uvrot = np.matmul(rot,uv)       #change of coordinates
-        urot = uvrot[0,:]               #urot aligns with major axis
-        #print('UROT MAX', max(urot))
-        dt = np.diff(self.temp)
-        #print("dt: ", dt)
-        dz = np.diff(self.alt)
-        #print('dz: ', dz)
-        dTdz = np.diff(self.temp)  / np.diff(self.alt) 
-        #print('dTdz: ', dTdz)             #discreet temperature gradient dt/dz
-
-        ###EXPERIMENT TO CHECK HOW HEIGHT CHANGES WITH TEMP
-        dzdT = np.diff(self.alt)  / np.diff(self.temp) 
-
-        ###END EXPERIMENT#################################
-        eta = np.mean(dTdz / urot[0:-1])
-        if eta < 0:                 # check to see if temp perterbaton has same sign as u perterbation - clears up 180 deg ambiguity in propogation direction
-            self.phi += np.pi
-        
-        self.directionOfPropogation = self.phi      # (radians ccw fromxaxis)
-        self.directionOfPropogation = np.rad2deg(self.directionOfPropogation)
-        #self.directionOfPropogation = 450 - self.directionOfPropogation
-        if self.directionOfPropogation > 360:
-            self.directionOfPropogation -= 360
-
-        """
-        ########################################PLOTTING FOR TROUBLESHOOTING##################################################
-        #plots all micro-hodographs for a single flight
-        uvPlot = plt.figure("Troubleshooting", figsize=(10, 5))
-        
-        ax = uvPlot.add_subplot(1,2,1, aspect='equal')
-        ax.plot(self.u, self.v, 'red') 
-
-        #plot parametric best fit ellipse
-        param = np.linspace(0, 2 * np.pi)
-        x = self.a * np.cos(param) * np.cos(self.phi) - self.b * np.sin(param) * np.sin(self.phi) + self.c_x
-        y = self.a * np.cos(param) * np.sin(self.phi) + self.b * np.sin(param) * np.cos(self.phi) + self.c_y
-        ax.plot(x, y)
-        ax.set_xlabel("(m/s)")
-        ax.set_ylabel("(m/s)")
-        ax.set_aspect('equal')
-        ax.set_title("UV with fit ellipse")
-        ax.grid()
-        #plot uvRot
-        ax.plot(urot, uvrot[1,:])
-        
-
-        #plot u, t, vs alt
-        color = 'tab:red'
-        ax = uvPlot.add_subplot(1,2,2, )
-        ax.set_xlabel('urot (m/s)', color=color)
-        ax.set_ylabel('alt (m)')
-        ax.plot(urot, self.alt, label='urot', color=color)
-        ax.plot(self.temp, self.alt, label='temp', color = 'green')
-        ax.tick_params(axis='x', labelcolor=color)
-
-        ax2 = ax.twiny()  # instantiate a second axes that shares the same x-axis
-
-        color = 'tab:blue'
-        ax2.set_xlabel('dtdz', color=color)  # we already handled the y-label with ax1
-        ax2.plot(dTdz, self.alt[0:-1], color=color, label='dTdz')
-        ax2.tick_params(axis='x', labelcolor=color)
-
-        ax.legend()  
-            
-        plt.show() 
-
-
-        #########################################END PLOTTING FOR TROUBLESHOOTING#############################################
-        """
-        #Intrinsic vertical group velocity
-
-        #Intrinsic horizontal group velocity
-
-        #Intrinsic vertical phase speed
-        
-
-        #Intrinsic horizontal phase speed (m/s)
-        intrinsicFreq = coriolisFreq.magnitude * wf     #one ought to assign units to output from ellipse fitting to ensure dimensional accuracy
-        intrinsicHorizPhaseSpeed = intrinsicFreq / k_h
-
-        #extraneous calculations - part of Tom's script
-        #k_h_2 = np.sqrt((intrinsicFreq**2 - coriolisFreq.magnitude**2) * (self.m**2 / abs(bv2Mean)))
-        #int2 = intrinsicFreq / k_h_2
-
-        #print("m: {}, lz: {}, h: {}, bv{}".format(self.m, self.lambda_z, intrinsicHorizPhaseSpeed, bv2Mean))
-        #return altitude of detection, latitude, longitude, vertical wavelength,horizontal wavenumber, intrinsic horizontal phase speed, axial ratio l/s
-        return  [self.time, self.altOfDetection, self.lat[0], self.long[0], self.lambda_z, k_h, intrinsicHorizPhaseSpeed, wf, self.directionOfPropogation]
+    
 
     def saveMicroHodoNoIndices(self):
         """ dumps microhodograph object attributs into csv 
         """
     
         T = np.column_stack([self.time, self.alt.magnitude, self.u.magnitude, self.v.magnitude, self.temp.magnitude, self.bv2, self.lat, self.long, self.orientation]) 
+        #T = np.column_stack([self.time, self.alt, self.u, self.v, self.temp, self.bv2, self.lat, self.long, self.orientation])
         T = pd.DataFrame(T, columns = ['time', 'alt', 'u', 'v', 'temp', 'bv2', 'lat','long', 'orientation'])
         
         
@@ -579,106 +485,160 @@ class microHodo:
         fname = '{}_microHodograph_{}-{}'.format(self.fname.strip('.txt'), int(self.alt[0].magnitude), int(self.alt[-1].magnitude))
         T.to_csv('{}/{}.csv'.format(self.savepath, fname), index=False)                          
 
-    #ellipse fitting courtesy of  Nicky van Foreest https://github.com/ndvanforeest/fit_ellipse
-    # a least squares algorithm is used
-    def ellipse_center(self, a):
-        """@brief calculate ellipse centre point
-        @param a the result of __fit_ellipse
-        """
-        b, c, d, f, g, a = a[1] / 2, a[2], a[3] / 2, a[4] / 2, a[5], a[0]
-        num = b * b - a * c
-        x0 = (c * d - b * f) / num
-        y0 = (a * f - b * d) / num
-        return np.array([x0, y0])
+    # #ellipse fitting courtesy of  Nicky van Foreest https://github.com/ndvanforeest/fit_ellipse
+    # # a least squares algorithm is used
+    # def ellipse_center(self, a):
+    #     """@brief calculate ellipse centre point
+    #     @param a the result of __fit_ellipse
+    #     """
+    #     b, c, d, f, g, a = a[1] / 2, a[2], a[3] / 2, a[4] / 2, a[5], a[0]
+    #     num = b * b - a * c
+    #     x0 = (c * d - b * f) / num
+    #     y0 = (a * f - b * d) / num
+    #     return np.array([x0, y0])
     
     
-    def ellipse_axis_length(self, a):
+    # def ellipse_axis_length(self, a):
         
-        """@brief calculate ellipse axes lengths
-        @param a the result of __fit_ellipse
-        """
-        b, c, d, f, g, a = a[1] / 2, a[2], a[3] / 2, a[4] / 2, a[5], a[0]
-        up = 2 * (a * f * f + c * d * d + g * b * b - 2 * b * d * f - a * c * g)
+    #     """@brief calculate ellipse axes lengths
+    #     @param a the result of __fit_ellipse
+    #     """
+    #     b, c, d, f, g, a = a[1] / 2, a[2], a[3] / 2, a[4] / 2, a[5], a[0]
+    #     up = 2 * (a * f * f + c * d * d + g * b * b - 2 * b * d * f - a * c * g)
         
-        down1 = (b * b - a * c) *\
-                ((c - a) * np.sqrt(1 + 4 * b * b / ((a - c) * (a - c))) - (c + a))
+    #     down1 = (b * b - a * c) *\
+    #             ((c - a) * np.sqrt(1 + 4 * b * b / ((a - c) * (a - c))) - (c + a))
         
-        down2 = (b * b - a * c) *\
-                ((a - c) * np.sqrt(1 + 4 * b * b / ((a - c) * (a - c))) - (c + a))
+    #     down2 = (b * b - a * c) *\
+    #             ((a - c) * np.sqrt(1 + 4 * b * b / ((a - c) * (a - c))) - (c + a))
         
-        res1 = np.sqrt(up / down1) 
-        res2 = np.sqrt(up / down2) 
-        return np.array([res1, res2])
+    #     res1 = np.sqrt(up / down1) 
+    #     res2 = np.sqrt(up / down2) 
+    #     return np.array([res1, res2])
     
     
-    def ellipse_angle_of_rotation(self, a):
-        """@brief calculate ellipse rotation angle
-        @param a the result of __fit_ellipse
-        """
-        b, c, d, f, g, a = a[1] / 2, a[2], a[3] / 2, a[4] / 2, a[5], a[0]
-        return atan2(2 * b, (a - c)) / 2
+    # def ellipse_angle_of_rotation(self, a):
+    #     """@brief calculate ellipse rotation angle
+    #     @param a the result of __fit_ellipse
+    #     """
+    #     b, c, d, f, g, a = a[1] / 2, a[2], a[3] / 2, a[4] / 2, a[5], a[0]
+    #     return atan2(2 * b, (a - c)) / 2
     
-    def fmod(self, x, y):
-        """@brief floating point modulus
-            e.g., fmod(theta, np.pi * 2) would keep an angle in [0, 2pi]
-        @param x angle to restrict
-        @param y end of  interval [0, y] to restrict to
-        """
-        r = x
-        while(r < 0):
-            r = r + y
-        while(r > y):
-            r = r - y
-        return r
-    
-    
-    def __fit_ellipse(self, x,y):
-        """@brief fit an ellipse to supplied data points
-                    (internal method.. use fit_ellipse below...)
-        @param x first coordinate of points to fit (array)
-        @param y second coord. of points to fit (array)
-        """
-        x, y = x[:, np.newaxis], y[:, np.newaxis]
-        D = np.hstack((x * x, x * y, y * y, x, y, np.ones_like(x)))
-        S, C = np.dot(D.T, D), np.zeros([6, 6])
-        C[0, 2], C[2, 0], C[1, 1] = 2, 2, -1
-        U, s, V = svd(np.dot(inv(S), C))
-        return U[:, 0]
+    # def fmod(self, x, y):
+    #     """@brief floating point modulus
+    #         e.g., fmod(theta, np.pi * 2) would keep an angle in [0, 2pi]
+    #     @param x angle to restrict
+    #     @param y end of  interval [0, y] to restrict to
+    #     """
+    #     r = x
+    #     while(r < 0):
+    #         r = r + y
+    #     while(r > y):
+    #         r = r - y
+    #     return r
     
     
-    def fit_ellipse(self):
+    # def __fit_ellipse(self, x,y):
+    #     """@brief fit an ellipse to supplied data points
+    #                 (internal method.. use fit_ellipse below...)
+    #     @param x first coordinate of points to fit (array)
+    #     @param y second coord. of points to fit (array)
+    #     """
+    #     x, y = x[:, np.newaxis], y[:, np.newaxis]
+    #     D = np.hstack((x * x, x * y, y * y, x, y, np.ones_like(x)))
+    #     S, C = np.dot(D.T, D), np.zeros([6, 6])
+    #     C[0, 2], C[2, 0], C[1, 1] = 2, 2, -1
+    #     U, s, V = svd(np.dot(inv(S), C))
+    #     return U[:, 0]
+    
+    
+    # def fit_ellipse(self):
         
-        """@brief fit an ellipse to supplied data points: the 5 params
-            returned are:
-            a - major axis length
-            b - minor axis length
-            cx - ellipse centre (x coord.)
-            cy - ellipse centre (y coord.)
-            phi - rotation angle of ellipse bounding box
-        @param x first coordinate of points to fit (array)
-        @param y second coord. of points to fit (array)
-        """
-        x, y = self.u, self.v
-        e = self.__fit_ellipse(x,y)
-        centre, phi = self.ellipse_center(e), self.ellipse_angle_of_rotation(e)
-        axes = self.ellipse_axis_length(e)
-        a, b = axes
+    #     """@brief fit an ellipse to supplied data points: the 5 params
+    #         returned are:
+    #         a - major axis length
+    #         b - minor axis length
+    #         cx - ellipse centre (x coord.)
+    #         cy - ellipse centre (y coord.)
+    #         phi - rotation angle of ellipse bounding box
+    #     @param x first coordinate of points to fit (array)
+    #     @param y second coord. of points to fit (array)
+    #     """
+    #     x, y = self.u, self.v
+    #     e = self.__fit_ellipse(x,y)
+    #     centre, phi = self.ellipse_center(e), self.ellipse_angle_of_rotation(e)
+    #     axes = self.ellipse_axis_length(e)
+    #     a, b = axes
     
-        # assert that a is the major axis (otherwise swap and correct angle)
-        if(b > a):
-            tmp = b
-            b = a
-            a = tmp
+    #     # assert that a is the major axis (otherwise swap and correct angle)
+    #     if(b > a):
+    #         tmp = b
+    #         b = a
+    #         a = tmp
     
-        # ensure the angle is betwen 0 and 2*pi
-        phi = self.fmod(phi, 2. * np.pi)   #originally alpha = ...
+    #     # ensure the angle is betwen 0 and 2*pi
+    #     phi = self.fmod(phi, 2. * np.pi)   #originally alpha = ...
             
-        self.a = a
-        self.b = b
-        self.c_x = centre[0]
-        self.c_y = centre[1]
-        self.phi = phi
-        return a, b, centre[0], centre[1],phi
+    #     self.a = a
+    #     self.b = b
+    #     self.c_x = centre[0]
+    #     self.c_y = centre[1]
+    #     self.phi = phi
+    #     return a, b, centre[0], centre[1],phi
+    
+
+    def fit_ellipse(self):
+            
+            # """@brief fit an ellipse to supplied data points: the 5 params
+            #     returned are:
+            #     a - major axis length
+            #     b - minor axis length
+            #     cx - ellipse centre (x coord.)
+            #     cy - ellipse centre (y coord.)
+            #     phi - rotation angle of ellipse bounding box
+            # @param x first coordinate of points to fit (array)
+            # @param y second coord. of points to fit (array)
+            # """
+            # x, y = self.u, self.v
+            # e = self.__fit_ellipse(x,y)
+            # centre, phi = self.ellipse_center(e), self.ellipse_angle_of_rotation(e)
+            # axes = self.ellipse_axis_length(e)
+            # a, b = axes
+        
+            # # assert that a is the major axis (otherwise swap and correct angle)
+            # if(b > a):
+            #     tmp = b
+            #     b = a
+            #     a = tmp
+        
+            # # ensure the angle is betwen 0 and 2*pi
+            # #phi = self.fmod(phi, 2. * np.pi)   #originally alpha = ...
+                
+            #Skimage ellipse fitting
+            #   Halir, R.; Flusser, J. “Numerically stable direct least squares fitting of ellipses”.
+            #In Proc. 6th International Conference in Central Europe on Computer Graphics and Visualization. 
+            #WSCG (Vol. 98, pp. 125-132).
+            
+            #xs = hodo_list[i].u
+            #ys = hodo_list[i].v
+            #a_points = np.array([xs, ys])
+            points = np.array([self.u, self.v])
+            
+            ell = EllipseModel()
+            ell.estimate(points.transpose())
+            xc, yc, a, b, theta = ell.params
+            
+            if a<b:
+                #swap a, b if in wrong order
+                a,b = b,a
+            
+            
+            self.a = a
+            self.b = b
+            self.c_x = xc
+            self.c_y = yc
+            self.phi = theta
+            return a, b, xc, yc, theta
     
     def bootstrap_params(self, n_trials):
         """
@@ -747,6 +707,75 @@ class microHodo:
         print("STDev AR: ", sdAR)
         
         return np.mean(aas), np.std(aas), np.mean(bs), np.std(bs), np.mean(c_xs), np.std(c_xs), np.mean(c_ys), np.std(c_ys), np.mean(phis), np.std(phis)# return statistics
+    
+    @property
+    def getParameters(self):
+
+        #Altitude of detection - mean
+        self.altOfDetection = np.mean(self.alt)     # (meters)
+
+        #Latitude of Detection - mean
+        self.latOfDetection = np.mean(self.lat)     # (decimal degrees) 
+
+        #Longitude of Detection - mean
+        self.longOfDetection = np.mean(self.long)     # (decimal degrees)
+
+        #Date/Time of Detection - mean - needs to be added!
+        
+        #Axial ratio
+        wf = (2 * self.a) / (2 * self.b)    #long axis / short axis
+        
+
+        #Vertical wavelength
+        self.lambda_z = self.alt[-1] - self.alt[0]       # (meters) -- Toms script multiplies altitude of envelope by two? 
+        self.m = 2 * np.pi / self.lambda_z      # vertical wavenumber (rad/meters)
+
+        #Horizontal wavelength
+        bv2Mean = np.mean(self.bv2)
+        coriolisFreq = mpcalc.coriolis_parameter(latitudeOfAnalysis)
+        
+        k_h = np.sqrt((coriolisFreq.magnitude**2 * self.m**2) / abs(bv2Mean) * (wf**2 - 1)) #horizontal wavenumber (1/meter)
+        self.lambda_h = 1 / k_h     #horizontal wavelength (meter)
+
+        #Propogation Direction (Marlton 2016) 
+        
+        #rot = np.array([[np.cos(self.phi), -np.sin(self.phi)], [np.sin(self.phi), np.cos(self.phi)]])       #2d rotation matrix - containinng angle of fitted elipse - as used in Toms script
+        rot = np.array([[np.cos(-self.phi), -np.sin(-self.phi)], [np.sin(-self.phi), np.cos(-self.phi)]])       #2d rotation matrix - containinng  negative angle of fitted elipse
+        uv = np.array([self.u, self.v])       #zonal and meridional components
+        uvrot = np.matmul(rot,uv)       #change of coordinates
+        urot = uvrot[0,:]               #urot aligns with major axis
+        #print('UROT MAX', max(urot))
+        dt = np.diff(self.temp)
+        #print("dt: ", dt)
+        dz = np.diff(self.alt)
+        #print('dz: ', dz)
+        dTdz = np.diff(self.temp)  / np.diff(self.alt) 
+        #print('dTdz: ', dTdz)             #discreet temperature gradient dt/dz
+
+        dzdT = np.diff(self.alt)  / np.diff(self.temp) 
+
+        eta = np.mean(dTdz * urot[0:-1])
+        if eta < 0:                 # check to see if temp perterbaton has same sign as u perterbation - clears up 180 deg ambiguity in propogation direction
+            self.phi += np.pi
+        
+        self.directionOfPropogation = self.phi      # (radians ccw fromxaxis)
+        self.directionOfPropogation = np.rad2deg(self.directionOfPropogation)
+        #self.directionOfPropogation = 450 - self.directionOfPropogation
+        if self.directionOfPropogation > 360:
+            self.directionOfPropogation -= 360
+
+        
+        #Intrinsic horizontal phase speed (m/s)
+        intrinsicFreq = coriolisFreq.magnitude * wf     #one ought to assign units to output from ellipse fitting to ensure dimensional accuracy
+        intrinsicHorizPhaseSpeed = intrinsicFreq / k_h
+
+        #extraneous calculations - part of Tom's script
+        #k_h_2 = np.sqrt((intrinsicFreq**2 - coriolisFreq.magnitude**2) * (self.m**2 / abs(bv2Mean)))
+        #int2 = intrinsicFreq / k_h_2
+
+        #print("m: {}, lz: {}, h: {}, bv{}".format(self.m, self.lambda_z, intrinsicHorizPhaseSpeed, bv2Mean))
+        #return altitude of detection, latitude, longitude, vertical wavelength,horizontal wavenumber, intrinsic horizontal phase speed, axial ratio l/s
+        return  [self.altOfDetection, self.lat[0], self.long[0], self.lambda_z/1000, self.lambda_h/1000, k_h, intrinsicFreq,  intrinsicHorizPhaseSpeed, wf, self.directionOfPropogation]
 """
     def improveFit(self):
         uu, vv = np.asarray(self.u), np.asarray(self.v)
@@ -809,6 +838,8 @@ class microHodo:
         a, b, c_x, c_y,phi = self.fit_ellipse() # get estimate of params
            
 """
+
+
 def doAnalysis(microHodoDir):
     """ Extracts wave parameters from microHodographs; this function can be run on existing microhodograph files without needing to operate the GUI
     """
@@ -826,7 +857,7 @@ def doAnalysis(microHodoDir):
         df = np.genfromtxt(fname=path, delimiter=',', names=True)
     
         #create microhodograph object, then start giving it attributes
-        instance = microHodo(df['Alt'], df['u'], df['v'], df['temp'], df['bv2'], df['lat'], df['long'], df['time'])
+        instance = microHodo(df['alt'], df['u'], df['v'], df['temp'], df['bv2'], df['lat'], df['long'], df['time'])
 
         #file name added to object attribute here to be used in labeling plots
         instance.addNameAddPath(file, microHodoDir)  
@@ -838,13 +869,13 @@ def doAnalysis(microHodoDir):
         #instance.improveFit()
         
         #lets try to fit an ellipse to microhodograph
-        instance.bootstrap_params(n_trials)
+        #instance.bootstrap_params(n_trials)
         instance.fit_ellipse()
         
         
         
         #use ellipse to extract wave characteristics
-        params = instance.getParameters()
+        params = instance.getParameters
         #print("Wave Parameters: \n", params)
 
         #update running list of processed hodos and corresponding parameters
@@ -852,8 +883,8 @@ def doAnalysis(microHodoDir):
         hodo_list.append(instance)  #add micro-hodo to running list
     
     #organize parameters into dataframe; dump into csv
-    parameterList = pd.DataFrame(parameterList, columns = ['time', 'Alt.', 'Lat', 'Long', 'Vert Wavelength', 'Horizontal Wave#', 'IntHorizPhase Speed', 'Axial Ratio L/S', 'Propagation Direction' ])
-    parameterList.sort_values(by='Alt.', inplace=True)
+    parameterList = pd.DataFrame(parameterList, columns = ['Alt. [km]', 'Lat', 'Long', 'Vert Wavelength [km]', 'Horiz. Wavelength [km]', 'Horizontal Wave#', 'IntHorizPhase Speed', 'Int. Freq.', 'Axial Ratio L/S', 'Propagation Direction' ])
+    parameterList.sort_values(by='Alt. [km]', inplace=True)
     
     pathAndFile = "{}\{}_params.csv".format(waveParamDir, fileToBeInspected.strip(".txt"))
     parameterList.to_csv(pathAndFile, index=False, na_rep='NaN')
@@ -864,9 +895,10 @@ def doAnalysis(microHodoDir):
     return hodo_list     
     
 def plotBulkMicros(hodo_list, fname):
+    
     """ plot microhodographs in grid of subplots
     """ 
-    
+    """
     #plots all micro-hodographs for a single flight
     bulkPlot = plt.figure(fname, figsize=(8.5,11))
     plt.suptitle("Micro-hodographs for \n {}".format(fname))#, y=1.09)
@@ -951,7 +983,87 @@ def plotBulkMicros(hodo_list, fname):
         plt.tight_layout()
         
         plt.show() 
-        return
+        """
+    ########## FUNCTIONS ##########
+    
+    def hodoPlot(graph, x, y, low, high):
+        graph.plot(x, y)
+        points = np.array([x,y])
+            
+        ell = EllipseModel()
+        ell.estimate(points.transpose())
+        xc, yc, a, b, theta = ell.params
+        
+        if a<b:
+            #swap a, b if in wrong order
+            a,b = b,a
+            
+            
+        param = np.linspace(0, 2 * np.pi)    
+        x = a * np.cos(param) * np.cos(theta) - b * np.sin(param) * np.sin(theta) + xc
+        y = a * np.cos(param) * np.sin(theta) + b * np.sin(param) * np.cos(theta) + yc  
+        
+        graph.plot(x, y)
+        
+        graph.set_title(str(low)+" - "+str(high))
+        # graph.set_xlabel('u')
+        # graph.set_ylabel('v')
+        
+    def trim(axs, n, rem):
+        axs = axs.flat
+        for ax in axs[n:]:
+            ax.remove()
+            rem += 1
+        return axs[:n], rem
+    
+    
+    ########## VARIABLES ##########
+    folder = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory\T36_hodographs"
+    global hodo
+    hodo = []
+    index = 0
+    rem = 0
+    
+    
+    ########## MAIN ##########
+    
+    #Create List of Hodograph Files
+    print("Printing hodograph files")
+    for file in os.listdir(folder):
+        print(file)
+        hodo.append(file)
+    
+    #Create Plot Diagram
+    num = len(hodo)
+    cols = 4
+    rows = np.ceil(num/cols)
+    print("ROWS ", rows)
+    #fig = plt.figure(figsize = (8.5, 2*rows), constrained_layout=True)
+    fig = plt.figure(figsize = (8.5, 11), constrained_layout=True)
+    axs = fig.subplots(int(rows),cols, sharex=True, sharey=True)
+    fig.suptitle('T36 Local Hodographs')
+    fig.text(.5, -.02, 'u wind speed')
+    fig.text(-.02, .5, 'v wind speed', va='center', rotation='vertical')
+    axs, rem = trim(axs, num, rem)
+    
+    #Fill Subplots
+    for place in axs.flat:
+            data = pd.read_csv(os.path.join(folder,hodo[index]))
+            u = data['u']
+            v = data['v']
+            alt = data['alt']
+            low = alt[0]
+            high = alt.iloc[-1]
+            hodoPlot(place, u, v, low, high)
+            if rem >= 1 and index == (rows-2)*cols + cols-1:
+                place.xaxis.set_tick_params(which='both', labelbottom=True)
+            if rem >= 2 and index == (rows-2)*cols + cols-2:
+                place.xaxis.set_tick_params(which='both', labelbottom=True)
+            if rem >= 3 and index == (rows-2)*cols + cols-3:
+                place.xaxis.set_tick_params(which='both', labelbottom=True)
+            index += 1
+            
+    return
 
 def macroHodo():
     """ plot hodograph for entire flight
@@ -1073,6 +1185,7 @@ def manualTKGUI():
             """ on each change to gui, this method refreshes hodograph plot
             """
             self.readyToSave = True
+            #this line used to work in spyder, not sure what happened, might have been deprecated by updates made to modules?
             #sliderAlt = int(self.alt.get()) works originally
             sliderAlt = int(float(self.altSpinner.get()))
             sliderWindow = int(self.winSpinner.get())
@@ -1151,7 +1264,7 @@ def run_(file, filePath):
         
         if showVisualizations:
             macroHodo()
-            uvVisualize()
+            #uvVisualize()
             plotBulkMicros(hodo_list, file)
         return
     return
