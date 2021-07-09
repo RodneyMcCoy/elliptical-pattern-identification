@@ -56,17 +56,17 @@ from skimage.measure import EllipseModel
 ###############################BEGINING OF USER INPUT##########################
 
 #Which functionality would you like to use?
-showVisualizations = True     # Displays macroscopic hodograph for flight
-siftThruHodo = False    # Use manual GUI to locate ellipse-like structures in hodograph
-analyze = True   # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
+showVisualizations = False     # Displays macroscopic hodograph for flight
+siftThruHodo = True    # Use manual GUI to locate ellipse-like structures in hodograph
+analyze = False    # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
 location = "Tolten"     #[Tolten]/[Villarica]
 
 #variables that are specific to analysis: These might be changed regularly depending on flight location, file format, etc.
-flightData = r"C:\Users\Malachi\OneDrive - University of Idaho\%SummerInternship2020\%%CHIILE_Analysis_Backups\ChilePythonEnvironment_01112021\ChileData_012721\Tolten_01282021"             #flight data directory
-fileToBeInspected = 'T36_0230_121520_Artemis_Rerun_CLEAN.txt'                                                 #specific flight profile to be searched through manually
-microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory\T36_hodographs"  
+flightData = r"C:\Users\reec7164\OneDrive - University of Idaho\Eclipse\Data\Tolten"             #flight data directory
+fileToBeInspected = 'Tolten_L01_121320_UTC1600.txt'                                                 #specific flight profile to be searched through manually
+microHodoDir = r"C:\Users\reec7164\OneDrive - University of Idaho\Eclipse\Hodographs\MicroHodos"  
 #microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory\Tolten\T28"              #location where selections from GUI ard. This is also the location where do analysis looks for micro hodos to analysis
-waveParamDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory"     #location where wave parameter files are to be saved
+waveParamDir = r"C:\Users\reec7164\OneDrive - University of Idaho\Eclipse\Hodographs\Parameters"     #location where wave parameter files are to be saved
 
 if location == "Tolten":
     latitudeOfAnalysis = abs(-39.236248) * units.degree    #latitude at which sonde was launched. Used to account for affect of coriolis force.
@@ -86,7 +86,7 @@ highcut = 4000  #m - upper vertical wavelength cutoff for Butterworth bandpass f
 order = 3   #Butterworth filter order - Dutta(2017)
 #modes for data preprocessing
 backgroundPolyOrder = 3
-applyButterworth = False
+applyButterworth = True
 tropopause = 11427  #m
 ##################################END OF USER INPUT######################
 
@@ -407,15 +407,15 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     
     
         #re define u,v
-        #u = uButter[4]
-        #v = vButter[4]
-        #Temp = tempButter[4]
+        u = uButter[4]
+        v = vButter[4]
+        Temp = tempButter[4]
         print("Butterworth Filter Applied")
     
     polyIndice = backgroundPolyOrder - 2
-    u = uPert[polyIndice] * units.m / units.second
-    v = vPert[polyIndice] * units.m / units.second
-    Temp = tempPert[polyIndice] * units.degC
+    #u = uPert[polyIndice] * units.m / units.second
+    #v = vPert[polyIndice] * units.m / units.second
+    #Temp = tempPert[polyIndice] * units.degC
     #########
 
 def butter_bandpass(lowcut, highcut, fs, order):
@@ -1144,24 +1144,35 @@ def manualTKGUI():
             
             
             #Create Sliders
-            self.alt = IntVar()
+            self.low = IntVar()
             self.win = IntVar()
-            
-            
+            self.up = IntVar()
+            global winMin
+            winMin = 15
+            global var 
+            var = IntVar()
+            var.set(1)
 
             #initialize gui vars added 12/27
             #self.alt.set(min(Alt.magnitude.tolist())) 
             
             #self.altSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.alt, values=Alt.magnitude.tolist(), font=Font(family='Helvetica', size=25, weight='normal')).place(relx=.05, rely=.12, relheight=.05, relwidth=.15)
             #added 12/27 test
-            self.altSpinner = tkinter.Spinbox(root, command=self.update, values=Alt.magnitude.tolist(), repeatinterval=1, font=Font(family='Helvetica', size=25, weight='normal'))
-            self.altSpinner.place(relx=.05, rely=.12, relheight=.05, relwidth=.15)  #originally followed above line
-            #self.winSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.win, from_=5, to=1000, font=Font(family='Helvetica', size=25, weight='normal')).place(relx=.05, rely=.22, relheight=.05, relwidth=.15)
-            self.winSpinner = tkinter.Spinbox(root, command=self.update, from_=5, to=10000, repeatinterval=1, font=Font(family='Helvetica', size=25, weight='normal'))
+            self.lowSpinner = tkinter.Spinbox(root, command=self.updateLow, values=Alt.magnitude.tolist(), repeatinterval=1, font=Font(family='Helvetica', size=25, weight='normal'))
+            self.lowSpinner.place(relx=.05, rely=.12, relheight=.05, relwidth=.15)  #originally followed above line
+            self.upSpinner = tkinter.Spinbox(root, command=self.updateUp, values=Alt.magnitude.tolist(), repeatinterval=1,font=Font(family='Helvetica', size=25, weight='normal'))
+            self.upSpinner.place(relx=.05, rely=.32, relheight=.05, relwidth=.15)
+            self.winSpinner = tkinter.Spinbox(root, command=self.updateWin, from_=winMin, to=10000, repeatinterval=1, font=Font(family='Helvetica', size=25, weight='normal'))
             self.winSpinner.place(relx=.05, rely=.22, relheight=.05, relwidth=.15)  #originally followed above line
-            self.altLabel = tkinter.Label(root, text="Select Lower Altitude (m):", font=Font(family='Helvetica', size=18, weight='normal')).place(relx=.05, rely=.09)
-            self.winLabel = tkinter.Label(root, text="Select Alt. Window (# data points):", font=Font(family='Helvetica', size=18, weight='normal')).place(relx=.05, rely=.19)
+
+            self.lockLow = tkinter.Radiobutton(root, variable=var, value=1).place(relx=.03, rely=.14)
+            self.lockUp = tkinter.Radiobutton(root, variable=var, value=2).place(relx=.03, rely=.24)
+            self.lockWin = tkinter.Radiobutton(root, variable=var, value=3).place(relx=.03, rely=.34)
             
+            self.lowLabel = tkinter.Label(root, text="Select Lower Altitude (m):", font=Font(family='Helvetica', size=18, weight='normal')).place(relx=.05, rely=.09)
+            self.upLabel = tkinter.Label(root, text="Select Upper Altitude (m):", font=Font(family='Helvetica', size=18, weight='normal')).place(relx=.05, rely=.29)
+            self.winLabel = tkinter.Label(root, text="Select Alt. Window (# data points):", font=Font(family='Helvetica', size=18, weight='normal')).place(relx=.05, rely=.19)
+
             #Create figure, plot 
             fig = Figure(figsize=(5, 4), dpi=100)
             self.ax = fig.add_subplot(111)
@@ -1181,16 +1192,158 @@ def manualTKGUI():
             self.readyToSave = False #flag to make sure hodo is updated before saving
             #---------
             
-        def update(self, *args):
+        def updateLow(self, *args):
             """ on each change to gui, this method refreshes hodograph plot
             """
             self.readyToSave = True
-            #this line used to work in spyder, not sure what happened, might have been deprecated by updates made to modules?
-            #sliderAlt = int(self.alt.get()) works originally
-            sliderAlt = int(float(self.altSpinner.get()))
-            sliderWindow = int(self.winSpinner.get())
-            self.l.set_xdata(u[np.where(Alt.magnitude == sliderAlt)[0][0]:np.where(Alt.magnitude == sliderAlt)[0][0] + sliderWindow])
-            self.l.set_ydata(v[np.where(Alt.magnitude == sliderAlt)[0][0]:np.where(Alt.magnitude == sliderAlt)[0][0] + sliderWindow])
+            
+
+            valLow = int(float(self.lowSpinner.get()))
+            valUp = int(float(self.upSpinner.get()))            
+            sliderLow = np.where(Alt.magnitude == valLow)[0][0]
+            sliderUp = np.where(Alt.magnitude == valUp)[0][0]
+            sliderWin = int(self.winSpinner.get())
+            lock = var.get()
+            
+            if lock == 1: #lower is locked, cancel
+                print('error')
+                sliderLow = sliderUp - sliderWin
+                self.lowSpinner.delete(0, 'end')
+                self.lowSpinner.insert(0,Alt.magnitude[sliderLow])
+                return
+            if lock == 2: #window is locked, edit upper
+                sliderUp = sliderLow + sliderWin
+                if sliderUp >= len(Alt.magnitude): #if upper is above max, cancel
+                    sliderUp = len(Alt.magnitude)-1
+                    sliderLow = sliderUp - sliderWin
+                    self.lowSpinner.delete(0, 'end')
+                    self.lowSpinner.insert(0,Alt.magnitude[sliderLow])
+                    return
+                self.upSpinner.delete(0, 'end')
+                self.upSpinner.insert(0,Alt.magnitude[sliderUp])
+            if lock == 3: #upper is locked, edit window
+                sliderWin = sliderUp-sliderLow
+                if sliderWin < winMin: #if window is too small, cancel
+                    sliderWin = winMin
+                    sliderLow = sliderUp - sliderWin
+                    self.lowSpinner.delete(0, 'end')
+                    self.lowSpinner.insert(0,Alt.magnitude[sliderLow])
+                    return
+                self.winSpinner.delete(0, 'end')
+                self.winSpinner.insert(0,sliderWin)  
+                
+            #get updated values from spinners
+            low = np.where(Alt.magnitude == valLow)[0][0] #Gives index of current spinner altitude ##current altitude is sliderAlt
+            up = np.where(Alt.magnitude == valUp)[0][0]
+            win = sliderWin
+            
+            #update graph to show between lower and upper variables
+            self.l.set_xdata(u[low:up])
+            self.l.set_ydata(v[low:up])
+           
+            self.ax.autoscale(enable=True)
+            self.ax.relim()
+            self.canvas.draw()
+            return
+        
+        def updateUp(self, *args):
+            """ on each change to gui, this method refreshes hodograph plot
+            """
+            self.readyToSave = True
+            
+            valLow = int(float(self.lowSpinner.get()))
+            valUp = int(float(self.upSpinner.get()))            
+            sliderLow = np.where(Alt.magnitude == valLow)[0][0]
+            sliderUp = np.where(Alt.magnitude == valUp)[0][0]
+            sliderWin = int(self.winSpinner.get())
+            lock = var.get()
+            
+            if lock == 1: #lower is locked, edit window
+                sliderWin = sliderUp-sliderLow
+                if sliderWin < winMin: #if window is too small, cancel
+                    sliderWin = winMin
+                    sliderUp = sliderLow + sliderWin
+                    self.upSpinner.delete(0, 'end')
+                    self.upSpinner.insert(0,Alt.magnitude[sliderUp])
+                    return
+                self.winSpinner.delete(0, 'end')
+                self.winSpinner.insert(0,sliderWin) 
+            if lock == 2: #window is locked, edit lower
+                sliderLow = sliderUp - sliderWin
+                if sliderLow < 0: #if lower is below 0, cancel
+                    sliderLow = 0
+                    sliderUp = sliderLow + sliderWin
+                    self.upSpinner.delete(0, 'end')
+                    self.upSpinner.insert(0,Alt.magnitude[sliderUp])
+                    return
+                self.lowSpinner.delete(0, 'end')
+                self.lowSpinner.insert(0,Alt.magnitude[sliderLow])
+            if lock == 3: #upper is locked, cancel
+                sliderUp = sliderLow + sliderWin
+                self.upSpinner.delete(0, 'end')
+                self.upSpinner.insert(0,Alt.magnitude[sliderUp])
+                return
+ 
+            #get updated values from spinners
+            low = np.where(Alt.magnitude == valLow)[0][0] #Gives index of current spinner altitude ##current altitude is sliderAlt
+            up = np.where(Alt.magnitude == valUp)[0][0]
+            win = sliderWin
+            
+            #update graph to show between lower and upper variables
+            self.l.set_xdata(u[low:up])
+            self.l.set_ydata(v[low:up])
+           
+            self.ax.autoscale(enable=True)
+            self.ax.relim()
+            self.canvas.draw()
+            return
+        
+        def updateWin(self, *args):
+            """ on each change to gui, this method refreshes hodograph plot
+            """
+            self.readyToSave = True
+
+            valLow = int(float(self.lowSpinner.get()))
+            valUp = int(float(self.upSpinner.get()))            
+            sliderLow = np.where(Alt.magnitude == valLow)[0][0]
+            sliderUp = np.where(Alt.magnitude == valUp)[0][0]
+            sliderWin = int(self.winSpinner.get())
+            lock = var.get()
+            
+            if lock == 1: #lower is locked, edit upper
+                sliderUp = sliderLow + sliderWin
+                if sliderUp >= len(Alt.magnitude): #if upper is above max, cancel
+                    sliderUp = len(Alt.magnitude)-1
+                    sliderWin = sliderUp - sliderLow
+                    self.winSpinner.delete(0, 'end')
+                    self.winSpinner.insert(0,sliderWin)
+                    return
+                self.upSpinner.delete(0, 'end')
+                self.upSpinner.insert(0,Alt.magnitude[sliderUp])
+            if lock == 2: #window is locked, cancel
+                sliderWin = sliderUp-sliderLow
+                self.winSpinner.delete(0, 'end')
+                self.winSpinner.insert(0,sliderWin)
+                return
+            if lock == 3: #upper is locked, edit lower
+                sliderLow = sliderUp - sliderWin
+                if sliderLow < 0: #if lower is below 0, cancel
+                    sliderLow = 0
+                    sliderWin = sliderUp - sliderLow
+                    self.winSpinner.delete(0, 'end')
+                    self.winSpinner.insert(0,sliderWin)
+                    return
+                self.lowSpinner.delete(0, 'end')
+                self.lowSpinner.insert(0,Alt.magnitude[sliderLow])  
+                
+            #get updated values from spinners
+            low = np.where(Alt.magnitude == valLow)[0][0] #Gives index of current spinner altitude ##current altitude is sliderAlt
+            up = np.where(Alt.magnitude == valUp)[0][0]
+            win = sliderWin
+            
+            #update graph to show between lower and upper variables
+            self.l.set_xdata(u[low:up])
+            self.l.set_ydata(v[low:up])
            
             self.ax.autoscale(enable=True)
             self.ax.relim()
@@ -1204,9 +1357,10 @@ def manualTKGUI():
                 
                 ORIENTATION = self.orient.get()
                 print('Orientation: ', ORIENTATION )
-                sliderAlt = int(float(self.altSpinner.get()))
+                sliderlow = int(float(self.lowSpinner.get()))
+                sliderup = int(float(self.upSpinner.get()))
                 sliderWindow = int(float(self.winSpinner.get()))
-                lowerAltInd = np.where(Alt.magnitude == sliderAlt)[0][0]
+                lowerAltInd = np.where(Alt.magnitude == sliderlow)[0][0]
                 upperAltInd = lowerAltInd + sliderWindow
             
             
@@ -1250,7 +1404,7 @@ def run_(file, filePath):
     #make sure there are no existing figures open
     plt.close('all')
 
-    # set location of flight data as surrent working directory
+    # set location of flight data as current working directory
     os.chdir(filePath)
     preprocessDataResample(file, flightData, spatialResolution, lowcut, highcut, order)
     
