@@ -476,7 +476,7 @@ class microHodo:
         """ dumps microhodograph object attributs into csv 
         """
     
-        T = np.column_stack([self.time, self.alt.magnitude, self.u.magnitude, self.v.magnitude, self.temp.magnitude, self.bv2, self.lat, self.long, self.orientation]) 
+        T = np.column_stack([self.time, self.alt.magnitude, self.u, self.v, self.temp, self.bv2, self.lat, self.long, self.orientation]) 
         #T = np.column_stack([self.time, self.alt, self.u, self.v, self.temp, self.bv2, self.lat, self.long, self.orientation])
         T = pd.DataFrame(T, columns = ['time', 'alt', 'u', 'v', 'temp', 'bv2', 'lat','long', 'orientation'])
         
@@ -1126,8 +1126,6 @@ def manualTKGUI():
             """ method sets up gui
             """
             
-            alt0 = 0
-            wind0 = 100
             # Create a container
             tkinter.Frame(master)
             
@@ -1164,6 +1162,9 @@ def manualTKGUI():
             self.upSpinner.place(relx=.05, rely=.32, relheight=.05, relwidth=.15)
             self.winSpinner = tkinter.Spinbox(root, command=self.updateWin, from_=winMin, to=10000, repeatinterval=1, font=Font(family='Helvetica', size=25, weight='normal'))
             self.winSpinner.place(relx=.05, rely=.22, relheight=.05, relwidth=.15)  #originally followed above line
+            
+            self.upSpinner.delete(0, 'end')
+            self.upSpinner.insert(0, Alt.magnitude[15])
 
             self.lockLow = tkinter.Radiobutton(root, variable=var, value=1).place(relx=.03, rely=.14)
             self.lockUp = tkinter.Radiobutton(root, variable=var, value=2).place(relx=.03, rely=.24)
@@ -1177,7 +1178,7 @@ def manualTKGUI():
             fig = Figure(figsize=(5, 4), dpi=100)
             self.ax = fig.add_subplot(111)
             fig.suptitle("{}".format(fileToBeInspected))
-            self.l, = self.ax.plot(u[:alt0+wind0], v[:alt0+wind0], 'o', ls='-', markevery=[0])
+            self.l, = self.ax.plot(u[:15], v[:15], 'o', ls='-', markevery=[0])
             self.ax.set_aspect('equal')
         
             self.canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
