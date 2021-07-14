@@ -1,1 +1,0 @@
-ground pressure correction -> current pressure: 873.8  offset:0.6

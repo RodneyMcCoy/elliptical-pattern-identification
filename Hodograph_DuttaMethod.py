@@ -422,6 +422,17 @@ def bruntViasalaFreqSquared(potTemp, heightSamplingFreq):
     N2 = (G / potTemp) * np.gradient(potTemp, heightSamplingFreq * units.m)     #artifact of tom's code, 
     return N2
 
+def unitCirc2Azmith(radians):
+    """Calculate compass direction in degrees, input: unit circle angle in radians
+    """
+    degrees = np.rad2deg(radians)
+    degrees = 450 - degrees    #rotate cordinate system 90 deg CCW
+    while degrees < 0:
+        degrees += 360
+    if degrees > 360:
+        degrees %= 360
+    return degrees
+
 class microHodo:
     def __init__(self, ALT, U, V, TEMP, BV2, LAT, LONG, TIME, ORIENTATION):
       self.alt = ALT#.magnitude
@@ -470,18 +481,20 @@ class microHodo:
             ell = EllipseModel()
             ell.estimate(points.transpose())
             xc, yc, a, b, theta = ell.params
-            
+            print("Unmodified Theta: ", theta)
             do = True
             if a<b and do:
+                print("Swappring a,b etc")
                 #swap a, b if in wrong order
                 a,b = b,a
                 theta = theta - np.pi/2
                 
-                
             if theta > np.pi/2:
-                theta = np.pi - theta
+                     theta = theta - np.pi
             if theta < -np.pi/2:
-                theta = np.pi + theta
+                 theta = theta + np.pi
+                
+            
                 
                 
                 
@@ -616,23 +629,16 @@ class microHodo:
         self.uRot = urot
         self.vRot = uvrot[1,:]
         print('UROT MAX', max(urot))
-        #dt = np.diff(self.temp)
-        #print("dt: ", dt)
-        #dz = np.diff(self.alt)
-        #print('dz: ', dz)
         dTdz = np.diff(self.temp)  / np.diff(self.alt) 
-        #print('dTdz: ', dTdz)             #discreet temperature gradient dt/dz
 
         eta = np.mean(dTdz * urot[0:-1])
-        # this is commented out to troubleshoot ellipse fitting
-        # if eta < 0:                 # check to see if temp perterbaton has same sign as u perterbation - clears up 180 deg ambiguity in propogation direction
-        #     self.phi += np.pi
         
-        self.directionOfPropogation = self.phi      # (radians ccw fromxaxis)
-        self.directionOfPropogation = np.rad2deg(self.directionOfPropogation)
-        # #self.directionOfPropogation = 450 - self.directionOfPropogation
-        # if self.directionOfPropogation > 360:
-        #     self.directionOfPropogation -= 360
+        if eta < 0:                 # check to see if temp perterbaton has same sign as u perterbation - clears up 180 deg ambiguity in propogation direction
+            self.phi += np.pi
+            print("Direction of orientaion reversed")
+        
+        self.directionOfPropogation = unitCirc2Azmith(self.phi) #get aorientation in degrees CW from North
+            
 
         
         #Intrinsic horizontal phase speed (m/s)
@@ -698,11 +704,6 @@ class microHodo:
         #scale parameters back
         self.b_improved = b / ratioOfEccentricity
         self.a_improved = a
-        
-        
-        
-        
-        
         
         #return u,v t original state
         self.u = uu
@@ -771,7 +772,7 @@ def plotBulkMicros(hodo_list, fname):
     
     """ plot microhodographs in grid of subplots
     """ 
-    """
+    """ This block of code is useful for inspecting single hodographs and their bestfit parameters
     #plots all micro-hodographs for a single flight
     bulkPlot = plt.figure(fname, figsize=(8.5,11))
     plt.suptitle("Micro-hodographs for \n {}".format(fname))#, y=1.09)
@@ -857,7 +858,7 @@ def plotBulkMicros(hodo_list, fname):
         
         plt.show() 
         """
-    ########## FUNCTIONS ##########
+    ########## FUNCTIONS ########## plotting courtesy of Kathyrin Reece
     def generatePoints(a,b,theta):
         print("  ")
         return none
