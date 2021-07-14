@@ -56,9 +56,9 @@ from skimage.measure import EllipseModel
 ###############################BEGINING OF USER INPUT##########################
 
 #Which functionality would you like to use?
-showVisualizations = True     # Displays macroscopic hodograph for flight
-siftThruHodo = False    # Use manual GUI to locate ellipse-like structures in hodograph
-analyze = True   # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
+showVisualizations = False     # Displays macroscopic hodograph for flight
+siftThruHodo = True    # Use manual GUI to locate ellipse-like structures in hodograph
+analyze = False   # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
 applyButterworth = True #should Butterworth filter be applied to data? Linear interpolation is also implemented, prior to filtering, at specified spatial resolution
 location = "Tolten"     #[Tolten]/[Villarica]
 
@@ -94,7 +94,7 @@ highcut = 4000  #m - upper vertical wavelength cutoff for Butterworth bandpass f
 order = 3   #Butterworth filter order - Dutta(2017)
 #modes for data preprocessing
 backgroundPolyOrder = 3
-applyButterworth = False
+applyButterworth = True
 tropopause = 11427  #m
 
 
@@ -1018,17 +1018,19 @@ def manualTKGUI():
             self.low = IntVar()
             self.win = IntVar()
             self.up = IntVar()
-            global winMin
+            global winMin #minimum window size. edit here
             winMin = 15
-            global var
-            var = IntVar()
-            var.set(1)
 
-            #initialize gui vars added 12/27
-            #self.alt.set(min(Alt.magnitude.tolist())) 
+            #create sliders
+            self.lowSlider = tkinter.Scale(root, from_=0, to_=len(Alt.magnitude)-1, repeatinterval=1, orient=HORIZONTAL, command=self.updateSlideLow)
+            self.lowSlider.place(relx=.05, rely=.15, relwidth=.15)
+            self.upSlider = tkinter.Scale(root, from_=0, to_=len(Alt.magnitude)-1, repeatinterval=1, orient=HORIZONTAL, command=self.updateSlideUp)
+            self.upSlider.place(relx=.05, rely=.35, relwidth=.15)
+            self.winSlider = tkinter.Scale(root, from_=0, to_=len(Alt.magnitude)-1, repeatinterval=1, orient=HORIZONTAL, command=self.updateSlideWin)
+            self.winSlider.place(relx=.05, rely=.25, relwidth=.15)
             
-            #self.altSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.alt, values=Alt.magnitude.tolist(), font=Font(family='Helvetica', size=25, weight='normal')).place(relx=.05, rely=.12, relheight=.05, relwidth=.15)
-            #added 12/27 test
+
+            #Create spinners
             self.lowSpinner = tkinter.Spinbox(root, command=self.updateLow, values=Alt.magnitude.tolist(), repeatinterval=1, font=Font(family='Helvetica', size=25, weight='normal'))
             self.lowSpinner.place(relx=.05, rely=.12, relheight=.05, relwidth=.15)  #originally followed above line
             self.upSpinner = tkinter.Spinbox(root, command=self.updateUp, values=Alt.magnitude.tolist(), repeatinterval=1,font=Font(family='Helvetica', size=25, weight='normal'))
@@ -1036,13 +1038,19 @@ def manualTKGUI():
             self.winSpinner = tkinter.Spinbox(root, command=self.updateWin, from_=winMin, to=10000, repeatinterval=1, font=Font(family='Helvetica', size=25, weight='normal'))
             self.winSpinner.place(relx=.05, rely=.22, relheight=.05, relwidth=.15)  #originally followed above line
 
+            #initialize vals inside spinners
             self.upSpinner.delete(0, 'end')
             self.upSpinner.insert(0, Alt.magnitude[15])
 
+            #create lock radiobuttons
+            global var #
+            var = IntVar()
+            var.set(1)
             self.lockLow = tkinter.Radiobutton(root, variable=var, value=1).place(relx=.03, rely=.14)
             self.lockUp = tkinter.Radiobutton(root, variable=var, value=2).place(relx=.03, rely=.24)
             self.lockWin = tkinter.Radiobutton(root, variable=var, value=3).place(relx=.03, rely=.34)
 
+            #create labels
             self.lowLabel = tkinter.Label(root, text="Select Lower Altitude (m):", font=Font(family='Helvetica', size=18, weight='normal')).place(relx=.05, rely=.09)
             self.upLabel = tkinter.Label(root, text="Select Upper Altitude (m):", font=Font(family='Helvetica', size=18, weight='normal')).place(relx=.05, rely=.29)
             self.winLabel = tkinter.Label(root, text="Select Alt. Window (# data points):", font=Font(family='Helvetica', size=18, weight='normal')).place(relx=.05, rely=.19)
@@ -1059,6 +1067,7 @@ def manualTKGUI():
             self.canvas.get_tk_widget().place(relx=0.25, rely=0.05, relheight=.9, relwidth=.7)
             #frame.pack()
             
+            #create buttons
             self.winLabel = tkinter.Label(root, text="Blue dot indicates lower altitude", font=Font(family='Helvetica', size=15, weight='normal')).place(relx=.05, rely=.4)
             self.quitButton = tkinter.Button(master=root, text="Quit", command=self._quit).place(relx=.05, rely=.6, relheight=.05, relwidth=.15)
             self.saveButton = tkinter.Button(master=root, text="Save Micro-Hodograph", command=self.save).place(relx=.05, rely=.5, relheight=.05, relwidth=.15)
@@ -1066,6 +1075,27 @@ def manualTKGUI():
             self.readyToSave = False #flag to make sure hodo is updated before saving
             #---------
             
+        def updateSlideLow(self, *args):
+            SlideLow = int(float(self.lowSlider.get()))
+            self.lowSpinner.delete(0, 'end')
+            self.lowSpinner.insert(0,Alt.magnitude[SlideLow])
+            self.updateLow()
+            return
+
+        def updateSlideUp(self, *args):
+            SlideUp = int(float(self.upSlider.get()))
+            self.upSpinner.delete(0, 'end')
+            self.upSpinner.insert(0,Alt.magnitude[SlideUp])
+            self.updateUp()
+            return
+
+        def updateSlideWin(self, *args):
+            SlideWin = int(float(self.winSlider.get()))
+            self.winSpinner.delete(0, 'end')
+            self.winSpinner.insert(0,SlideWin)
+            self.updateWin()
+            return
+
         def updateLow(self, *args):
             """ on each change to gui, this method refreshes hodograph plot
             """
@@ -1074,42 +1104,44 @@ def manualTKGUI():
 
             valLow = int(float(self.lowSpinner.get()))
             valUp = int(float(self.upSpinner.get()))
-            sliderLow = np.where(Alt.magnitude == valLow)[0][0]
-            sliderUp = np.where(Alt.magnitude == valUp)[0][0]
-            sliderWin = int(self.winSpinner.get())
+            spinLow = np.where(Alt.magnitude == valLow)[0][0]
+            spinUp = np.where(Alt.magnitude == valUp)[0][0]
+            spinWin = int(self.winSpinner.get())
             lock = var.get()
 
             if lock == 1: #lower is locked, cancel
                 print('error')
-                sliderLow = sliderUp - sliderWin
+                spinLow = spinUp - spinWin
                 self.lowSpinner.delete(0, 'end')
-                self.lowSpinner.insert(0,Alt.magnitude[sliderLow])
-                return
+                self.lowSpinner.insert(0,Alt.magnitude[spinLow])
             if lock == 2: #window is locked, edit upper
-                sliderUp = sliderLow + sliderWin
-                if sliderUp >= len(Alt.magnitude): #if upper is above max, cancel
-                    sliderUp = len(Alt.magnitude)-1
-                    sliderLow = sliderUp - sliderWin
+                spinUp = spinLow + spinWin
+                if spinUp >= len(Alt.magnitude): #if upper is above max, cancel
+                    spinUp = len(Alt.magnitude)-1
+                    spinLow = spinUp - spinWin
                     self.lowSpinner.delete(0, 'end')
-                    self.lowSpinner.insert(0,Alt.magnitude[sliderLow])
-                    return
-                self.upSpinner.delete(0, 'end')
-                self.upSpinner.insert(0,Alt.magnitude[sliderUp])
+                    self.lowSpinner.insert(0,Alt.magnitude[spinLow])
+                else:
+                    self.upSpinner.delete(0, 'end')
+                    self.upSpinner.insert(0,Alt.magnitude[spinUp])
             if lock == 3: #upper is locked, edit window
-                sliderWin = sliderUp-sliderLow
-                if sliderWin < winMin: #if window is too small, cancel
-                    sliderWin = winMin
-                    sliderLow = sliderUp - sliderWin
+                spinWin = spinUp-spinLow
+                if spinWin < winMin: #if window is too small, cancel
+                    spinWin = winMin
+                    spinLow = spinUp - spinWin
                     self.lowSpinner.delete(0, 'end')
-                    self.lowSpinner.insert(0,Alt.magnitude[sliderLow])
-                    return
-                self.winSpinner.delete(0, 'end')
-                self.winSpinner.insert(0,sliderWin)
+                    self.lowSpinner.insert(0,Alt.magnitude[spinLow])
+                else:
+                    self.winSpinner.delete(0, 'end')
+                    self.winSpinner.insert(0,spinWin)
 
+            self.lowSlider.set(spinLow)
+            self.upSlider.set(spinUp)
+            self.winSlider.set(spinWin)
             #get updated values from spinners
             low = np.where(Alt.magnitude == valLow)[0][0] #Gives index of current spinner altitude ##current altitude is sliderAlt
             up = np.where(Alt.magnitude == valUp)[0][0]
-            win = sliderWin
+            win = spinWin
 
             #update graph to show between lower and upper variables
             self.l.set_xdata(u[low:up])
@@ -1127,41 +1159,43 @@ def manualTKGUI():
 
             valLow = int(float(self.lowSpinner.get()))
             valUp = int(float(self.upSpinner.get()))
-            sliderLow = np.where(Alt.magnitude == valLow)[0][0]
-            sliderUp = np.where(Alt.magnitude == valUp)[0][0]
-            sliderWin = int(self.winSpinner.get())
+            spinLow = np.where(Alt.magnitude == valLow)[0][0]
+            spinUp = np.where(Alt.magnitude == valUp)[0][0]
+            spinWin = int(self.winSpinner.get())
             lock = var.get()
 
             if lock == 1: #lower is locked, edit window
-                sliderWin = sliderUp-sliderLow
-                if sliderWin < winMin: #if window is too small, cancel
-                    sliderWin = winMin
-                    sliderUp = sliderLow + sliderWin
+                spinWin = spinUp-spinLow
+                if spinWin < winMin: #if window is too small, cancel
+                    spinWin = winMin
+                    spinUp = spinLow + spinWin
                     self.upSpinner.delete(0, 'end')
-                    self.upSpinner.insert(0,Alt.magnitude[sliderUp])
-                    return
-                self.winSpinner.delete(0, 'end')
-                self.winSpinner.insert(0,sliderWin)
+                    self.upSpinner.insert(0,Alt.magnitude[spinUp])
+                else:
+                    self.winSpinner.delete(0, 'end')
+                    self.winSpinner.insert(0,spinWin)
             if lock == 2: #window is locked, edit lower
-                sliderLow = sliderUp - sliderWin
-                if sliderLow < 0: #if lower is below 0, cancel
-                    sliderLow = 0
-                    sliderUp = sliderLow + sliderWin
+                spinLow = spinUp - spinWin
+                if spinLow < 0: #if lower is below 0, cancel
+                    spinLow = 0
+                    spinUp = spinLow + spinWin
                     self.upSpinner.delete(0, 'end')
-                    self.upSpinner.insert(0,Alt.magnitude[sliderUp])
-                    return
-                self.lowSpinner.delete(0, 'end')
-                self.lowSpinner.insert(0,Alt.magnitude[sliderLow])
+                    self.upSpinner.insert(0,Alt.magnitude[spinUp])
+                else:
+                    self.lowSpinner.delete(0, 'end')
+                    self.lowSpinner.insert(0,Alt.magnitude[spinLow])
             if lock == 3: #upper is locked, cancel
-                sliderUp = sliderLow + sliderWin
+                spinUp = spinLow + spinWin
                 self.upSpinner.delete(0, 'end')
-                self.upSpinner.insert(0,Alt.magnitude[sliderUp])
-                return
+                self.upSpinner.insert(0,Alt.magnitude[spinUp])
 
+            self.lowSlider.set(spinLow)
+            self.upSlider.set(spinUp)
+            self.winSlider.set(spinWin)
             #get updated values from spinners
             low = np.where(Alt.magnitude == valLow)[0][0] #Gives index of current spinner altitude ##current altitude is sliderAlt
             up = np.where(Alt.magnitude == valUp)[0][0]
-            win = sliderWin
+            win = spinWin
 
             #update graph to show between lower and upper variables
             self.l.set_xdata(u[low:up])
@@ -1179,41 +1213,43 @@ def manualTKGUI():
 
             valLow = int(float(self.lowSpinner.get()))
             valUp = int(float(self.upSpinner.get()))
-            sliderLow = np.where(Alt.magnitude == valLow)[0][0]
-            sliderUp = np.where(Alt.magnitude == valUp)[0][0]
-            sliderWin = int(self.winSpinner.get())
+            spinLow = np.where(Alt.magnitude == valLow)[0][0]
+            spinUp = np.where(Alt.magnitude == valUp)[0][0]
+            spinWin = int(self.winSpinner.get())
             lock = var.get()
 
             if lock == 1: #lower is locked, edit upper
-                sliderUp = sliderLow + sliderWin
-                if sliderUp >= len(Alt.magnitude): #if upper is above max, cancel
-                    sliderUp = len(Alt.magnitude)-1
-                    sliderWin = sliderUp - sliderLow
+                spinUp = spinLow + spinWin
+                if spinUp >= len(Alt.magnitude): #if upper is above max, cancel
+                    spinUp = len(Alt.magnitude)-1
+                    spinWin = spinUp - spinLow
                     self.winSpinner.delete(0, 'end')
-                    self.winSpinner.insert(0,sliderWin)
-                    return
-                self.upSpinner.delete(0, 'end')
-                self.upSpinner.insert(0,Alt.magnitude[sliderUp])
+                    self.winSpinner.insert(0,spinWin)
+                else:
+                    self.upSpinner.delete(0, 'end')
+                    self.upSpinner.insert(0,Alt.magnitude[spinUp])
             if lock == 2: #window is locked, cancel
-                sliderWin = sliderUp-sliderLow
+                spinWin = spinUp-spinLow
                 self.winSpinner.delete(0, 'end')
-                self.winSpinner.insert(0,sliderWin)
-                return
+                self.winSpinner.insert(0,spinWin)
             if lock == 3: #upper is locked, edit lower
-                sliderLow = sliderUp - sliderWin
-                if sliderLow < 0: #if lower is below 0, cancel
-                    sliderLow = 0
-                    sliderWin = sliderUp - sliderLow
+                spinLow = spinUp - spinWin
+                if spinLow < 0: #if lower is below 0, cancel
+                    spinLow = 0
+                    spinWin = spinUp - spinLow
                     self.winSpinner.delete(0, 'end')
-                    self.winSpinner.insert(0,sliderWin)
-                    return
-                self.lowSpinner.delete(0, 'end')
-                self.lowSpinner.insert(0,Alt.magnitude[sliderLow])
+                    self.winSpinner.insert(0,spinWin)
+                else:
+                    self.lowSpinner.delete(0, 'end')
+                    self.lowSpinner.insert(0,Alt.magnitude[spinLow])
 
+            self.lowSlider.set(spinLow)
+            self.upSlider.set(spinUp)
+            self.winSlider.set(spinWin)
             #get updated values from spinners
             low = np.where(Alt.magnitude == valLow)[0][0] #Gives index of current spinner altitude ##current altitude is sliderAlt
             up = np.where(Alt.magnitude == valUp)[0][0]
-            win = sliderWin
+            win = spinWin
 
             #update graph to show between lower and upper variables
             self.l.set_xdata(u[low:up])
@@ -1231,11 +1267,11 @@ def manualTKGUI():
                 
                 ORIENTATION = self.orient.get()
                 print('Orientation: ', ORIENTATION )
-                sliderlow = int(float(self.lowSpinner.get()))
-                sliderup = int(float(self.upSpinner.get()))
-                sliderWindow = int(float(self.winSpinner.get()))
-                lowerAltInd = np.where(Alt.magnitude == sliderlow)[0][0]
-                upperAltInd = lowerAltInd + sliderWindow
+                spinLow = int(float(self.lowSpinner.get()))
+                spinUp = int(float(self.upSpinner.get()))
+                spinWindow = int(float(self.winSpinner.get()))
+                lowerAltInd = np.where(Alt.magnitude == spinLow)[0][0]
+                upperAltInd = lowerAltInd + spinWindow
             
             
                 #collect local data for altitude that is visible in plot, dump into .csv
@@ -1265,7 +1301,7 @@ def manualTKGUI():
             root.quit()     # stops mainloop
             root.destroy()  # this is necessary on Windows to prevent Fatal Python Error: PyEval_RestoreThread: NULL tstate
     
-    root = tkinter.Tk() # this line works fine with no theme
+    root = tkinter.Tk()
     root.geometry("400x650")
     #Change the icon of window taskbar
     os.chdir(scriptDirectory)
