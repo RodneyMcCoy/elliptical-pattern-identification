@@ -51,6 +51,7 @@ import scipy.fft
 ###############################BEGINING OF USER INPUT##########################
 
 #variables that are specific to analysis: These might be changed regularly depending on flight location, file format, etc.
+r"""
 flightData = r"C:\Users\M\OneDrive - University of Idaho\%SummerInternship2020\%%CHIILE_Analysis_Backups\ChilePythonEnvironment_01112021\ChileData_012721\Tolten_01282021"             #flight data directory
 fileToBeInspected = 'T26_1630_12142020_MT2.txt'                                                 #specific flight profile to be searched through manually
 microHodoDir = r"C:\Users\M\OneDrive - University of Idaho\workingChileDirectory\Tolten\T26_all"  
@@ -58,8 +59,8 @@ microHodoDir = r"C:\Users\M\OneDrive - University of Idaho\workingChileDirectory
 waveParamDir = r"C:\Users\M\OneDrive - University of Idaho\workingChileDirectory"     #location where wave parameter files are to be saved
 flightTimesDir = r"C:\Users\M\OneDrive - University of Idaho\%SummerInternship2020\hodographAnalysis\Tolten"
 flightTimes = r"Tolten_FlightTimes.csv"
+"""
 
-r"""
 flightData = r"C:\Users\Malachi\OneDrive - University of Idaho\%SummerInternship2020\%%CHIILE_Analysis_Backups\ChilePythonEnvironment_01112021\ChileData_012721\Tolten_01282021"             #flight data directory
 fileToBeInspected = 'T26_1630_12142020_MT2.txt'                                                 #specific flight profile to be searched through manually
 microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory\Tolten\T26_all"  
@@ -67,7 +68,7 @@ microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDir
 waveParamDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory"     #location where wave parameter files are to be saved
 flightTimesDir = r"C:\Users\Malachi\OneDrive - University of Idaho\%SummerInternship2020\hodographAnalysis\Tolten"
 flightTimes = r"Tolten_FlightTimes.csv"
-"""
+
 
 p_0 = 1000 * units.hPa
 spatialResolution = 5
@@ -348,7 +349,7 @@ def constructContourPlot(directory, times, timesPath):
     #interpolate onto grid
     #this method is effective
     #zi = scipy.interpolate.griddata(knownPoints, knownValues, points, method='linear')
-    zi = scipy.interpolate.griddata(knownPoints, knownValues, points, method='linear', fill_value='extrapolate')
+    zi = scipy.interpolate.griddata(knownPoints, knownValues, points, method='linear')#, fill_value='extrapolate')
     #print("Starting INTERPOLATION")
     #f = scipy.interpolate.interp2d(x, y, knownValues, bounds_error=False)
     #print("Still working on INTERPOLATION")
