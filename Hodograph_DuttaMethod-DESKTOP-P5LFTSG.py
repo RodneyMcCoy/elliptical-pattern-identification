@@ -51,18 +51,18 @@ from tkinter import ttk
 
 #skimage ellipse fitting
 from skimage.measure import EllipseModel
-
+# from scikit_image import EllipseModel
 
 ###############################BEGINING OF USER INPUT##########################
 
 #Which functionality would you like to use?
-showVisualizations = True     # Displays macroscopic hodograph for flight
-siftThruHodo = False    # Use manual GUI to locate ellipse-like structures in hodograph
-analyze = True   # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
+showVisualizations = False     # Displays macroscopic hodograph for flight
+siftThruHodo = True    # Use manual GUI to locate ellipse-like structures in hodograph
+analyze = False   # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
 applyButterworth = True #should Butterworth filter be applied to data? Linear interpolation is also implemented, prior to filtering, at specified spatial resolution
 location = "Tolten"     #[Tolten]/[Villarica]
 
-user = r'\Malachi'
+user = '\M'
 #variables that are specific to analysis: These might be changed regularly depending on flight location, file format, etc.
 flightData = r"C:\Users" + user + r"\OneDrive - University of Idaho\%SummerInternship2020\%%CHIILE_Analysis_Backups\ChilePythonEnvironment_01112021\ChileData_012721\Tolten_01282021"             #flight data directory
 fileToBeInspected = 'T36_0230_121520_Artemis_Rerun_CLEAN.txt'                                                 #specific flight profile to be searched through manually
@@ -72,9 +72,6 @@ waveParamDir = r"C:\Users" + user + "\OneDrive - University of Idaho\workingChil
 
 #for Kathryn:
 #flightData = r"C:\Users\reec7164\OneDrive - University of Idaho\%SummerInternship2020\%%CHIILE_Analysis_Backups\ChilePythonEnvironment_01112021\ChileData_012721\Tolten_01282021"             #flight data directory
-#fileToBeInspected = 'T36_0230_121520_Artemis_Rerun_CLEAN.txt'                                                 #specific flight profile to be searched through manually
-#microHodoDir = r"C:\Users\Moon8435\OneDrive - University of Idaho\workingChileDirectory\T36_hodographs"
-#microHodoDir = r"C:\Users\reec7164\OneDrive - University of Idaho\workingChileDirectory\Tolten\T28"              #location where selections from GUI ard. This is also the location where do analysis looks for micro hodos to analysis
 #waveParamDir = r"C:\Users\reec7164\OneDrive - University of Idaho\Eclipse\Hodographs\Parameters"     #location where wave parameter files are to be saved
 
 if location == "Tolten":
@@ -351,16 +348,16 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
         # Plot the frequency response for a few different orders.
         b, a = butter_bandpass(freq1, freq2, heightSamplingFreq, order)
         w, h = signal.freqz(b, a, worN=5000)
-        plt.figure(4, figsize=(5,5))
+        plt.figure(4)
         plt.plot(w/np.pi, abs(h))
         plt.plot([0, 1], [np.sqrt(0.5), np.sqrt(0.5)],'--', label='sqrt(1/2)')
-        plt.xlabel('Normalized Frequency (x Pi rad/sample) \n [Nyquist Frequency = 2 pi]') #1/m ?
+        plt.xlabel('Normalized Frequency (x Pi rad/sample) \n [Nyquist Frequency = 1]') #1/m ?
         plt.ylabel('Gain')
         plt.xlim([0,.1])
         plt.grid(True)
         plt.title("Frequency Response of 3rd Order Butterworth Filter \n Vertical Cut-off Wavelengths: 0.5 - 4 km")
         plt.legend(loc='best')
-        plt.tight_layout()
+    
         # Filter a noisy signal.
         uButter = []
         vButter = []
@@ -609,9 +606,7 @@ class microHodo:
         # Horizontal wavelength
         bv2Mean = np.mean(self.bv2)
         coriolisFreq = mpcalc.coriolis_parameter(latitudeOfAnalysis)
-        #OMEGA = 7292115e-11
-        #coriolisTest = 2 * OMEGA * np.sin(latitudeOfAnalysis * np.pi/180)
-        #print("Coriolis param: ", coriolisTest)
+        
         # test to determine if k_h is imaginary
         radical = (coriolisFreq.magnitude**2 * self.m**2) / abs(bv2Mean) * (wf**2 - 1)
         if radical < 0:
@@ -623,11 +618,11 @@ class microHodo:
         self.lambda_h = 1 / k_h     #horizontal wavelength (meter) #should be 2pi/k
 
         #Propogation Direction (Marlton 2016)
-        rot = np.array([[np.cos(self.phi), np.sin(self.phi)], [-np.sin(self.phi), np.cos(self.phi)]])       # Transpose of 2d rotation matrix - containinng angle of fitted elipse - as used in Toms script
-        # rot = np.array([[np.cos(-self.phi), -np.sin(-self.phi)], [np.sin(-self.phi), np.cos(-self.phi)]])       #2d rotation matrix - containinng  negative angle of fitted elipse
+        #rot = np.array([[np.cos(self.phi), -np.sin(self.phi)], [np.sin(self.phi), np.cos(self.phi)]])       #2d rotation matrix - containinng angle of fitted elipse - as used in Toms script
+        rot = np.array([[np.cos(-self.phi), -np.sin(-self.phi)], [np.sin(-self.phi), np.cos(-self.phi)]])       #2d rotation matrix - containinng  negative angle of fitted elipse
         uv = np.array([self.u, self.v])       #zonal and meridional components
         uvrot = np.matmul(rot,uv)       #change of coordinates
-        urot = uvrot[0,:]               #urot aligns with semi-major axis
+        urot = uvrot[0,:]               #urot aligns with major axis
         self.uRot = urot
         self.vRot = uvrot[1,:]
         print('UROT MAX', max(urot))
@@ -881,7 +876,7 @@ def plotBulkMicros(hodo_list, fname):
         graph.plot(x, y, color='red')
 
         # plot rotated data
-        graph.plot(hodo_list[index].uRot, hodo_list[index].vRot)
+        # graph.plot(hodo_list[index].uRot, hodo_list[index].vRot)
 
 
         graph.arrow(xc, yc, a*np.cos(theta), a*np.sin(theta), width=0.03, head_length=0.15, length_includes_head=True, color='black')
@@ -1307,10 +1302,6 @@ def manualTKGUI():
     root.geometry("400x650")
     #Change the icon of window taskbar
     os.chdir(scriptDirectory)
-    from PIL import Image
-    filename = r'eclipse.png'
-    img = Image.open(filename)
-    img.save('logo.ico', sizes=[(255, 255)])
     root.wm_iconbitmap("logo.ico")
 
     root.wm_title("Manual Hodograph GUI")
