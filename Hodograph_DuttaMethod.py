@@ -62,7 +62,7 @@ analyze = False   # Display list of microhodographs with overlayed fit ellipses 
 applyButterworth = True #should Butterworth filter be applied to data? Linear interpolation is also implemented, prior to filtering, at specified spatial resolution
 location = "Tolten"     #[Tolten]/[Villarica]
 
-user = r'\Malachi'
+user = r'\Moon8435'
 #variables that are specific to analysis: These might be changed regularly depending on flight location, file format, etc.
 flightData = r"C:\Users" + user + r"\OneDrive - University of Idaho\%SummerInternship2020\%%CHIILE_Analysis_Backups\ChilePythonEnvironment_01112021\ChileData_012721\Tolten_01282021"             #flight data directory
 fileToBeInspected = 'T36_0230_121520_Artemis_Rerun_CLEAN.txt'                                                 #specific flight profile to be searched through manually
@@ -497,12 +497,6 @@ class microHodo:
             if theta < -np.pi/2:
                  theta = theta + np.pi
 
-
-
-
-
-
-
             # if theta < 0:
             #     theta = 2 * np.pi + theta
             #
@@ -532,8 +526,7 @@ class microHodo:
         c_xs[0] = c_x
         c_ys[0] = c_y
         phis[0] = phi
-        
- 
+
         num_data_points = self.u.shape[0] # or len(u), depending on if it's an array or list
         
         #keep track of erroneous fits
@@ -639,8 +632,6 @@ class microHodo:
 
         self.directionOfPropogation = unitCirc2Azmith(self.phi) #get aorientation in degrees CW from North
 
-
-        
         #Intrinsic horizontal phase speed (m/s)
         intrinsicFreq = coriolisFreq.magnitude * wf     #one ought to assign units to output from ellipse fitting to ensure dimensional accuracy
         intrinsicHorizPhaseSpeed = intrinsicFreq / k_h
