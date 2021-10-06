@@ -59,8 +59,8 @@ from skimage.measure import EllipseModel
 ###############################BEGINING OF USER INPUT##########################
 
 #Which functionality would you like to use?
-showVisualizations = True     # Displays macroscopic hodograph for flight
-siftThruHodo = False    # Use manual GUI to locate ellipse-like structures in hodograph
+showVisualizations = False     # Displays macroscopic hodograph for flight
+siftThruHodo = True    # Use manual GUI to locate ellipse-like structures in hodograph
 analyze = True   # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
 applyButterworth = True #should Butterworth filter be applied to data? Linear interpolation is also implemented, prior to filtering, at specified spatial resolution
 location = "Tolten"     #[Tolten]/[Villarica]
@@ -72,6 +72,13 @@ fileToBeInspected = 'T26_1630_12142020_MT2.txt'                                 
 microHodoDir = r"C:/Users/Malachi/OneDrive - University of Idaho/workingChileDirectory/Tolten/T30"
 #microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory\Tolten\T28"              #location where selections from GUI ard. This is also the location where do analysis looks for micro hodos to analysis
 waveParamDir = r"C:\Users" + user + "\OneDrive - University of Idaho\workingChileDirectory"     #location where wave parameter files are to be saved
+
+#for Kathryn:
+#flightData = r"C:\Users\reec7164\OneDrive - University of Idaho\%SummerInternship2020\%%CHIILE_Analysis_Backups\ChilePythonEnvironment_01112021\ChileData_012721\Tolten_01282021"             #flight data directory
+#fileToBeInspected = 'T36_0230_121520_Artemis_Rerun_CLEAN.txt'                                                 #specific flight profile to be searched through manually
+#microHodoDir = r"C:\Users\Moon8435\OneDrive - University of Idaho\workingChileDirectory\T36_hodographs"
+#microHodoDir = r"C:\Users\reec7164\OneDrive - University of Idaho\workingChileDirectory\Tolten\T28"              #location where selections from GUI ard. This is also the location where do analysis looks for micro hodos to analysis
+#waveParamDir = r"C:\Users\reec7164\OneDrive - University of Idaho\Eclipse\Hodographs\Parameters"     #location where wave parameter files are to be saved
 
 if location == "Tolten":
     latitudeOfAnalysis = abs(-39.236248) * units.degree    #latitude at which sonde was launched. Used to account for affect of coriolis force.
@@ -104,6 +111,7 @@ def getFlightConfiguration(profile, configFile, configFilePath):
     num = profile.split("_")[0]     #get cite initial and flight number from file name
     num = [x for x in num if x.isdigit()]   #remove cite initial(s)
     num = int("".join(num))     #flight number by itself
+    
     
     return 
 
@@ -160,7 +168,7 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     print("Maximum Altitude: {}".format(max(data['Alt'])))
     
     #Truncate data below tropopause
-    data = data[data['Alt'] >= tropopause] 
+    #data = data[data['Alt'] >= tropopause] 
     print("Minimum Altitude: {}".format(min(data['Alt'])))
 
     #drop rows with nans
@@ -221,7 +229,7 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
 
     #calculate brunt-viasala frequency **2 
     tempK = Temp.to('kelvin')
-    potentialTemperature =  tempKsaveMi * (p_0 / Pres) ** (2/7)    #https://glossary.ametsoc.org/wiki/Potential_temperature   
+    potentialTemperature =  tempK * (p_0 / Pres) ** (2/7)    #https://glossary.ametsoc.org/wiki/Potential_temperature   
     bv2 = mpcalc.brunt_vaisala_frequency_squared(Alt, potentialTemperature)   #N^2 
     bv = mpcalc.brunt_vaisala_frequency(Alt, potentialTemperature)
     print("BV MEAN: ", np.nanmean(bv))
@@ -249,48 +257,46 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     u_background = []
     v_background = []
 
-    for k in range(2,10):
-        i = k-2
-        
-        #temp
-        poly = np.polyfit(Alt.magnitude / 1000, Temp.magnitude, k)
-        tempFit = np.polyval(poly, Alt.magnitude / 1000)
-        temp_background.append(tempFit)
-        
-        #u
-        poly = np.polyfit(Alt.magnitude / 1000, u.magnitude, k)
-        uFit = np.polyval(poly, Alt.magnitude / 1000)
-        u_background.append(uFit)
+    #fit background polynomial 3rd order
+    #temp
+    poly = np.polyfit(Alt.magnitude / 1000, Temp.magnitude, 3)
+    tempFit = np.polyval(poly, Alt.magnitude / 1000)
+    temp_background.append(tempFit)
+    
+    #u
+    poly = np.polyfit(Alt.magnitude / 1000, u.magnitude, 3)
+    uFit = np.polyval(poly, Alt.magnitude / 1000)
+    u_background.append(uFit)
 
-        #v
-        poly = np.polyfit(Alt.magnitude / 1000, v.magnitude, k)
-        vFit = np.polyval(poly, Alt.magnitude / 1000)
-        v_background.append(vFit)
-        '''
-        #plot temp
-        axs[i].plot(tempFit, Alt.magnitude / 1000, color='darkblue')
-        axs[i].plot(Temp.magnitude, Alt.magnitude / 1000)
-        axs[i].set_title("Order: " + str(k))
-        #axs[i].set_xlabel("Temperature (C)")
-        axs[i].set_ylabel("Altitude (km)")
-        axs[i].tick_params(top=True, right=True)
-        
-        #plot u
-        zonal, = axs2[i].plot(uFit, Alt.magnitude / 1000, color='darkblue', label='Zonal')
-        axs2[i].plot(u.magnitude, Alt.magnitude / 1000, color='darkblue')
-        axs2[i].set_title("Order: " + str(k))
-        #axs[i].set_xlabel("Temperature (C)")
-        axs2[i].set_ylabel("Altitude (km)")
-        axs2[i].tick_params(top=True, right=True)
-        
-        #plot v
-        meridional, = axs2[i].plot(vFit, Alt.magnitude / 1000, color='darkred', label='Meridional')
-        axs2[i].plot(v.magnitude, Alt.magnitude / 1000, color='darkred')
-        #axs2[i].set_title("Order: " + str(k))
-        #axs[i].set_xlabel("Temperature (C)")
-        #axs2[i].set_ylabel("Altitude (km)")
-        #axs2[i].tick_params(top=True, right=True)
-        '''
+    #v
+    poly = np.polyfit(Alt.magnitude / 1000, v.magnitude, 3)
+    vFit = np.polyval(poly, Alt.magnitude / 1000)
+    v_background.append(vFit)
+    '''
+    #plot temp
+    axs[i].plot(tempFit, Alt.magnitude / 1000, color='darkblue')
+    axs[i].plot(Temp.magnitude, Alt.magnitude / 1000)
+    axs[i].set_title("Order: " + str(k))
+    #axs[i].set_xlabel("Temperature (C)")
+    axs[i].set_ylabel("Altitude (km)")
+    axs[i].tick_params(top=True, right=True)
+    
+    #plot u
+    zonal, = axs2[i].plot(uFit, Alt.magnitude / 1000, color='darkblue', label='Zonal')
+    axs2[i].plot(u.magnitude, Alt.magnitude / 1000, color='darkblue')
+    axs2[i].set_title("Order: " + str(k))
+    #axs[i].set_xlabel("Temperature (C)")
+    axs2[i].set_ylabel("Altitude (km)")
+    axs2[i].tick_params(top=True, right=True)
+    
+    #plot v
+    meridional, = axs2[i].plot(vFit, Alt.magnitude / 1000, color='darkred', label='Meridional')
+    axs2[i].plot(v.magnitude, Alt.magnitude / 1000, color='darkred')
+    #axs2[i].set_title("Order: " + str(k))
+    #axs[i].set_xlabel("Temperature (C)")
+    #axs2[i].set_ylabel("Altitude (km)")
+    #axs2[i].tick_params(top=True, right=True)
+    '''
         
     '''    
     #Fig - hide labels and ticks, add notations
@@ -332,12 +338,19 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     
     #plot to double check subtraction
     Fig, axs = plt.subplots(2,2,figsize=(6,6), num=3, sharey=True)#, sharex=True)   #figure for u,v butterworth filter
-    for i,element in enumerate(u_background):
-        axs[0,0].plot(uPert[i], Alt.magnitude/1000, linewidth=0.5, label="Order: {}".format(str(i+2)))
-        axs[1,0].plot(vPert[i], Alt.magnitude/1000, linewidth=0.5)   
+    #plot 3rd order subtraction
+    axs[0,0].plot(uPert[0], Alt.magnitude/1000, linewidth=0.5, color='red', label="Polynomial Background Subtracted: n=3")
+    axs[1,0].plot(vPert[0], Alt.magnitude/1000, linewidth=0.5, color='red') 
+    #plot no subtraction
+    axs[0,0].plot(u, Alt.magnitude/1000, linewidth=0.5, color='blue', label="No Background Subtraction")
+    axs[1,0].plot(v, Alt.magnitude/1000, linewidth=0.5, color='blue')
+    
+    
+    
+    
    
     Fig.legend()
-    Fig.suptitle("Wind Components; Background Removed, Filtered \n {}".format(file))
+    Fig.suptitle("Comparison of 3rd order background subtraction to no background subtraction \n 3rd order Butterwoth Filter applied: 0.5-4 km \n {}".format(file))
     axs[0,0].set_xlabel("Zonal Wind (m/s)")
     axs[1,0].set_xlabel("Meridional Wind (m/s)")
     axs[0,1].set_xlabel("Filtered Zonal Wind (m/s)")
@@ -345,6 +358,12 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     axs[1,1].set_xlim([-10,10])
     axs[0,0].set_xlim([-20,35])
     axs[1,0].set_xlim([-20,35])
+    
+    axs[0,1].set_ylim([10,35])
+    axs[1,1].set_ylim([10,35])
+    axs[0,0].set_ylim([10,35])
+    axs[1,0].set_ylim([10,35])
+    
     axs[1,1].set_xlabel("Filtered Meridional Wind (m/s)")
     axs[0,0].set_ylabel("Altitude (km)")
     axs[1,0].set_ylabel("Altitude (km)")
@@ -387,18 +406,24 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
             filtTemp = butter_bandpass_filter(tempPert[i],freq1, freq2, heightSamplingFreq, order)
             tempButter.append(filtTemp)
             #axs[1,1].plot(vPert[0], Alt.magnitude)
-            axs[1,1].plot(vButter[i], Alt.magnitude/1000, linewidth=0.5)
-            axs[0,1].plot(uButter[i], Alt.magnitude/1000, linewidth=0.5)
+            axs[1,1].plot(vButter[i], Alt.magnitude/1000, linewidth=0.5, color='red')
+            axs[0,1].plot(uButter[i], Alt.magnitude/1000, linewidth=0.5, color='red')
             #plt.xlabel('time (seconds)')
             #plt.hlines([-a, a], 0, T, linestyles='--')
             #plt.grid(True)
             #plt.axis('tight')
             #plt.legend(loc='upper left')
     
+        #filter no background subtracted signal
+        filtU = butter_bandpass_filter(u,freq1, freq2, heightSamplingFreq, order)
+        filtV = butter_bandpass_filter(vPert[i], freq1, freq2, 1/5, order)
+        axs[1,1].plot(filtV, Alt.magnitude/1000, linewidth=0.5, color='blue')
+        axs[0,1].plot(filtU, Alt.magnitude/1000, linewidth=0.5, color='blue')
+            
         #re define u,v
-        u = uButter[4]
-        v = vButter[4]
-        Temp = tempButter[4]
+        #u = uButter[4]
+        #v = vButter[4]
+        #Temp = tempButter[4]
         print("Butterworth Filter Applied")
     
     #polyIndice = backgroundPolyOrder - 2
@@ -602,7 +627,7 @@ class microHodo:
 
         # Date/Time of Detection - mean - needs to be added!
         
-        # Axial ratio - NOT to be confused with what most publications call AR, which is ratio of short:long!
+        # Axial ratio
         wf = (self.a) / (self.b)    #long axis / short axis
         
         # Vertical wavelength
@@ -622,10 +647,10 @@ class microHodo:
         if radical < 0:
             print("WARNING: negative value encountered in radical")
         try:
-         k_h = np.sqrt((coriolisFreq.magnitude**2 * self.m**2) / abs(bv2Mean) * (wf**2 - 1)) #horizontal wavenumber (rad/meter)
+         k_h = np.sqrt((coriolisFreq.magnitude**2 * self.m**2) / abs(bv2Mean) * (wf**2 - 1)) #horizontal wavenumber (1/meter)
         except:
             print("\033[1;31;40m Runtime warning encountered  \n")
-        self.lambda_h = 2*np.pi / k_h     #horizontal wavelength (meter) #should be 2pi/k
+        self.lambda_h = 1 / k_h     #horizontal wavelength (meter) #should be 2pi/k
 
         #Propogation Direction (Marlton 2016)
         rot = np.array([[np.cos(self.phi), np.sin(self.phi)], [-np.sin(self.phi), np.cos(self.phi)]])       # Transpose of 2d rotation matrix - containinng angle of fitted elipse - as used in Toms script
@@ -651,19 +676,7 @@ class microHodo:
         period = 1/intrinsicFreq
         print("PERIOD: ", period)
         intrinsicHorizPhaseSpeed = intrinsicFreq / k_h
-        
-        #wave amplitudes - Gubenko 
-        plt.figure()
-        plt.plot(self.temp, self.alt)
-        temp_magnitude = abs(np.max(self.temp) - np.mean(self.temp))
-        print("temp magnitude", temp_magnitude)
-        print("bv: ", np.sqrt(bv2Mean))
-        print("bv2: ", bv2Mean)
-        ae = (self.m * g * temp_magnitude)/bv2Mean
-        au = (self.a*self.m/np.sqrt(bv2Mean))*(1 - (coriolisFreq.magnitude/intrinsicFreq)**2)**(1/2)
-        print("AE: ", ae)
-        print("AU: ", au)
-        
+
         #extraneous calculations - part of Tom's script
         #k_h_2 = np.sqrt((intrinsicFreq**2 - coriolisFreq.magnitude**2) * (self.m**2 / abs(bv2Mean)))
         #int2 = intrinsicFreq / k_h_2
@@ -682,7 +695,6 @@ def doAnalysis(microHodoDir):
     
     hodo_list = []
     parameterList = []
-
     for file in os.listdir(microHodoDir):
         path = os.path.join(microHodoDir, file)
         print('Analyzing micro-hodos for flight: {}'.format(file))

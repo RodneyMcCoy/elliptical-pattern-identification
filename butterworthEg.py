@@ -8,49 +8,40 @@ File to test the design of 3rd order Butterworth filter
 """
 
 
-from scipy.signal import butter, lfilter
+from scipy import signal
 
 def butter_bandpass(lowcut, highcut, fs, order):
+    """
+        Used for plotting the frequency response of Butterworth
+    """
     nyq = 0.5 * fs
     low = lowcut / nyq
     high = highcut / nyq
-    b, a = butter(order, [low, high], btype='bandpass')
+    b, a = signal.butter(order, [low, high], btype='bandpass')
     return b, a
 
 
-def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
+def butter_bandpass_filter(data, lowcut, highcut, fs, order):
+    """
+        Applies Butterworth filter to perturbation profiles
+    """
     b, a = butter_bandpass(lowcut, highcut, fs, order=order)
-    y = lfilter(b, a, data)
+    y = signal.lfilter(b, a, data)
     return y
 
 
-def run():
+
     import numpy as np
     import matplotlib.pyplot as plt
     from scipy.signal import freqz
 
     # Sample rate and desired cutoff frequencies (in Hz).
-    fs = 5000
-    lowcut = 500
-    highcut = 1250
-
-    # Plot the frequency response for a few different orders.
-    plt.figure(1)
-    plt.clf()
-    b, a = butter_bandpass(lowcut, highcut, fs, 3)
-    w, h = freqz(b, a, worN=5000)
-    plt.plot(w/np.pi, np.abs(h))
-    plt.plot([0, 1], [np.sqrt(0.5), np.sqrt(0.5)],
-             '--', label='sqrt(0.5)')
-    plt.xlabel('Normalized Frequency (x Pi rad/sample) \n(1=Nyquist freq)')    #1/m ?
-    plt.ylabel('Gain')
-   
-    plt.title("3rd Order Butterworth Frequency Response \n0.5km - 2km cutoff")
-    plt.grid(True)
-    plt.legend(loc='best')
+    fs = 5
+    lowcut = 1/500
+    highcut = 1/4000
     
     # Filter a noisy signal.
-    T = 0.05
+    T = 1
     nsamples = int(T * fs)
     t = np.linspace(0, T, nsamples, endpoint=False)
     a = 0.02
@@ -63,7 +54,7 @@ def run():
     plt.clf()
     plt.plot(t, x, label='Noisy signal')
 
-    y = butter_bandpass_filter(x, lowcut, highcut, fs, order=6)
+    y = butter_bandpass_filter(x, lowcut, highcut, fs, order=5)
     plt.plot(t, y, label='Filtered signal (%g Hz)' % f0)
     plt.xlabel('time (seconds)')
     plt.hlines([-a, a], 0, T, linestyles='--')
@@ -76,4 +67,23 @@ def run():
     plt.show()
 
 
-run()
+
+
+
+
+'''
+    # Plot the frequency response for a few different orders.
+    plt.figure(1)
+    plt.clf()
+    b, a = butter_bandpass(lowcut, highcut, fs, 5)
+    w, h = freqz(b, a, worN=5000)
+    plt.plot(w/np.pi, np.abs(h))
+    plt.plot([0, 1], [np.sqrt(0.5), np.sqrt(0.5)],
+             '--', label='sqrt(0.5)')
+    plt.xlabel('Normalized Frequency (x Pi rad/sample) \n(1=Nyquist freq)')    #1/m ?
+    plt.ylabel('Gain')
+   
+    plt.title("3rd Order Butterworth Frequency Response \n0.5km - 2km cutoff")
+    plt.grid(True)
+    plt.legend(loc='best')
+    '''

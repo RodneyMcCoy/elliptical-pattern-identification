@@ -192,6 +192,10 @@ def openFile(file, path):
     data = data[['Time', 'Alt', 'T', 'P', 'Ws', 'Wd', 'Lat.', 'Long.']]
     return data
 
+def polarPlots():
+    
+    return
+
 def interpolateVertically(data):
     #linearly interpolate data - such that it is spaced iniformly in space, heightwise - stolen from Keaton
     #create index of heights with 1 m spacial resolution - from minAlt to maxAlt
@@ -285,7 +289,7 @@ def constructContourPlot(directory, times, timesPath):
         num = [x for x in num if x.isdigit()]
         num = int("".join(num))
         
-        if num < 5: #temporarily use first 4 profiles
+        if num < 50: #temporarily use first 4 profiles
             
             #print(type(num))
             #print("num: ", num)
@@ -374,7 +378,7 @@ def constructContourPlot(directory, times, timesPath):
     
     #construct background
     #xy = np.column_stack([z, xv,yv])
-    """
+    
     #apply 2d fft
     print("zi type: ", type(zi))
     z_fft = scipy.fft.fft2(zi)
@@ -413,7 +417,7 @@ def constructContourPlot(directory, times, timesPath):
     #filtered 
     figure = plt.figure("Filtered Image")
     plt.contourf(Xi, Yi, z_filtered, levels=50)
-    """
+    
     """
     fig, (ax0, ax1, ax2) = plt.subplots(1,3)
     ax0.contourf(xv,yv,z, levels=100)
@@ -436,9 +440,9 @@ def constructContourPlot(directory, times, timesPath):
     plt.show()
     
     #create figure for background
-    #fig, ax = plt.subplots()
-    #cntr1 = ax.contourf(Xi, Yi, z_filtered, levels=100, cmap='rainbow')
-    #fig.colorbar(cntr1, ax=ax)
+    fig, ax = plt.subplots()
+    cntr1 = ax.contourf(Xi, Yi, z_filtered, levels=100, cmap='rainbow')
+    fig.colorbar(cntr1, ax=ax)
     
     #view convex hull
     """
@@ -548,5 +552,8 @@ def constructContourPlot(directory, times, timesPath):
     return
 #Run data to construct background
 constructContourPlot(flightData, flightTimes, flightTimesDir)
+
+
 #preprocessDataResample(fileToBeInspected, flightData, 5, 1, 1, 3)
+
 #constructBackGroundFFT(flightData)
