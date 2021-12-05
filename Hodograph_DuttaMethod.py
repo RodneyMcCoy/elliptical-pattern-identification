@@ -75,7 +75,7 @@ user = 'Malachi'
 #variables that are specific to analysis: These might be changed regularly depending on flight location, file format, etc.
 flightData = r"C:\Users/" + user + r"/OneDrive - University of Idaho/%SummerInternship2020/ChileData_profile/tolten"             #flight data directory
 fileToBeInspected = 'T1_1600_121320_ACE.txt'                                                                       #specific flight profile to be searched through manually
-microHodoDir = r"C:/Users" + user + "\OneDrive - University of Idaho/workingChileDirectory/test"
+microHodoDir = r"C:/Users/" + user + "\OneDrive - University of Idaho/workingChileDirectory/test"
 #microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory\Tolten\T28"              #location where selections from GUI ard. This is also the location where do analysis looks for micro hodos to analysis
 waveParamDir = r"C:\Users" + user + "\OneDrive - University of Idaho\workingChileDirectory"     #location where wave parameter files are to be saved
 
@@ -141,7 +141,6 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
             #print("File contains GRAWMET profile data")
             break
     f.close()  # Need to close opened file
-
 
     # Read in the data and perform cleaning
     # Need to remove space so Virt. Temp reads as one column, not two
@@ -994,7 +993,7 @@ def uvVisualize():
     plt.title("V")
     return
 
-def manualTKGUI(fileToBeInspected):
+def manualTKGUI():
     """ tool for visualizing hodograph, sifting for micro hodographs, saving files for future analysis
     """
     
@@ -1147,7 +1146,7 @@ def run_(filePath):
             #print("Processing: ", file)
         file = fileToBeInspected
         data = preprocessDataResample(file, flightData, spatialResolution, lowcut, highcut, order, configFile, configPath)
-        manualTKGUI(file)
+        manualTKGUI()
         return
     
     if analyze:
