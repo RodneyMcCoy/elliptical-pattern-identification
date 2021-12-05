@@ -3,14 +3,20 @@
 Methods adopted form Dutta (2017)
 
 Manual Hodograph Analyzer
-Include this script in the same folder as the input and output directories, or else specify their file path
 
-Configuration File
+
+Configuration File:
 A configuration file must be created for each launch site. This file includes a 
 
 Semantics:
 Enclosed structures contained in full-flight hodographs are reffered to as "microhodographs", 
 let u_o = (U_x0, U_y0, 0) be the background wind and u_1 = (u, v, w) be the perturbed velocities 
+
+Units:
+Metpy is a convenient library for making atmospheric calculations. It is used occasionally in this script. 
+Metpy requires that units be attached to data fields via the Pint library. There is an eclectic 
+mix of unit and unitless (as far as metpy is concerned) quantities in this script, though all quanities are 
+assumed to be in SI units, inherited from the graw dmf-17 profiles.
 
 To Do:
 - add/update sources for parameter calculations
@@ -21,7 +27,6 @@ To Do:
     
 
 Malachi Mooney-Rivkin
-Last Edit: 
 Idaho Space Grant Consortium
 moon8435@vandals.uidaho.edu
 """
@@ -39,6 +44,7 @@ import matplotlib.pyplot as plt
 
 #data smoothing
 from scipy import signal
+from scipy import optimize
 
 #metpy related dependencies - consider removing entirely
 import metpy.calc as mpcalc
@@ -59,19 +65,23 @@ from skimage.measure import EllipseModel
 ###############################BEGINING OF USER INPUT##########################
 
 #Which functionality would you like to use?
-showVisualizations = True     # Displays macroscopic hodograph for flight
-siftThruHodo = False    # Use manual GUI to locate ellipse-like structures in hodograph
+showVisualizations = True    # Displays macroscopic hodograph for flight
+siftThruHodo = True    # Use manual GUI to locate ellipse-like structures in hodograph
 analyze = True   # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
 applyButterworth = True #should Butterworth filter be applied to data? Linear interpolation is also implemented, prior to filtering, at specified spatial resolution
 location = "Tolten"     #[Tolten]/[Villarica]
 
-user = r'\Malachi'
+user = 'Malachi'
 #variables that are specific to analysis: These might be changed regularly depending on flight location, file format, etc.
-flightData = r"C:\Users" + user + r"/OneDrive - University of Idaho/%SummerInternship2020/exampleAnalysisForT26-36-44/flightData"             #flight data directory
-fileToBeInspected = 'T26_1630_12142020_MT2.txt'                                                 #specific flight profile to be searched through manually
-microHodoDir = r"C:/Users/Malachi/OneDrive - University of Idaho/workingChileDirectory/Tolten/T30"
+flightData = r"C:\Users/" + user + r"/OneDrive - University of Idaho/%SummerInternship2020/ChileData_profile/tolten"             #flight data directory
+fileToBeInspected = 'T1_1600_121320_ACE.txt'                                                                       #specific flight profile to be searched through manually
+microHodoDir = r"C:/Users" + user + "\OneDrive - University of Idaho/workingChileDirectory/test"
 #microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory\Tolten\T28"              #location where selections from GUI ard. This is also the location where do analysis looks for micro hodos to analysis
 waveParamDir = r"C:\Users" + user + "\OneDrive - University of Idaho\workingChileDirectory"     #location where wave parameter files are to be saved
+
+#configuration file
+configFile = "Tolten_FlightTimes.csv"
+configPath = "C:/Users/" + user + "/OneDrive - University of Idaho/%SummerInternship2020/hodographAnalysis/Tolten"
 
 if location == "Tolten":
     latitudeOfAnalysis = abs(-39.236248) * units.degree    #latitude at which sonde was launched. Used to account for affect of coriolis force.
@@ -85,29 +95,28 @@ minAlt = 1000 * units.m     #minimun altitude of analysis
 p_0 = 1000 * units.hPa      #needed for potential temp calculatiion
 n_trials = 1000         #number of bootstrap iterations
 #for butterworth filter
-lowcut = 500  #m - lower vertical wavelength cutoff for Butterworth bandpass filter
+lowcut = 100  #m - lower vertical wavelength cutoff for Butterworth bandpass filter
 highcut = 4000  #m - upper vertical wavelength cutoff for Butterworth bandpass filter
 order = 3   #Butterworth filter order - Dutta(2017)
 #modes for data preprocessing
 backgroundPolyOrder = 3
 applyButterworth = True
-tropopause = 11427  #m
 
 ##################################END OF USER INPUT######################
 scriptDirectory = os.getcwd()
 print(scriptDirectory)
 
 def getFlightConfiguration(profile, configFile, configFilePath):
-    """retrieve information from cite configuration file which contains site initials, flight times, tropopause heights
+    """retrieve information from site configuration file which contains site initials, flight times, tropopause heights
     """
-    config = pd.read(os.path.join(configFilePath, configFile), skiprows=[1], parse_dates=[[2,3]])
-    num = profile.split("_")[0]     #get cite initial and flight number from file name
-    num = [x for x in num if x.isdigit()]   #remove cite initial(s)
+    config = pd.read_csv(os.path.join(configFilePath, configFile), skiprows=[1], parse_dates=[[2,3]])
+    num = profile.split("_")[0]     #get site initial and flight number from file name
+    num = [x for x in num if x.isdigit()]   #remove site initial(s)
     num = int("".join(num))     #flight number by itself
     
-    return 
+    return num
 
-def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, order):
+def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, order, configFile, configPath):
     #delete gloabal data variable as soon as troubleshooting is complete
     global data
     """ prepare data for hodograph analysis. non numeric values & values > 999999 removed, brunt-viasala freq
@@ -115,7 +124,10 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
 
         Different background removal techniques used: rolling average, savitsky-golay filter, nth order polynomial fits
     """
- 
+    
+    #retrieve values from flight configration file
+    flightNumber = getFlightConfiguration(file, configFile, configPath)
+    
     #indicate which file is in progress
     print("Analyzing: {}".format(file))
     
@@ -141,7 +153,9 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     for i in range(0, len(contents)):  # Iterate through lines
         if contents[i].strip() == "Tropopauses:":
             index = i  # Record start of footer
-            print("First Line of Footer: ", contents[index+1].strip())
+            tropopauses = [int(s) for s in contents[i+1].split() if s.isdigit()]
+            tropopauseMin = min(tropopauses)
+            print("Highest Troopause: ", tropopauseMin)
     if index >= 0:  # Remove footer, if found
         contents = contents[:index]
     contents = "\n".join(contents)  # Reassemble string
@@ -160,7 +174,7 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     print("Maximum Altitude: {}".format(max(data['Alt'])))
     
     #Truncate data below tropopause
-    data = data[data['Alt'] >= tropopause] 
+    data = data[data['P'] <= tropopauseMin] 
     print("Minimum Altitude: {}".format(min(data['Alt'])))
 
     #drop rows with nans
@@ -221,12 +235,13 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
 
     #calculate brunt-viasala frequency **2 
     tempK = Temp.to('kelvin')
-    potentialTemperature =  tempKsaveMi * (p_0 / Pres) ** (2/7)    #https://glossary.ametsoc.org/wiki/Potential_temperature   
+    potentialTemperature =  tempK * (p_0 / Pres) ** (2/7)    #https://glossary.ametsoc.org/wiki/Potential_temperature   
     bv2 = mpcalc.brunt_vaisala_frequency_squared(Alt, potentialTemperature)   #N^2 
     bv = mpcalc.brunt_vaisala_frequency(Alt, potentialTemperature)
     print("BV MEAN: ", np.nanmean(bv))
     print("BV Period [min]: ", (2 * np.pi)/(np.nanmean(bv.magnitude) * 60))
     bv2 = bv2.magnitude 
+    
     plt.plot(Alt,bv2)
     meanBV2 = np.ones(len(bv2)) * np.mean(bv2)
     # localmean =
@@ -236,6 +251,12 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
 
     #convert wind from polar to cartesian c.s.
     u, v = mpcalc.wind_components(Ws, Wd)   #raw u,v components - no different than using trig fuctions
+    
+    #Save raw (sum of background and perturbations) wind, temp data, in case needed in the furure
+    global U_total, V_total, T_total
+    U_total = u.magnitude
+    V_total = v.magnitude
+    T_total = tempK.magnitude
 
     #subtract nth order polynomials to find purturbation profile
     #detrend  temperature using polynomial fit
@@ -405,7 +426,23 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     #u = uPert[polyIndice] * units.m / units.second
     #v = vPert[polyIndice] * units.m / units.second
     #Temp = tempPert[polyIndice] * units.degC
-
+    
+    #remove units
+    Alt = Alt.magnitude
+    
+    #plot raw/filtered wind profiles
+    fig = plt.figure(33)
+    plt.plot(U_total, Alt/1000, label='U')
+    plt.plot(u, Alt/1000, label="U'")
+    plt.plot(V_total, Alt/1000, label='V')
+    plt.plot(v, Alt/1000, label="V'")
+    plt.legend()
+    plt.xlabel("Wind Speed (m/s)")
+    plt.ylabel("Altitude (km)")
+    plt.title("Comparison of Perturbation and Unfiltered Profiles \n T26")
+    
+    fig.savefig('pertCamparison.tiff', dpi=600)#, format="tiff")
+    
     processedData = []
     return processedData
 
@@ -453,7 +490,7 @@ def unitCirc2Azmith(radians):
 class microHodo:
     """Class of methods that operate on microhodographs
     """
-    def __init__(self, ALT, U, V, TEMP, BV2, LAT, LONG, TIME, ORIENTATION):
+    def __init__(self, ALT, U, V, TEMP, BV2, LAT, LONG, TIME, ORIENTATION, T_TOTAL, U_TOTAL, V_TOTAL):
       self.alt = ALT#.magnitude
       self.u = U#.magnitude
       self.v = V#.magnitude
@@ -464,6 +501,9 @@ class microHodo:
       self.time = TIME
       self.orientation = ORIENTATION
       #self.orientation = np.full((len(self.time), 1), ORIENTATION)
+      self.t_total = T_TOTAL
+      self.u_total = U_TOTAL
+      self.v_total = V_TOTAL
       
     def addOrientation(self, ORIENTATION):
         self.orientation = np.full((len(self.time), 1), ORIENTATION)
@@ -485,10 +525,11 @@ class microHodo:
         """
     
         #T = np.column_stack([self.time, self.alt.magnitude, self.u.magnitude, self.v.magnitude, self.temp.magnitude, self.bv2, self.lat, self.long, self.orientation]) 
-        T = np.column_stack([self.time, self.alt, self.u, self.v, self.temp, self.bv2, self.lat, self.long, self.orientation])
-        T = pd.DataFrame(T, columns = ['time', 'alt', 'u', 'v', 'temp', 'bv2', 'lat','long', 'orientation'])
-        fname = '{}_microHodograph_{}-{}'.format(self.fname.strip('.txt'), int(self.alt[0].magnitude), int(self.alt[-1].magnitude))
-        T.to_csv('{}/{}.csv'.format(self.savepath, fname), index=False)                          
+        T = np.column_stack([self.time, self.alt, self.u, self.v, self.temp, self.bv2, self.lat, self.long, self.orientation, self.t_total, self.u_total, self.v_total])
+        T = pd.DataFrame(T, columns = ['time', 'alt', 'u_prime', 'v_prime', 'temp_prime', 'bv2', 'lat','long', 'orientation', 'T', 'U', 'V'])
+        fname = '{}_microHodograph_{}-{}'.format(self.fname.strip('.txt'), int(self.alt[0]), int(self.alt[-1]))
+        T.to_csv('{}/{}.csv'.format(self.savepath, fname), index=False)  
+        return                        
 
     def fit_ellipse(self):
             """Fitting algorithm; approximates local hodograph, theta smallest angle in radians from +u axis
@@ -521,8 +562,8 @@ class microHodo:
             self.c_x = xc
             self.c_y = yc
             self.phi = theta    # radians, from +u' axis
-            print("Ellipse fit theta: ", np.rad2deg(theta))
-            print("Ellipse fit theta: ", theta)
+            print("Ellipse fit theta (degrees): ", np.rad2deg(theta))
+            print("Ellipse fit theta (rads): ", theta)
             return a, b, xc, yc, theta
     
     def bootstrap_params(self, n_trials):
@@ -613,7 +654,7 @@ class microHodo:
         bv2Mean = np.mean(self.bv2)
         coriolisFreq = mpcalc.coriolis_parameter(latitudeOfAnalysis)
         ff = coriolisFreq.magnitude
-        print("Coriolis Period: ", (2 * np.pi) / (ff * 3600))
+        print("Coriolis Period (hr): ", (2 * np.pi) / (ff * 3600))
         #OMEGA = 7292115e-11
         #coriolisTest = 2 * OMEGA * np.sin(latitudeOfAnalysis * np.pi/180)
         #print("Coriolis param: ", coriolisTest)
@@ -648,21 +689,30 @@ class microHodo:
 
         #Intrinsic horizontal phase speed (m/s)
         intrinsicFreq = coriolisFreq.magnitude * wf     #one ought to assign units to output from ellipse fitting to ensure dimensional accuracy
-        period = 1/intrinsicFreq
-        print("PERIOD: ", period)
+        period = (2 * np.pi)/intrinsicFreq /3600    #hr
+        print("PERIOD (s): ", period)
         intrinsicHorizPhaseSpeed = intrinsicFreq / k_h
         
         #wave amplitudes - Gubenko 
-        plt.figure()
-        plt.plot(self.temp, self.alt)
-        temp_magnitude = abs(np.max(self.temp) - np.mean(self.temp))
+        temp_magnitude = max(abs(max(self.temp)), abs(min(self.temp)))
+        tHatprime = temp_magnitude / np.nanmean(self.t_total)
+        print("meanTemp:", np.mean(self.t_total))
         print("temp magnitude", temp_magnitude)
         print("bv: ", np.sqrt(bv2Mean))
         print("bv2: ", bv2Mean)
-        ae = (self.m * g * temp_magnitude)/bv2Mean
-        au = (self.a*self.m/np.sqrt(bv2Mean))*(1 - (coriolisFreq.magnitude/intrinsicFreq)**2)**(1/2)
+        
+        ae = (abs(self.m) * g * abs(tHatprime))/bv2Mean
+        
+        au = (self.a*abs(self.m)/np.sqrt(bv2Mean))*np.sqrt(1 - (coriolisFreq.magnitude/intrinsicFreq)**2)
         print("AE: ", ae)
         print("AU: ", au)
+
+        fig, axs = plt.subplots(1,4)
+        fig.suptitle("{} - {}\n ae, au: {}, {}".format(np.min(self.alt), np.max(self.alt), ae, au))
+        axs[1].plot(self.temp, self.alt)
+        axs[0].plot(self.u, self.v)
+        axs[2].plot(self.u,self.alt)
+        axs[3].plot(self.v,self.alt)
         
         #extraneous calculations - part of Tom's script
         #k_h_2 = np.sqrt((intrinsicFreq**2 - coriolisFreq.magnitude**2) * (self.m**2 / abs(bv2Mean)))
@@ -688,12 +738,12 @@ def doAnalysis(microHodoDir):
         print('Analyzing micro-hodos for flight: {}'.format(file))
         
         #dataframe from local hodograph file
-        dtypes = "float, float, float, float, float, float, float, float, str"
-        df = np.genfromtxt(fname=path, delimiter=',', names=True, dtype=None)
+        #dtypes = "float, float, float, float, float, float, float, float, str"
+        df = np.genfromtxt(fname=path, delimiter=',', names=True, dtype=None, encoding='ascii')
 
         #create microhodograph object, then start giving it attributes
-        instance = microHodo(df['alt'], df['u'], df['v'], df['temp'], df['bv2'], df['lat'], df['long'], df['time'], df['orientation'][0])
-        print("doAnalysis orientation: ", type(df['orientation'][0]))
+        instance = microHodo(df['alt'], df['u_prime'], df['v_prime'], df['temp_prime'], df['bv2'], df['lat'], df['long'], df['time'], df['orientation'][0], df['T'], df['U'], df['V'])
+        print("doAnalysis orientation: ", type(df['orientation'][1]))
         #file name added to object attribute here to be used in labeling plots
         instance.addNameAddPath(file, microHodoDir)  
 
@@ -748,7 +798,7 @@ def plotBulkMicros(hodo_list, fname):
         graph.plot(x, y, color='red')
 
         # plot rotated data
-        graph.plot(hodo_list[index].uRot, hodo_list[index].vRot)
+        #graph.plot(hodo_list[index].uRot, hodo_list[index].vRot)
 
 
         graph.arrow(xc, yc, a*np.cos(theta), a*np.sin(theta), width=0.03, head_length=0.15, length_includes_head=True, color='black')
@@ -957,63 +1007,43 @@ def manualTKGUI(fileToBeInspected):
             wind0 = 100
             # Create a container
             tkinter.Frame(master)
-
+            
+            
+            
             #CREATE ORIENTATION SELECTION
             
             self.orient = StringVar()
             self.orient.set(['CW', 'CCW'])
             self.picDir = tkinter.Spinbox(root, textvariable=self.orient, values=['CW', 'CCW'], state='readonly', wrap=True, font=Font(family='Helvetica', size=18, weight='normal'))
-            self.picDir.place(relx=.05, rely=.45, relheight=.05, relwidth=.15)
+            self.picDir.place(relx=.05, rely=.32, relheight=.05, relwidth=.15)
             
             #END ORIENTATION SELECTION
             
             
             #Create Sliders
-            self.low = IntVar()
+            self.alt = IntVar()
             self.win = IntVar()
-            self.up = IntVar()
-            global winMin #minimum window size. edit here
-            winMin = 15
-
-            #create sliders
-            self.lowSlider = tkinter.Scale(root, from_=0, to_=len(Alt.magnitude)-1, repeatinterval=1, orient=HORIZONTAL, command=self.updateSlideLow)
-            self.lowSlider.place(relx=.05, rely=.15, relwidth=.15)
-            self.upSlider = tkinter.Scale(root, from_=0, to_=len(Alt.magnitude)-1, repeatinterval=1, orient=HORIZONTAL, command=self.updateSlideUp)
-            self.upSlider.place(relx=.05, rely=.35, relwidth=.15)
-            self.winSlider = tkinter.Scale(root, from_=0, to_=len(Alt.magnitude)-1, repeatinterval=1, orient=HORIZONTAL, command=self.updateSlideWin)
-            self.winSlider.place(relx=.05, rely=.25, relwidth=.15)
+            
             
 
-            #Create spinners
-            self.lowSpinner = tkinter.Spinbox(root, command=self.updateLow, values=Alt.magnitude.tolist(), repeatinterval=1, font=Font(family='Helvetica', size=25, weight='normal'))
-            self.lowSpinner.place(relx=.05, rely=.12, relheight=.05, relwidth=.15)  #originally followed above line
-            self.upSpinner = tkinter.Spinbox(root, command=self.updateUp, values=Alt.magnitude.tolist(), repeatinterval=1,font=Font(family='Helvetica', size=25, weight='normal'))
-            self.upSpinner.place(relx=.05, rely=.32, relheight=.05, relwidth=.15)
-            self.winSpinner = tkinter.Spinbox(root, command=self.updateWin, from_=winMin, to=10000, repeatinterval=1, font=Font(family='Helvetica', size=25, weight='normal'))
+            #initialize gui vars added 12/27
+            #self.alt.set(min(Alt.magnitude.tolist())) 
+            
+            #self.altSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.alt, values=Alt.magnitude.tolist(), font=Font(family='Helvetica', size=25, weight='normal')).place(relx=.05, rely=.12, relheight=.05, relwidth=.15)
+            #added 12/27 test
+            self.altSpinner = tkinter.Spinbox(root, command=self.update, values=Alt.tolist(), repeatinterval=1, font=Font(family='Helvetica', size=25, weight='normal'))
+            self.altSpinner.place(relx=.05, rely=.12, relheight=.05, relwidth=.15)  #originally followed above line
+            #self.winSpinner = tkinter.Spinbox(root, command=self.update, textvariable=self.win, from_=5, to=1000, font=Font(family='Helvetica', size=25, weight='normal')).place(relx=.05, rely=.22, relheight=.05, relwidth=.15)
+            self.winSpinner = tkinter.Spinbox(root, command=self.update, from_=5, to=10000, repeatinterval=1, font=Font(family='Helvetica', size=25, weight='normal'))
             self.winSpinner.place(relx=.05, rely=.22, relheight=.05, relwidth=.15)  #originally followed above line
-
-            #initialize vals inside spinners
-            self.upSpinner.delete(0, 'end')
-            self.upSpinner.insert(0, Alt.magnitude[15])
-
-            #create lock radiobuttons
-            global var #
-            var = IntVar()
-            var.set(1)
-            self.lockLow = tkinter.Radiobutton(root, variable=var, value=1).place(relx=.03, rely=.14)
-            self.lockUp = tkinter.Radiobutton(root, variable=var, value=2).place(relx=.03, rely=.24)
-            self.lockWin = tkinter.Radiobutton(root, variable=var, value=3).place(relx=.03, rely=.34)
-
-            #create labels
-            self.lowLabel = tkinter.Label(root, text="Select Lower Altitude (m):", font=Font(family='Helvetica', size=18, weight='normal')).place(relx=.05, rely=.09)
-            self.upLabel = tkinter.Label(root, text="Select Upper Altitude (m):", font=Font(family='Helvetica', size=18, weight='normal')).place(relx=.05, rely=.29)
+            self.altLabel = tkinter.Label(root, text="Select Lower Altitude (m):", font=Font(family='Helvetica', size=18, weight='normal')).place(relx=.05, rely=.09)
             self.winLabel = tkinter.Label(root, text="Select Alt. Window (# data points):", font=Font(family='Helvetica', size=18, weight='normal')).place(relx=.05, rely=.19)
-
+            
             #Create figure, plot 
             fig = Figure(figsize=(5, 4), dpi=100)
             self.ax = fig.add_subplot(111)
             fig.suptitle("{}".format(fileToBeInspected))
-            self.l, = self.ax.plot(u[:15], v[:15], 'o', ls='-', markevery=[0])
+            self.l, = self.ax.plot(u[:alt0+wind0], v[:alt0+wind0], 'o', ls='-', markevery=[0])
             self.ax.set_aspect('equal')
         
             self.canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
@@ -1021,7 +1051,6 @@ def manualTKGUI(fileToBeInspected):
             self.canvas.get_tk_widget().place(relx=0.25, rely=0.05, relheight=.9, relwidth=.7)
             #frame.pack()
             
-            #create buttons
             self.winLabel = tkinter.Label(root, text="Blue dot indicates lower altitude", font=Font(family='Helvetica', size=15, weight='normal')).place(relx=.05, rely=.4)
             self.quitButton = tkinter.Button(master=root, text="Quit", command=self._quit).place(relx=.05, rely=.6, relheight=.05, relwidth=.15)
             self.saveButton = tkinter.Button(master=root, text="Save Micro-Hodograph", command=self.save).place(relx=.05, rely=.5, relheight=.05, relwidth=.15)
@@ -1029,185 +1058,16 @@ def manualTKGUI(fileToBeInspected):
             self.readyToSave = False #flag to make sure hodo is updated before saving
             #---------
             
-        def updateSlideLow(self, *args):
-            SlideLow = int(float(self.lowSlider.get()))
-            self.lowSpinner.delete(0, 'end')
-            self.lowSpinner.insert(0,Alt.magnitude[SlideLow])
-            self.updateLow()
-            return
-
-        def updateSlideUp(self, *args):
-            SlideUp = int(float(self.upSlider.get()))
-            self.upSpinner.delete(0, 'end')
-            self.upSpinner.insert(0,Alt.magnitude[SlideUp])
-            self.updateUp()
-            return
-
-        def updateSlideWin(self, *args):
-            SlideWin = int(float(self.winSlider.get()))
-            self.winSpinner.delete(0, 'end')
-            self.winSpinner.insert(0,SlideWin)
-            self.updateWin()
-            return
-
-        def updateLow(self, *args):
+        def update(self, *args):
             """ on each change to gui, this method refreshes hodograph plot
             """
             self.readyToSave = True
-
-
-            valLow = int(float(self.lowSpinner.get()))
-            valUp = int(float(self.upSpinner.get()))
-            spinLow = np.where(Alt.magnitude == valLow)[0][0]
-            spinUp = np.where(Alt.magnitude == valUp)[0][0]
-            spinWin = int(self.winSpinner.get())
-            lock = var.get()
-
-            if lock == 1: #lower is locked, cancel
-                print('error')
-                spinLow = spinUp - spinWin
-                self.lowSpinner.delete(0, 'end')
-                self.lowSpinner.insert(0,Alt.magnitude[spinLow])
-            if lock == 2: #window is locked, edit upper
-                spinUp = spinLow + spinWin
-                if spinUp >= len(Alt.magnitude): #if upper is above max, cancel
-                    spinUp = len(Alt.magnitude)-1
-                    spinLow = spinUp - spinWin
-                    self.lowSpinner.delete(0, 'end')
-                    self.lowSpinner.insert(0,Alt.magnitude[spinLow])
-                else:
-                    self.upSpinner.delete(0, 'end')
-                    self.upSpinner.insert(0,Alt.magnitude[spinUp])
-            if lock == 3: #upper is locked, edit window
-                spinWin = spinUp-spinLow
-                if spinWin < winMin: #if window is too small, cancel
-                    spinWin = winMin
-                    spinLow = spinUp - spinWin
-                    self.lowSpinner.delete(0, 'end')
-                    self.lowSpinner.insert(0,Alt.magnitude[spinLow])
-                else:
-                    self.winSpinner.delete(0, 'end')
-                    self.winSpinner.insert(0,spinWin)
-
-            self.lowSlider.set(spinLow)
-            self.upSlider.set(spinUp)
-            self.winSlider.set(spinWin)
-            #get updated values from spinners
-            low = np.where(Alt.magnitude == valLow)[0][0] #Gives index of current spinner altitude ##current altitude is sliderAlt
-            up = np.where(Alt.magnitude == valUp)[0][0]
-            win = spinWin
-
-            #update graph to show between lower and upper variables
-            self.l.set_xdata(u[low:up])
-            self.l.set_ydata(v[low:up])
-
-            self.ax.autoscale(enable=True)
-            self.ax.relim()
-            self.canvas.draw()
-            return
-
-        def updateUp(self, *args):
-            """ on each change to gui, this method refreshes hodograph plot
-            """
-            self.readyToSave = True
-
-            valLow = int(float(self.lowSpinner.get()))
-            valUp = int(float(self.upSpinner.get()))
-            spinLow = np.where(Alt.magnitude == valLow)[0][0]
-            spinUp = np.where(Alt.magnitude == valUp)[0][0]
-            spinWin = int(self.winSpinner.get())
-            lock = var.get()
-
-            if lock == 1: #lower is locked, edit window
-                spinWin = spinUp-spinLow
-                if spinWin < winMin: #if window is too small, cancel
-                    spinWin = winMin
-                    spinUp = spinLow + spinWin
-                    self.upSpinner.delete(0, 'end')
-                    self.upSpinner.insert(0,Alt.magnitude[spinUp])
-                else:
-                    self.winSpinner.delete(0, 'end')
-                    self.winSpinner.insert(0,spinWin)
-            if lock == 2: #window is locked, edit lower
-                spinLow = spinUp - spinWin
-                if spinLow < 0: #if lower is below 0, cancel
-                    spinLow = 0
-                    spinUp = spinLow + spinWin
-                    self.upSpinner.delete(0, 'end')
-                    self.upSpinner.insert(0,Alt.magnitude[spinUp])
-                else:
-                    self.lowSpinner.delete(0, 'end')
-                    self.lowSpinner.insert(0,Alt.magnitude[spinLow])
-            if lock == 3: #upper is locked, cancel
-                spinUp = spinLow + spinWin
-                self.upSpinner.delete(0, 'end')
-                self.upSpinner.insert(0,Alt.magnitude[spinUp])
-
-            self.lowSlider.set(spinLow)
-            self.upSlider.set(spinUp)
-            self.winSlider.set(spinWin)
-            #get updated values from spinners
-            low = np.where(Alt.magnitude == valLow)[0][0] #Gives index of current spinner altitude ##current altitude is sliderAlt
-            up = np.where(Alt.magnitude == valUp)[0][0]
-            win = spinWin
-
-            #update graph to show between lower and upper variables
-            self.l.set_xdata(u[low:up])
-            self.l.set_ydata(v[low:up])
-
-            self.ax.autoscale(enable=True)
-            self.ax.relim()
-            self.canvas.draw()
-            return
-
-        def updateWin(self, *args):
-            """ on each change to gui, this method refreshes hodograph plot
-            """
-            self.readyToSave = True
-
-            valLow = int(float(self.lowSpinner.get()))
-            valUp = int(float(self.upSpinner.get()))
-            spinLow = np.where(Alt.magnitude == valLow)[0][0]
-            spinUp = np.where(Alt.magnitude == valUp)[0][0]
-            spinWin = int(self.winSpinner.get())
-            lock = var.get()
-
-            if lock == 1: #lower is locked, edit upper
-                spinUp = spinLow + spinWin
-                if spinUp >= len(Alt.magnitude): #if upper is above max, cancel
-                    spinUp = len(Alt.magnitude)-1
-                    spinWin = spinUp - spinLow
-                    self.winSpinner.delete(0, 'end')
-                    self.winSpinner.insert(0,spinWin)
-                else:
-                    self.upSpinner.delete(0, 'end')
-                    self.upSpinner.insert(0,Alt.magnitude[spinUp])
-            if lock == 2: #window is locked, cancel
-                spinWin = spinUp-spinLow
-                self.winSpinner.delete(0, 'end')
-                self.winSpinner.insert(0,spinWin)
-            if lock == 3: #upper is locked, edit lower
-                spinLow = spinUp - spinWin
-                if spinLow < 0: #if lower is below 0, cancel
-                    spinLow = 0
-                    spinWin = spinUp - spinLow
-                    self.winSpinner.delete(0, 'end')
-                    self.winSpinner.insert(0,spinWin)
-                else:
-                    self.lowSpinner.delete(0, 'end')
-                    self.lowSpinner.insert(0,Alt.magnitude[spinLow])
-
-            self.lowSlider.set(spinLow)
-            self.upSlider.set(spinUp)
-            self.winSlider.set(spinWin)
-            #get updated values from spinners
-            low = np.where(Alt.magnitude == valLow)[0][0] #Gives index of current spinner altitude ##current altitude is sliderAlt
-            up = np.where(Alt.magnitude == valUp)[0][0]
-            win = spinWin
-
-            #update graph to show between lower and upper variables
-            self.l.set_xdata(u[low:up])
-            self.l.set_ydata(v[low:up])
+            #this line used to work in spyder, not sure what happened, might have been deprecated by updates made to modules?
+            #sliderAlt = int(self.alt.get()) works originally
+            sliderAlt = int(float(self.altSpinner.get()))
+            sliderWindow = int(self.winSpinner.get())
+            self.l.set_xdata(u[np.where(Alt == sliderAlt)[0][0]:np.where(Alt == sliderAlt)[0][0] + sliderWindow])
+            self.l.set_ydata(v[np.where(Alt == sliderAlt)[0][0]:np.where(Alt == sliderAlt)[0][0] + sliderWindow])
            
             self.ax.autoscale(enable=True)
             self.ax.relim()
@@ -1219,16 +1079,16 @@ def manualTKGUI(fileToBeInspected):
             """
             if self.readyToSave:
                 
+                
                 ORIENTATION = self.orient.get()
                 print('Orientation: ', ORIENTATION )
-                spinLow = int(float(self.lowSpinner.get()))
-                spinUp = int(float(self.upSpinner.get()))
-                spinWindow = int(float(self.winSpinner.get()))
-                lowerAltInd = np.where(Alt.magnitude == spinLow)[0][0]
-                upperAltInd = lowerAltInd + spinWindow
+                sliderAlt = int(float(self.altSpinner.get()))
+                sliderWindow = int(float(self.winSpinner.get()))
+                lowerAltInd = np.where(Alt == sliderAlt)[0][0]
+                upperAltInd = lowerAltInd + sliderWindow
             
             
-                #collect local data for altitude that is visible in plot, dump into .csv
+                #collect local data for altitude that is visible in plot, dump into .csv - caps to prevent confusion with global data vars :/
                 ALT = Alt[lowerAltInd : upperAltInd]
                 U = u[lowerAltInd : upperAltInd]
                 V = v[lowerAltInd : upperAltInd]
@@ -1237,10 +1097,16 @@ def manualTKGUI(fileToBeInspected):
                 LAT = Lat[lowerAltInd : upperAltInd]
                 LONG = Long[lowerAltInd : upperAltInd]
                 TIME = Time[lowerAltInd : upperAltInd]
+                T_TOTAL = T_total[lowerAltInd : upperAltInd]
+                U_TOTAL = U_total[lowerAltInd : upperAltInd]
+                V_TOTAL = V_total[lowerAltInd : upperAltInd]
                 
-                instance = microHodo(ALT, U, V, TEMP, BV2, LAT, LONG, TIME, ORIENTATION)
-                #instance.addOrientation(ORIENTATION)
+                
+                instance = microHodo(ALT, U, V, TEMP, BV2, LAT, LONG, TIME, ORIENTATION, T_TOTAL, U_TOTAL, V_TOTAL)
+                
+                instance.addOrientation(ORIENTATION)
                 instance.addNameAddPath(fileToBeInspected, microHodoDir)
+                
                 instance.saveMicroHodoNoIndices()
                 
             else: 
@@ -1280,7 +1146,7 @@ def run_(filePath):
             #fileToBeInspected = file
             #print("Processing: ", file)
         file = fileToBeInspected
-        data = preprocessDataResample(file, flightData, spatialResolution, lowcut, highcut, order)
+        data = preprocessDataResample(file, flightData, spatialResolution, lowcut, highcut, order, configFile, configPath)
         manualTKGUI(file)
         return
     
@@ -1297,7 +1163,7 @@ def run_(filePath):
     
             #macroHodo()
             #uvVisualize()
-            ####plotBulkMicros(hodo_list, file)
+            plotBulkMicros(hodo_list, fileToBeInspected)
             print("Visualizations Plotted")
             return
     return
