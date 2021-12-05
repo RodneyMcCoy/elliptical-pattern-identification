@@ -67,7 +67,7 @@ from skimage.measure import EllipseModel
 #Which functionality would you like to use?
 showVisualizations = True    # Displays macroscopic hodograph for flight
 siftThruHodo = True    # Use manual GUI to locate ellipse-like structures in hodograph
-analyze = True   # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
+analyze = False   # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
 applyButterworth = True #should Butterworth filter be applied to data? Linear interpolation is also implemented, prior to filtering, at specified spatial resolution
 location = "Tolten"     #[Tolten]/[Villarica]
 
@@ -75,9 +75,9 @@ user = 'Malachi'
 #variables that are specific to analysis: These might be changed regularly depending on flight location, file format, etc.
 flightData = r"C:\Users/" + user + r"/OneDrive - University of Idaho/%SummerInternship2020/ChileData_profile/tolten"             #flight data directory
 fileToBeInspected = 'T1_1600_121320_ACE.txt'                                                                       #specific flight profile to be searched through manually
-microHodoDir = r"C:/Users/" + user + "\OneDrive - University of Idaho/workingChileDirectory/test"
+microHodoDir = r"C:/Users/" + user + "\OneDrive - University of Idaho/workingChileDirectory/Tolten_butterNoSubtraction/T1"
 #microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory\Tolten\T28"              #location where selections from GUI ard. This is also the location where do analysis looks for micro hodos to analysis
-waveParamDir = r"C:\Users" + user + "\OneDrive - University of Idaho\workingChileDirectory"     #location where wave parameter files are to be saved
+waveParamDir = r"C:\Users/" + user + r"\OneDrive - University of Idaho\workingChileDirectory"    #location where wave parameter files are to be saved
 
 #configuration file
 configFile = "Tolten_FlightTimes.csv"
@@ -241,10 +241,10 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     print("BV Period [min]: ", (2 * np.pi)/(np.nanmean(bv.magnitude) * 60))
     bv2 = bv2.magnitude 
     
-    plt.plot(Alt,bv2)
+    plt.scatter(Alt,bv2, s=0.75)
     meanBV2 = np.ones(len(bv2)) * np.mean(bv2)
     # localmean =
-    plt.plot(Alt, meanBV2)
+    plt.plot(Alt, meanBV2, color='red')
     #bv2 = bruntViasalaFreqSquared(potentialTemperature, heightSamplingFreq)     #Maybe consider using metpy version of N^2 ? Height sampling is not used in hodo method, why allow it to affect bv ?
     
 
@@ -390,7 +390,7 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
         plt.ylabel('Gain')
         plt.xlim([0,.1])
         plt.grid(True)
-        plt.title("Frequency Response of 3rd Order Butterworth Filter \n Vertical Cut-off Wavelengths: 0.5 - 4 km")
+        plt.title("Frequency Response of 3rd Order Butterworth Filter \n Vertical Cut-off Wavelengths: 0.15 - 4 km")
         plt.legend(loc='best')
         plt.tight_layout()
         """
@@ -415,10 +415,10 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
             #plt.axis('tight')
             #plt.legend(loc='upper left')
     
-        #re define u,v
-        u = uButter[4]
-        v = vButter[4]
-        Temp = tempButter[4]
+        #re define u,v - these are the values used in analysis
+        u = butter_bandpass_filter(u.magnitude,freq1, freq2, heightSamplingFreq, order)
+        v = butter_bandpass_filter(v.magnitude,freq1, freq2, heightSamplingFreq, order)
+        Temp = butter_bandpass_filter(Temp.magnitude,freq1, freq2, heightSamplingFreq, order)
         print("Butterworth Filter Applied")
     
     #polyIndice = backgroundPolyOrder - 2
@@ -440,7 +440,7 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     plt.ylabel("Altitude (km)")
     plt.title("Comparison of Perturbation and Unfiltered Profiles \n T26")
     
-    fig.savefig('pertCamparison.tiff', dpi=600)#, format="tiff")
+    #fig.savefig('pertCamparison.tiff', dpi=600)#, format="tiff")
     
     processedData = []
     return processedData
@@ -766,6 +766,7 @@ def doAnalysis(microHodoDir):
     parameterList = pd.DataFrame(parameterList, columns = ['Alt. [km]', 'Lat', 'Long', 'Vert Wavelength [km]', 'Horiz. Wavelength [km]', 'Horizontal Wave#', 'IntHorizPhase Speed', 'Int. Freq.', 'Axial Ratio L/S', 'Propagation Direction' ])
     parameterList.sort_values(by='Alt. [km]', inplace=True)
     pathAndFile = "{}\{}_params.csv".format(waveParamDir, fileToBeInspected.strip(".txt"))
+    print("SAVED PARAMETER FILE")
     parameterList.to_csv(pathAndFile, index=False, na_rep='NaN')
     
     #sort list of hodographs in order of ascending altitude; for further use, ie. plotting
@@ -1003,7 +1004,7 @@ def manualTKGUI():
             """
             
             alt0 = 0
-            wind0 = 100
+            wind0 = 300
             # Create a container
             tkinter.Frame(master)
             
