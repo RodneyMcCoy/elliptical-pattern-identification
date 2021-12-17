@@ -337,9 +337,9 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
         
     
     #plot to double check subtraction
-    Fig, axs = plt.subplots(2,2,figsize=(6,6), num=3, sharey=True)#, sharex=True)   #figure for u,v butterworth filter
+    Fig, axs = plt.subplots(2,2,figsize=(10,5), num=3, sharey=True)#, sharex=True)   #figure for u,v butterworth filter
     #plot 3rd order subtraction
-    axs[0,0].plot(uPert[0], Alt.magnitude/1000, linewidth=0.5, color='red', label="Polynomial Background Subtracted: n=3")
+    axs[0,0].plot(uPert[0], Alt.magnitude/1000, linewidth=0.5, color='red', label="Polynomial Background \nSubtracted (n=3)")
     axs[1,0].plot(vPert[0], Alt.magnitude/1000, linewidth=0.5, color='red') 
     #plot no subtraction
     axs[0,0].plot(u, Alt.magnitude/1000, linewidth=0.5, color='blue', label="No Background Subtraction")
@@ -349,27 +349,31 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     
     
    
-    Fig.legend()
-    Fig.suptitle("Comparison of 3rd order background subtraction to no background subtraction \n 3rd order Butterwoth Filter applied: 0.5-4 km \n {}".format(file))
-    axs[0,0].set_xlabel("Zonal Wind (m/s)")
-    axs[1,0].set_xlabel("Meridional Wind (m/s)")
-    axs[0,1].set_xlabel("Filtered Zonal Wind (m/s)")
+    #Fig.legend(loc='center right', prop={'size': 6})
+    #axs[0,1].legend(bbox_to_anchor=(1.04,.5), loc="center left", labels={"No polynomial subtracted", "Polynomial Background Subtracted (n=3)"})
+    Fig.legend(loc=7)
+    size=15
+    plt.subplots_adjust(left=None, bottom=None, right=.7, top=None, wspace=.2, hspace=.2)
+    #Fig.suptitle("Comparison of 3rd order background subtraction to no background subtraction \n 3rd order Butterwoth Filter applied: 0.5-4 km \n {}".format(file))
+    axs[0,0].set_xlabel("Zonal Wind", fontsize=size)
+    axs[1,0].set_xlabel("Meridional Wind\n (m/s)", fontsize=size)
+    axs[0,1].set_xlabel("Filtered Zonal Wind", fontsize=size)
     axs[0,1].set_xlim([-10,10])
     axs[1,1].set_xlim([-10,10])
-    axs[0,0].set_xlim([-20,35])
-    axs[1,0].set_xlim([-20,35])
+    axs[0,0].set_xlim([-25,35])
+    axs[1,0].set_xlim([-25,35])
     
     axs[0,1].set_ylim([10,35])
     axs[1,1].set_ylim([10,35])
     axs[0,0].set_ylim([10,35])
     axs[1,0].set_ylim([10,35])
     
-    axs[1,1].set_xlabel("Filtered Meridional Wind (m/s)")
-    axs[0,0].set_ylabel("Altitude (km)")
-    axs[1,0].set_ylabel("Altitude (km)")
+    axs[1,1].set_xlabel("Filtered Meridional Wind\n (m/s)", fontsize=size)
+    axs[0,0].set_ylabel("Altitude (km)", fontsize=size)
+    axs[1,0].set_ylabel("Altitude (km)", fontsize=size)
     axs[0,0].tick_params(axis='x',labelbottom=False) # labels along the bottom edge are off
     axs[0,1].tick_params(axis='x',labelbottom=False) # labels along the bottom edge are off
-
+    
 
     #Apply Butterworth Filter
     if applyButterworth:
@@ -417,9 +421,11 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
         #filter no background subtracted signal
         filtU = butter_bandpass_filter(u,freq1, freq2, heightSamplingFreq, order)
         filtV = butter_bandpass_filter(vPert[i], freq1, freq2, 1/5, order)
-        axs[1,1].plot(filtV, Alt.magnitude/1000, linewidth=0.5, color='blue')
-        axs[0,1].plot(filtU, Alt.magnitude/1000, linewidth=0.5, color='blue')
-            
+        axs[1,1].plot(filtV, Alt.magnitude/1000, linewidth=0.25, color='blue')
+        axs[0,1].plot(filtU, Alt.magnitude/1000, linewidth=0.25, color='blue')
+        
+        os.chdir(waveParamDir)
+        Fig.savefig('filterEg.png',bbox_inches='tight', format='png', dpi=400)
         #re define u,v
         #u = uButter[4]
         #v = vButter[4]

@@ -66,19 +66,19 @@ from skimage.measure import EllipseModel
 
 #Which functionality would you like to use?
 showVisualizations = True    # Displays macroscopic hodograph for flight
-siftThruHodo = True    # Use manual GUI to locate ellipse-like structures in hodograph
-analyze = False   # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
+siftThruHodo = False   # Use manual GUI to locate ellipse-like structures in hodograph
+analyze = True   # Display list of microhodographs with overlayed fit ellipses as well as wave parameters
 applyButterworth = True #should Butterworth filter be applied to data? Linear interpolation is also implemented, prior to filtering, at specified spatial resolution
 location = "Tolten"     #[Tolten]/[Villarica]
 
 user = 'Malachi'
 #variables that are specific to analysis: These might be changed regularly depending on flight location, file format, etc.
 flightData = r"C:\Users/" + user + r"/OneDrive - University of Idaho/%SummerInternship2020/ChileData_profile/tolten"             #flight data directory
-fileToBeInspected = 'T1_1600_121320_ACE.txt'                                                                       #specific flight profile to be searched through manually
-microHodoDir = r"C:/Users/" + user + "\OneDrive - University of Idaho/workingChileDirectory/Tolten_butterNoSubtraction/T1"
+fileToBeInspected = 'T26_1630_12142020_MT2.txt'                                                                       #specific flight profile to be searched through manually
+microHodoDir = r"C:/Users/" + user + "\OneDrive - University of Idaho/workingChileDirectory/test"#"Tolten_butterNoSubtraction/T29"
 #microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory\Tolten\T28"              #location where selections from GUI ard. This is also the location where do analysis looks for micro hodos to analysis
 waveParamDir = r"C:\Users/" + user + r"\OneDrive - University of Idaho\workingChileDirectory"    #location where wave parameter files are to be saved
-
+microHodoFolderDir = r"C:/Users/" + user + "\OneDrive - University of Idaho/workingChileDirectory/Tolten_butterNoSubtraction"    #location of micrhodo folders for each flight
 #configuration file
 configFile = "Tolten_FlightTimes.csv"
 configPath = "C:/Users/" + user + "/OneDrive - University of Idaho/%SummerInternship2020/hodographAnalysis/Tolten"
@@ -378,22 +378,31 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
         freq2 = 1/lambda1    #find cutoff freq 1/m
         freq1 =  1/lambda2    #find cutoff freq 1/m
         
-        """
+        
         # Plot the frequency response for a few different orders.
         #b, a = butter_bandpass(freq1, freq2, heightSamplingFreq, order)
         sos = butter_bandpass(freq1, freq2, heightSamplingFreq, order)
-        w, h = signal.freqz(b, a, worN=5000)
-        plt.figure(4, figsize=(5,5))
-        plt.plot(w/np.pi, abs(h))
-        plt.plot([0, 1], [np.sqrt(0.5), np.sqrt(0.5)],'--', label='sqrt(1/2)')
-        plt.xlabel('Normalized Frequency (x Pi rad/sample) \n [Nyquist Frequency = 2 pi]') #1/m ?
+        #w, h = signal.freqz(b, a, worN=5000)
+        w, h = signal.sosfreqz(sos, worN=5000)
+        freqResponse = plt.figure(4, figsize=(5,4))
+        plt.plot(w/np.pi, abs(h), color='blue')
+        plt.plot([0, 1], [np.sqrt(0.5), np.sqrt(0.5)], 'r--', label=r'$\sqrt{\frac{1}{2}}$')
+        plt.xlabel('Normalized Frequency (x $\pi \dfrac{rad}{sample}$)')#' \n [Nyquist Frequency =  0.5]') #1/m ?
         plt.ylabel('Gain')
-        plt.xlim([0,.1])
-        plt.grid(True)
-        plt.title("Frequency Response of 3rd Order Butterworth Filter \n Vertical Cut-off Wavelengths: 0.15 - 4 km")
-        plt.legend(loc='best')
-        plt.tight_layout()
-        """
+        plt.xlim([0,.6])
+        plt.ylim([0,1.05])
+        plt.grid(b=True, which='major', color='k', linestyle='-')
+        plt.grid(b=True, which='minor', color='k', linestyle='-', alpha=0.2)
+        plt.minorticks_on()
+        plt.subplots_adjust(bottom=0.2, left=.2)
+        #plt.title("Frequency Response of 3rd Order Butterworth Filter \n Vertical Cut-off Wavelengths: 0.100 - 4.000 km")
+        
+        freqResponse.legend(loc=1, prop={'size': 18})
+        #plt.tight_layout()
+        #save figure
+        freqResponse.savefig('frequencyResponse.tiff',bbox_inches='tight', format='tiff', dpi=600)
+        print("saved to: ", os.getcwd())
+        
         # Filter a noisy signal.
         uButter = []
         vButter = []
@@ -561,8 +570,8 @@ class microHodo:
             self.c_x = xc
             self.c_y = yc
             self.phi = theta    # radians, from +u' axis
-            print("Ellipse fit theta (degrees): ", np.rad2deg(theta))
-            print("Ellipse fit theta (rads): ", theta)
+            #print("Ellipse fit theta (degrees): ", np.rad2deg(theta))
+            #print("Ellipse fit theta (rads): ", theta)
             return a, b, xc, yc, theta
     
     def bootstrap_params(self, n_trials):
@@ -641,8 +650,8 @@ class microHodo:
         self.longOfDetection = np.mean(self.long)     # (decimal degrees)
 
         # Date/Time of Detection - mean - needs to be added!
-        
-        # Axial ratio - NOT to be confused with what most publications call AR, which is ratio of short:long!
+        time = self.time[0]
+        # Axial ratio - NOT to be confused with what most publications call AXR, which is ratio of short:long!
         wf = (self.a) / (self.b)    #long axis / short axis
         
         # Vertical wavelength
@@ -651,9 +660,10 @@ class microHodo:
 
         # Horizontal wavelength
         bv2Mean = np.mean(self.bv2)
-        coriolisFreq = mpcalc.coriolis_parameter(latitudeOfAnalysis)
+        coriolisFreq = mpcalc.coriolis_parameter(latitudeOfAnalysis) #rad/s
+        print("Coriolis Frequency: ", coriolisFreq)
         ff = coriolisFreq.magnitude
-        print("Coriolis Period (hr): ", (2 * np.pi) / (ff * 3600))
+        #print("Coriolis Period (hr): ", (2 * np.pi) / (ff * 3600))
         #OMEGA = 7292115e-11
         #coriolisTest = 2 * OMEGA * np.sin(latitudeOfAnalysis * np.pi/180)
         #print("Coriolis param: ", coriolisTest)
@@ -675,7 +685,7 @@ class microHodo:
         urot = uvrot[0,:]               #urot aligns with semi-major axis
         self.uRot = urot
         self.vRot = uvrot[1,:]
-        print('UROT MAX', max(urot))
+        #print('UROT MAX', max(urot))
         dTdz = np.diff(self.temp)  / np.diff(self.alt)
 
         eta = np.mean(dTdz * urot[0:-1])
@@ -687,32 +697,39 @@ class microHodo:
         self.directionOfPropogation = unitCirc2Azmith(self.phi) #get aorientation in degrees CW from North
 
         #Intrinsic horizontal phase speed (m/s)
-        intrinsicFreq = coriolisFreq.magnitude * wf     #one ought to assign units to output from ellipse fitting to ensure dimensional accuracy
-        period = (2 * np.pi)/intrinsicFreq /3600    #hr
-        print("PERIOD (s): ", period)
-        intrinsicHorizPhaseSpeed = intrinsicFreq / k_h
+        intrinsicFreq = coriolisFreq.magnitude * wf     #rad/s  --- one ought to assign units to output from ellipse fitting to ensure dimensional accuracy
+        print("Intrinsic Freq (rad/s): ", intrinsicFreq)
+        intrinsicPeriod = (2 * np.pi)/intrinsicFreq /3600    #hr
+        print("PERIOD (hr): ", intrinsicPeriod)
+        intrinsicHorizPhaseSpeed = intrinsicFreq / k_h #m/s
+        
+        #ground based horizontal phase speed
+        horizontalBackgroundWindDir = np.arctan2(np.mean(self.v_total),np.mean(self.u_total))
+        waveDir = self.phi
+        U_h = (np.mean(self.v_total)**2 + np.mean(self.u_total)**2)**(1/2)
+        horizontalPhaseSpeed_ground = intrinsicHorizPhaseSpeed + U_h * np.cos(horizontalBackgroundWindDir - waveDir)
         
         #wave amplitudes - Gubenko 
-        temp_magnitude = max(abs(max(self.temp)), abs(min(self.temp)))
-        tHatprime = temp_magnitude / np.nanmean(self.t_total)
-        print("meanTemp:", np.mean(self.t_total))
-        print("temp magnitude", temp_magnitude)
-        print("bv: ", np.sqrt(bv2Mean))
-        print("bv2: ", bv2Mean)
+        #temp_magnitude = max(abs(max(self.temp)), abs(min(self.temp)))
+        #tHatprime = temp_magnitude / np.nanmean(self.t_total)
+        #print("meanTemp:", np.mean(self.t_total))
+        #print("temp magnitude", temp_magnitude)
+        #print("bv: ", np.sqrt(bv2Mean))
+        #print("bv2: ", bv2Mean)
         
-        ae = (abs(self.m) * g * abs(tHatprime))/bv2Mean
+        #ae = (abs(self.m) * g * abs(tHatprime))/bv2Mean
         
-        au = (self.a*abs(self.m)/np.sqrt(bv2Mean))*np.sqrt(1 - (coriolisFreq.magnitude/intrinsicFreq)**2)
-        print("AE: ", ae)
-        print("AU: ", au)
-
+        # au = (self.a*abs(self.m)/np.sqrt(bv2Mean))*np.sqrt(1 - (coriolisFreq.magnitude/intrinsicFreq)**2)
+        #print("AE: ", ae)
+        #print("AU: ", au)
+        """
         fig, axs = plt.subplots(1,4)
         fig.suptitle("{} - {}\n ae, au: {}, {}".format(np.min(self.alt), np.max(self.alt), ae, au))
         axs[1].plot(self.temp, self.alt)
         axs[0].plot(self.u, self.v)
         axs[2].plot(self.u,self.alt)
         axs[3].plot(self.v,self.alt)
-        
+        """
         #extraneous calculations - part of Tom's script
         #k_h_2 = np.sqrt((intrinsicFreq**2 - coriolisFreq.magnitude**2) * (self.m**2 / abs(bv2Mean)))
         #int2 = intrinsicFreq / k_h_2
@@ -721,7 +738,7 @@ class microHodo:
         #return altitude of detection, latitude, longitude, vertical wavelength,horizontal wavenumber, intrinsic horizontal phase speed, axial ratio l/s
         print("Parameters Calculated")
 
-        return  [self.altOfDetection, self.lat[0], self.long[0], self.lambda_z/1000, self.lambda_h/1000, k_h, intrinsicFreq,  intrinsicHorizPhaseSpeed, wf, self.directionOfPropogation]
+        return  [time, self.altOfDetection, self.lat[0], self.long[0], self.lambda_z/1000, self.lambda_h/1000, k_h, intrinsicFreq, intrinsicPeriod, intrinsicHorizPhaseSpeed, horizontalPhaseSpeed_ground, wf, self.directionOfPropogation, self.orientation, self.a]
 
 def doAnalysis(microHodoDir):
     """ Extracts wave parameters from microHodographs; this function can be run on existing microhodograph files without needing to operate the GUI
@@ -742,7 +759,7 @@ def doAnalysis(microHodoDir):
 
         #create microhodograph object, then start giving it attributes
         instance = microHodo(df['alt'], df['u_prime'], df['v_prime'], df['temp_prime'], df['bv2'], df['lat'], df['long'], df['time'], df['orientation'][0], df['T'], df['U'], df['V'])
-        print("doAnalysis orientation: ", type(df['orientation'][1]))
+        #print("doAnalysis orientation: ", type(df['orientation'][1]))
         #file name added to object attribute here to be used in labeling plots
         instance.addNameAddPath(file, microHodoDir)  
 
@@ -755,17 +772,18 @@ def doAnalysis(microHodoDir):
 
         #use ellipse to extract wave characteristics
         params = instance.getParameters()
-        print("Wave Parameters: \n", params)
+        #print("Wave Parameters: \n", params)
 
         #update running list of processed hodos and corresponding parameters
         parameterList.append(params)
         hodo_list.append(instance)  #add micro-hodo to running list
-        print("")
 
     #organize parameters into dataframe; dump into csv
-    parameterList = pd.DataFrame(parameterList, columns = ['Alt. [km]', 'Lat', 'Long', 'Vert Wavelength [km]', 'Horiz. Wavelength [km]', 'Horizontal Wave#', 'IntHorizPhase Speed', 'Int. Freq.', 'Axial Ratio L/S', 'Propagation Direction' ])
+    parameterList = pd.DataFrame(parameterList, columns = ['Time (s)', 'Alt. [km]', 'Lat', 'Long', 'Vert Wavelength [km]', 'Horiz. Wavelength [km]', 'Horizontal Wave # (rad/wave)', 'Int. Freq.(rad/s)', 'Intrinsic Period (hr)', 'IntHorizPhase Speed (m/s)', 'horizPhaseSpeedGround (m/s)','Axial Ratio L/S', 'Propagation Azmith', 'vertDir', 'minorAxis'])
+    parameterList.drop(parameterList[parameterList['minorAxis'] < 1].index, inplace=True)    #delete waves with minor axis smaller than 10 times the minimum wind velocity accuracy
     parameterList.sort_values(by='Alt. [km]', inplace=True)
-    pathAndFile = "{}\{}_params.csv".format(waveParamDir, fileToBeInspected.strip(".txt"))
+    filePrefix = file.split('_')[0] #get flight name and number
+    pathAndFile = "{}\{}_params.csv".format(waveParamDir, filePrefix)#fileToBeInspected.strip(".txt"))
     print("SAVED PARAMETER FILE")
     parameterList.to_csv(pathAndFile, index=False, na_rep='NaN')
     
@@ -778,6 +796,7 @@ def plotBulkMicros(hodo_list, fname):
     """ plot microhodographs in grid of subplots
     """ 
     ########## FUNCTIONS ########## plotting courtesy of Kathyrin Reece
+    """
     def generatePoints(a,b,theta):
         print("  ")
         return none
@@ -854,8 +873,8 @@ def plotBulkMicros(hodo_list, fname):
                 place.xaxis.set_tick_params(which='both', labelbottom=True)
             index += 1
     plt.show()
-    
-    """ This block of code is useful for inspecting single hodographs and their bestfit parameters
+    """
+    #This block of code is useful for inspecting single hodographs and their bestfit parameters
     #plots all micro-hodographs for a single flight
     bulkPlot = plt.figure(fname, figsize=(8.5,11))
     plt.suptitle("Micro-hodographs for \n {}".format(fname))#, y=1.09)
@@ -876,8 +895,9 @@ def plotBulkMicros(hodo_list, fname):
         for hodo in hodo_list:
             print("HODO ITERATION: ", hodo)
             #ax = bulkPlot.add_subplot(numRows, numColumns, position[i])#, aspect='equal')
-            fig, ax = plt.subplots(figsize=(8.5,8.5))
-            ax.plot(hodo_list[i].u, hodo_list[i].v, color='black', label='hodograph') 
+            fig, ax = plt.subplots(figsize=(5,5))
+            ax.scatter(hodo_list[i].u, hodo_list[i].v, color='black', label='hodograph') 
+            ax.plot(hodo_list[i].u, hodo_list[i].v, 'go', color='black',linewidth=1, markevery=[0], markersize = 10) 
             #axs[i].plot(hodo_list[i].u, hodo_list[i].v)
             
             #plot rotated raw data
@@ -890,7 +910,7 @@ def plotBulkMicros(hodo_list, fname):
             #best fit
             x = hodo_list[i].a * np.cos(param) * np.cos(hodo_list[i].phi) - hodo_list[i].b * np.sin(param) * np.sin(hodo_list[i].phi) + hodo_list[i].c_x
             y = hodo_list[i].a * np.cos(param) * np.sin(hodo_list[i].phi) + hodo_list[i].b * np.sin(param) * np.cos(hodo_list[i].phi) + hodo_list[i].c_y
-            ax.plot(x, y, color='red', label='single fit')
+            #ax.plot(x, y, color='red', label='single fit')
             #axs[i].plot(x, y, color='red', label='single fit')
             
             #rotated fit
@@ -916,21 +936,27 @@ def plotBulkMicros(hodo_list, fname):
             #improved fit
             x = a_skimage * np.cos(param) * np.cos(theta_skimage) - b_skimage * np.sin(param) * np.sin(theta_skimage) + xc_skimage
             y = a_skimage * np.cos(param) * np.sin(theta_skimage) + b_skimage * np.sin(param) * np.cos(theta_skimage) + yc_skimage
-            ax.plot(x, y, color='orange', label='improved fit')
+            ax.plot(x, y, color='blue', label='Least Squares Fit')
             
-            
+            u_par = a_skimage
+            lw = .125
+            hw = .125
+            ax.arrow(xc_skimage,yc_skimage,-1.1*u_par*np.cos(theta_skimage), -u_par * np.sin(theta_skimage), head_width=hw*.75, lw=lw*.75, color='k')
+            ax.arrow(xc_skimage,yc_skimage,-0.7*u_par*np.cos(theta_skimage+np.pi/2), -0.7*u_par * np.sin(theta_skimage+np.pi/2), head_width=hw*.75, lw=lw*.75, color='k')
             #bootstrapped values
             #x = hodo_list[i].bsa * np.cos(param) * np.cos(hodo_list[i].bsphi) - hodo_list[i].bsb * np.sin(param) * np.sin(hodo_list[i].bsphi) + hodo_list[i].bsc_x
             #y = hodo_list[i].bsa * np.cos(param) * np.sin(hodo_list[i].bsphi) + hodo_list[i].bsb * np.sin(param) * np.cos(hodo_list[i].bsphi) + hodo_list[i].bsc_y
             #ax.plot(x, y, color='blue', label='bootstrapped fit')
             
-            ax.set_xlabel("(m/s)", fontsize=7)
-            ax.set_ylabel("(m/s)", fontsize=7)
+            ax.set_xlabel("Zonal Wind Perturbation (m/s)", fontsize=18)
+            ax.set_ylabel("Meridional Wind Perturbation (m/s)", fontsize=18)
             ax.set_aspect('equal')
-            ax.set_title("{}-{} (m)".format(hodo_list[i].lowerAlt, hodo_list[i].upperAlt), fontsize=9 )
+            #ax.set_title("{}-{} (m)".format(hodo_list[i].lowerAlt, hodo_list[i].upperAlt), fontsize=9 )
             #if i==0:
             ax.legend(prop={'size':9})
-            
+            plt.tight_layout
+            #os.chdir(waveParamDir)
+            #fig.savefig('hodoEg.png',bbox_inches='tight', format='png', dpi=400)
             i += 1
             #plt.xlim([-5, 5])
             #plt.ylim([-5,5])
@@ -940,7 +966,7 @@ def plotBulkMicros(hodo_list, fname):
         plt.tight_layout()
         
         plt.show() 
-        """
+        
 
     return
 
@@ -1137,6 +1163,9 @@ def run_(filePath):
     """
     #make sure there are no existing figures open
     plt.close('all')
+    #figure settings
+    plt.rcParams.update({'font.sans-serif':'Arial'})
+    plt.rcParams.update({'font.size': 20})
     
     # set location of flight data as current working directory
     os.chdir(filePath)
@@ -1152,11 +1181,12 @@ def run_(filePath):
     
     if analyze:
         #need to iterate through all folders in microHodoDir
-        #for folder in os.listdir(microHodoDir):
-            #for file in os.listdir(os.path.join(microHodoDir, folder)):
+        for folder in os.listdir(microHodoFolderDir):
+            #print(folder)
+            for file in os.listdir(os.path.join(microHodoFolderDir, folder)):
                 #print(file)
                 #need to format doAnalysis, or create var called fileToBe Instected here in order to do analysis on each folder
-        hodo_list= doAnalysis(microHodoDir)
+                hodo_list= doAnalysis(os.path.join(microHodoFolderDir, folder))
         #print("hodo_list attributes: ", vars(hodo_list[0]).keys())
     
         if showVisualizations:
