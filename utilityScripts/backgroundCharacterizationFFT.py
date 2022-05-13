@@ -61,7 +61,7 @@ flightTimesDir = r"C:\Users\M\OneDrive - University of Idaho\%SummerInternship20
 flightTimes = r"Tolten_FlightTimes.csv"
 """
 
-flightData = r"C:\Users\Malachi\OneDrive - University of Idaho\%SummerInternship2020\%%CHIILE_Analysis_Backups\ChilePythonEnvironment_01112021\ChileData_012721\Tolten_01282021"             #flight data directory
+flightData = r"C:/Users/Malachi/OneDrive - University of Idaho/%SummerInternship2020/ChileData_profile/tolten"             #flight data directory
 fileToBeInspected = 'T26_1630_12142020_MT2.txt'                                                 #specific flight profile to be searched through manually
 microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory\Tolten\T26_all"  
 #microHodoDir = r"C:\Users\Malachi\OneDrive - University of Idaho\workingChileDirectory\Tolten\T28"              #location where selections from GUI ard. This is also the location where do analysis looks for micro hodos to analysis
@@ -278,6 +278,7 @@ def constructContourPlot(directory, times, timesPath):
     #A.xaxis.set_major_formatter(date_form)
     
     global bulkData     # useful for troubleshooting
+    global num
     bulkData = pd.DataFrame()
     for file in os.listdir(directory):
         print(file)
@@ -287,7 +288,7 @@ def constructContourPlot(directory, times, timesPath):
         num = file.split("_")[0]    #get flight initial and number from file name
         #num = num[1:]   #remove flight initial - this results in flight number 
         num = [x for x in num if x.isdigit()]
-        num = int("".join(num))
+        num = int("".join(num), 10)
         
         if num < 50: #temporarily use first 4 profiles
             
@@ -401,7 +402,7 @@ def constructContourPlot(directory, times, timesPath):
     
     #block high freq in height
     #cutoff_height = 1/10    #wavelength [m] (1/f)
-    cutoff_height = 35000
+    cutoff_height = 12000 #35000
     #cutoff_time = 1/10  #wavelength [s] (1/f)
     cutoff_time = 60*60*24  #wavelength [s] (1/f)
     
@@ -428,6 +429,7 @@ def constructContourPlot(directory, times, timesPath):
     """
     #create figure for plotting interpolated data
     contour, ax1 = plt.subplots()
+    ax1.set_ylim([0, 1000])
     ax1.contour(Xi, Yi, zi, linewidths=0.5, colors='k')
     cntr1 = ax1.contourf(xi, yi, zi, levels=100, cmap='rainbow')
     contour.colorbar(cntr1, ax=ax1)
@@ -437,6 +439,7 @@ def constructContourPlot(directory, times, timesPath):
     ax1.plot(x,y, 'ko', ms=.005)
     ax1.set_title("Contour Map Temp vs Alt vs Time")
     #ax1.set_title('grid and contour (%d points, %d grid points)' %(npts, ngridx * ngridy))
+    
     plt.show()
     
     #create figure for background
