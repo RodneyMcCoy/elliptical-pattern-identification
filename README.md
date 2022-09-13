@@ -3,9 +3,6 @@
 
 
 
-
-
-
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
@@ -17,14 +14,6 @@
 
   <p align="center">
     Project Description
-    <br />
-    <a href="https://github.com/github_username/repo_name">Explore the docs</a>
-    ·
-    <a href="https://github.com/github_username/repo_name">View Demo</a>
-    ·
-    <a href="https://github.com/github_username/repo_name/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/github_username/repo_name/issues">Request Feature</a>
   </p>
 </div>
 
@@ -34,13 +23,12 @@
 
 ### Table of Contents
 <ol>
-  <li> <a href="#about-the-project">About The Project</a> </li>
   <li>
     <a href="#getting-started">Getting Started</a>
     <ul>
-      <li><a href="#download"> Downloading the Application</li>
-      <li><a href="#use"> Using the Application </li>
-      <li><a href="#build"> Building the Application </li>
+      <li><a href="#downloading-the-application"> Downloading the Application</li>
+      <li><a href="#using-the-application"> Using the Application </li>
+      <li><a href="#build-the-application-yourself"> Build the Application Yourself</li>
     </ul>
   </li>
   <li><a href="#contributors">Contributors</a></li>
@@ -49,16 +37,6 @@
   <li><a href="#acknowledgments">Acknowledgments</a></li>
 </ol>
 
-
-
-<!-- ABOUT THE PROJECT -->
-## About The Project
-
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
-
-Here's a blank template to get started: To avoid retyping too much info. Do a search and replace with your text editor for the following: `github_username`, `repo_name`, `twitter_handle`, `linkedin_username`, `email_client`, `email`, `project_title`, `project_description`
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
@@ -70,6 +48,7 @@ Here's a blank template to get started: To avoid retyping too much info. Do a se
 This is an example of how you may give instructions on setting up your project locally.
 To get a local copy up and running follow these simple example steps.
 
+<!-- DOWNLOADING THE APPLICATION -->
 ### Downloading the Application
 
 
@@ -78,10 +57,12 @@ To get a local copy up and running follow these simple example steps.
 
 
 
-### Building the Application
+### Build the Application Yourself
 
 
 
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
@@ -111,6 +92,8 @@ Don't forget to give the project a star! Thanks again!
 Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
 
 
 
