@@ -72,9 +72,9 @@ Located here will be the instructions on how to build the project yourself. I wi
 <!-- CONTRIBUTORS -->
 ## Contributors
 
-This repository was mirrored from and based off of [`Malachi's`](https://github.com/malachiRivkin/hodographAnalysis) original work for the 2020 solar eclipse project. You can *hopefully* find Malachi [`Here`](https://github.com/malachiRivkin). This repository here has no explicit association with Malachi.
+This repository was mirrored from and based off of Malachi's and kareece's [`Original Work`](https://github.com/malachiRivkin/hodographAnalysis) for the 2020 solar eclipse project. You can *hopefully* find Malachi [`Here`](https://github.com/malachiRivkin) and kareece [`Here`](https://github.com/kareece). This repository has no explicit association with them.
 
-We have revamped his work here for our *Senior Capstone Project*. For giving credit, our information is below. Note that any pressing matters related to this project which aren't answered in this README should be noted under Issues (this includes Bug Reports). After May 2023, we won't be actively updating this repository.
+We have revamped and continued their work here for our *Senior Capstone Project*. For giving credit, our information is below. Note that any pressing matters related to this project which aren't answered in this README should be noted under Issues (this includes Bug Reports). After May 2023, we won't be actively updating this repository.
 
 
 **Rodney McCoy** &middot;
