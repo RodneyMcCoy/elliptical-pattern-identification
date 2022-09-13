@@ -10,10 +10,10 @@
     <img src="https://github.com/RodneyMcCoy/elliptical-pattern-identification/blob/master/res/logo.ico" alt="Logo" width="120">
   </a>
 
-<h3 align="center">Ellipcitcal Pattern Identification for Gravitational Wave Analysis</h3>
+<h3 align="center">Ellipcitcal Pattern Identification</h3>
 
   <p align="center">
-    Project Description
+    This project host's our work for identifying Gravitational Waves via Radiosonde data. Check out this README for further details.
   </p>
 </div>
 
@@ -28,12 +28,11 @@
     <ul>
       <li><a href="#downloading-the-application"> Downloading the Application</li>
       <li><a href="#using-the-application"> Using the Application </li>
-      <li><a href="#build-the-application-yourself"> Build the Application Yourself</li>
+      <li><a href="#build-the-project-yourself"> Build the Project Yourself</li>
     </ul>
   </li>
   <li><a href="#contributors">Contributors</a></li>
   <li><a href="#license">License</a></li>
-  <li><a href="#contact">Contact</a></li>
   <li><a href="#acknowledgments">Acknowledgments</a></li>
 </ol>
 
@@ -45,20 +44,22 @@
 <!-- GETTING STARTED -->
 ## Getting Started
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
-
 <!-- DOWNLOADING THE APPLICATION -->
 ### Downloading the Application
+
+This project is still being built. (In the future) Navigate to `Releases` to download the application on your own machine.
 
 
 
 ### Using the Application
 
+This project is still being built. (In the future) This section will describe how to use the application.
 
 
-### Build the Application Yourself
 
+### Build the Project Yourself
+
+Located here will be the instructions on how to build the project yourself. I will update this when i figure out how to build the project.
 
 
 
@@ -71,16 +72,32 @@ To get a local copy up and running follow these simple example steps.
 <!-- CONTRIBUTORS -->
 ## Contributors
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+This repository was mirrored from and based off of [`Malachi's`](https://github.com/malachiRivkin/hodographAnalysis) original work for the 2020 solar eclipse project. You can *hopefully* find Malachi [`Here`](https://github.com/malachiRivkin). This repository here has no explicit association with Malachi.
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
+We have revamped his work here for our *Senior Capstone Project*. For giving credit, our information is below. Note that any pressing matters related to this project which aren't answered in this README should be noted under Issues (this includes Bug Reports). After May 2023, we won't be actively updating this repository.
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+
+**Rodney McCoy** &middot;
+[Github Profile](https://github.com/RodneyMcCoy) &middot;
+[Email](rbmj2001@outlook.com) &middot;
+[Phone](208-860-4186)
+
+
+
+
+**Riley Doyle** &middot;
+[Github Profile](https://www.example.com/) &middot;
+[Email](doyl1482@vandals.uidaho.edu) &middot;
+[Phone](805-850-8594)
+
+
+
+
+**Luis Lopez** &middot;
+[Github Profile](https://www.example.com/) &middot;
+[Email](lope9245@vandals.uidaho.edu) &middot;
+[Phone](208-320-2344)
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -97,22 +114,9 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 
 
-<!-- CONTACT -->
-## Contact
-
-Your Name - [@twitter_handle](https://twitter.com/twitter_handle) - email@email_client.com
-
-Project Link: [https://github.com/github_username/repo_name](https://github.com/github_username/repo_name)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-* []()
-* []()
-* []()
+Uh... NASA is super cool.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
