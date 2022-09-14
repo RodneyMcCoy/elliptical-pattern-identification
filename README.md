@@ -67,12 +67,14 @@ Located here will be the instructions on how to build the project yourself. I wi
 
 
 
+<!-- utilityScripts:
+	this directory contains a variety of programs I have created to test ideas, learn analysis 	techniques, and troubleshoot problems. None are essential for analysis, but provide some insight to the evolution of the main analysis script. It also contains the original hodograph code from Thomas Colligan that I ported over to Python. -->
 
 
 <!-- CONTRIBUTORS -->
 ## Contributors
 
-This repository was mirrored from and based off of malachiRivkin's and kareece's [Original Work](https://github.com/malachiRivkin/hodographAnalysis) for the 2020 solar eclipse project. To contact those two, you can *hopefully* find malachiRivkin [Here](https://github.com/malachiRivkin) and kareece [Here](https://github.com/kareece). This repository has no explicit association with them.
+This repository was mirrored from and based off of malachiRivkin's and kareece's [Original Work](https://github.com/malachiRivkin/hodographAnalysis) for the 2020 solar eclipse project. To contact those two, you can *hopefully* find malachiRivkin [Here](https://github.com/malachiRivkin) and kareece [Here](https://github.com/kareece). This repository has no explicit association with them. The original code base was created by Thomas Colligan, and was ported over to python by those two.
 
 We have revamped and continued their work at this repository for our *Senior Capstone Project*. For giving credit, our information is below. Note that any pressing matters related to this project which aren't answered in this README should be noted under Issues (this includes Bug Reports). After May 2023, we won't be actively updating this repository.
 
