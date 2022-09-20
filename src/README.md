@@ -1,18 +1,4 @@
-Uh, i dont have the slightest idea how to build the project, and how the code works. 
-It didn't seem like Malachi new someone else would be using his code when he originally wrote it.
-So hopefully we can find some time to figure it out and describe it here 
-(ill make sure a more concise verison of what we find will go in the README in the main directory).
-
-
-This and makeing a writeup of the actual algorithm / technique of what we will be implimenting is 
-going to be my main work for the capstone project, atleast the first semester. 
-These seem to be the first bottleneck in the way of you two doing some work yourself,
- so ill try to get these mostly done by October. 
-After that, ill leave most of the work to you two until atleast next semester.
-(Although, putting this here might be redundant since will probably discuss this when we meet again)
-
-
-## Useful Repositories
+## Useful Repositories that we might need to add into this repo
 
 - [Repo currently in src folder](https://github.com/malachiRivkin/hodographAnalysis)
 - [Idk what this is, might have useful information](https://github.com/malachiRivkin/gravity-wave-gui-matlab)
