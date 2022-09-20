@@ -11,9 +11,6 @@ These seem to be the first bottleneck in the way of you two doing some work your
 After that, ill leave most of the work to you two until atleast next semester.
 (Although, putting this here might be redundant since will probably discuss this when we meet again)
 
-[Here is an overleaf link to write up, this most likely wont have anything in it for a bit](https://www.overleaf.com/read/wcmmhbqyzpcd
-)
-
 *The link is read only, since this repo is public. Hit me up if you want write access for any reason*
 
 ## SRC Folder Summary
