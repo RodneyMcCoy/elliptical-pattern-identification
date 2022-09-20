@@ -12,6 +12,12 @@ After that, ill leave most of the work to you two until atleast next semester.
 (Although, putting this here might be redundant since will probably discuss this when we meet again)
 
 
+## Useful Repositories
+
+- [Repo currently in src folder](https://github.com/malachiRivkin/hodographAnalysis)
+- [Idk what this is, might have useful information](https://github.com/malachiRivkin/gravity-wave-gui-matlab)
+
+
 ## SRC Folder Summary
 
 - utilityScripts
