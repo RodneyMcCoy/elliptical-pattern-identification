@@ -1,6 +1,6 @@
 Uh, i dont have the slightest idea how to build the project, and how the code works. 
 It didn't seem like Malachi new someone else would be using his code when he originally wrote it.
-So ill hopefully find some time to figure it out and describe it here 
+So hopefully we can find some time to figure it out and describe it here 
 (a more concise verison of what i find will go in the README in the main directory).
 
 
@@ -16,6 +16,7 @@ After that, ill leave most of the work to you two until atleast next semester.
 
 - [Repo currently in src folder](https://github.com/malachiRivkin/hodographAnalysis)
 - [Idk what this is, might have useful information](https://github.com/malachiRivkin/gravity-wave-gui-matlab)
+- [THIS MIGHT BE HELPFUL](https://github.com/malachiRivkin/fit_ellipse)
 
 
 ## SRC Folder Summary
