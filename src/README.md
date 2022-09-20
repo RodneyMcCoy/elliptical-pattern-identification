@@ -1,7 +1,7 @@
 Uh, i dont have the slightest idea how to build the project, and how the code works. 
 It didn't seem like Malachi new someone else would be using his code when he originally wrote it.
 So hopefully we can find some time to figure it out and describe it here 
-(a more concise verison of what i find will go in the README in the main directory).
+(ill make sure a more concise verison of what we find will go in the README in the main directory).
 
 
 This and makeing a writeup of the actual algorithm / technique of what we will be implimenting is 
