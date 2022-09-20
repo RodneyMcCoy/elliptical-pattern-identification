@@ -1,2 +1,8 @@
 #ignore misc folder
 misc/
+
+
+# ignore stupid project folders that people shouldnt use unless absolutely necessary. 
+# Even if they use it, it shouldn't be wasting space in a github repository making it more complicated for people to figure out what the heck its there fore
+.spyproject/
+.idea/
