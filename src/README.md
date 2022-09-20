@@ -16,7 +16,7 @@ After that, ill leave most of the work to you two until atleast next semester.
 
 *The link is read only, since this repo is public. Hit me up if you want write access for any reason*
 
-# SRC Folder Summary
+## SRC Folder Summary
 
 - utilityScripts
   - "this directory contains a variety of programs I have created to test ideas, learn analysis 	techniques, and troubleshoot problems. None are essential for analysis, but provide some insight to the evolution of the main analysis script. It also contains the original hodograph code from Thomas Colligan that I ported over to Python. "
@@ -27,7 +27,17 @@ After that, ill leave most of the work to you two until atleast next semester.
 - .idea
   - This is an ide specific folder for jetbrains.
 
-# SRC Python Script Summary
+## SRC Python Script Summary
 
 - Hodograph_DuttaMethod
   - This script is used to find local hodographs, and extract parameters. 
+- manualAnalyzer_vsc.py
+  - ...
+- paperGraphics
+  - I believe this script just is meant to graphically render data
+- PDAP_minimal_11122020
+  - ...
+  
+## utilityScripts Python Script Summary
+
+- ...
