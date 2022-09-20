@@ -19,7 +19,9 @@ After that, ill leave most of the work to you two until atleast next semester.
   - This script is used to find local hodographs, and extract parameters. 
 - utilityScripts **Folder**
   - "this directory contains a variety of programs I have created to test ideas, learn analysis 	techniques, and troubleshoot problems. None are essential for analysis, but provide some insight to the evolution of the main analysis script. It also contains the original hodograph code from Thomas Colligan that I ported over to Python. "
-- Tolten, Villarica, .idea **Folders**
+- Tolten, Villarica **Folders**
   - Contains flight data. Will be moved to *test* folder in the future
 - .spyproject **Folder**
   - Idk what this is. Probabily a folder type specific to the spyder ide
+- .idea **Folder**
+  - This is an ide specific folder for jetbrains.
