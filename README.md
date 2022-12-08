@@ -10,7 +10,7 @@
     <img src="https://github.com/RodneyMcCoy/elliptical-pattern-identification/blob/master/res/logo.ico" alt="Logo" width="120">
   </a>
 
-<h3 align="center">Ellipcitcal Pattern Identification</h3>
+<h3 align="center">Elliptical Pattern Identification</h3>
 
   <p align="center">
     This project host's our work for identifying Gravitational Waves via Radiosonde data. Check out this README for further details.
