@@ -1,0 +1,18 @@
+Overall:
+
+1. Refurbish the code such that it actual runs.
+
+
+
+
+Front End:
+
+1. Take as input large batches of flight data, and apply the algorithms from the backend to each File.
+
+
+
+
+Back end:
+
+1. Impliment an algorithm which parse's through Radiosonde Flight Data and identifies when ellipses occur. The algorithm which given an ellipse, parameterizes it, has already been implimented.
+
