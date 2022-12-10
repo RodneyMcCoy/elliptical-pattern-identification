@@ -1,0 +1,50 @@
+Rodney McCoy
+
+So Matplotlib is python data visualization tool. 
+Because its built into the prior code base and interfaces with the Tkinter GUI application well, its important that i understand how it works, so i can use it.
+
+Talk about numpy. And mat plot lib.
+
+
+-- Practice --
+
+    # Generate Data
+    x = np.linspace(start=0, stop=n, num=n)
+    plt.plot(x, [explicit_formula(n+1, i) for i in range(n)], color="red", label="Explicit Formula")
+    plt.plot(x, [approximation(n+1, i) for i in range(n)], color="green", label="Approximation")
+    plt.plot(x, [monte_carlo_method(n+1, i, samples) for i in range(n)], color="blue", label="Monte Carlo Method")
+    
+    # Setup Plot
+    plt.xlabel("k")
+    plt.ylabel("probability of 1 or more collision occuring")
+    plt.title("Comparing methods for Calculating p(" + str(n) + ", k)")
+    plt.legend(loc="lower right")
+    plt.show()
+
+--------------
+
+    x = np.linspace(start=0, stop=upper_bound, num=upper_bound)    
+    # COMMENT OUT SIX_N_PI LINE TO GET MORE DETAILED PLOT OF OTHERS. SINCE IT OVER COUNTS ALOT
+    plt.plot(x, six_n_pi, color="magenta", label="6n pm 1", linewidth=width)
+    plt.plot(x, erato_pi, color="blue", label="Exact Amount", linewidth=width)
+    plt.plot(x, fermat_pi, color="red", label="Fermat", linewidth=width)
+    plt.plot(x, miller_pi, color="orange", label="Miller-Rabin", linewidth=width)
+    plt.plot(x, [approximation(n) for n in range(upper_bound)], 
+             color="green", label="Approximation", linewidth=width)
+    plt.xlabel("n")
+    plt.ylabel("pi(n)")
+    plt.title("Counting Prime Numbers less than or equal to n")
+    plt.legend(loc="upper left")
+    plt.show()
+
+--------------
+
+    plt.plot(lcg_result, color="red", label="Linear Congruential Generator", linewidth=thick)
+    plt.plot(msm_result, color="blue", label="Middle Square Method", linewidth=thick)
+
+    plt.xlabel("x")
+    plt.ylabel("x returned by random number generator")
+    plt.title("Comparing Random Number Generation Techniques")
+    plt.legend(loc="lower right")
+    plt.ylim(ymin=0, ymax=2 * samples/(2**bit_count))
+    plt.show()
