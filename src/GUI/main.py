@@ -7,6 +7,12 @@ December 2022
 import tkinter as tk
 import MainApp as App
 
+
+
+
+
+
+# Purpose: Run the application
 def main(): 
     master = tk.Tk()
     App.MainApp(master)
