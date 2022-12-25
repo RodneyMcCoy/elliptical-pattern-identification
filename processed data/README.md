@@ -1,0 +1,1 @@
+This is the default folder for storing the results from the files that are processed via the tkinter python application.
