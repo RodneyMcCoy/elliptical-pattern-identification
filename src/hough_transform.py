@@ -6,10 +6,15 @@ import math
 
 # step 1. store pixels in 1D array
 #z_points = Alt
-x_points = u.magnitude
-y_points = v.magnitude
-data = np.column_stack((x_points,y_points))
+#x_points = u.magnitude
+#y_points = v.magnitude
+z_values = np.linspace(0,6.28,20)
+x_values = 3 * np.cos(z_values) +5
+y_values = 5 * np.sin(z_values) +5
+data = np.column_stack((x_values,y_values))
 
+plt.scatter(x_values, y_values,z_values)
+plt.show()
 
 #use on pairs found with detectEllipse
 def calc_ellipse(x, y, x_centre, y_centre, rotation, semi_major, semi_minor):
@@ -38,7 +43,7 @@ def checkPairs(x_values, y_values):
 def checkMinDist(x,y):
     valid = False
     dist = math.sqrt((x[0]-x[1])**2 + (y[0]-y[1])**2)
-    if dist > 2 and dist < 8:
+    if dist > 4:
         valid = True
     return valid
 
@@ -46,7 +51,7 @@ def checkMinDist(x,y):
 #first refers to the pair(0-len(pairs))
 #second refers to x1y1 or x2y2 (0 or 1)
 #third refers to x or y (0 or 1)
-pairs = checkPairs(x_points,y_points)
+pairs = checkPairs(x_values,y_values)
 print('done')
 print(pairs)
 minMinorEllipse = 1
