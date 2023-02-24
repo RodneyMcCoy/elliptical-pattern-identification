@@ -7,8 +7,7 @@ December 2022
 import tkinter as tk
 import tkinter.ttk as ttk
 
-import MainApp as App
-import FileData as File
+
 
 
 
@@ -201,7 +200,7 @@ class SearchWindow(tk.Frame):
             self.app_reference.switch_to_File_Window(0)
         else:
             for i, val in enumerate(self.app_reference.file_container):
-                if val.name == answer:
+                if val == answer:
                     break
             self.app_reference.switch_to_File_Window(i)
             self.app_reference.current_file_index = i
@@ -214,10 +213,10 @@ class SearchWindow(tk.Frame):
         # Refresh the search dropdown
         self.options = []
         for file in self.app_reference.file_container:
-            self.options.append(file.name) 
+            self.options.append(file) 
                 
         self.label.configure(text="".join(
-            [" " + f.get_label() + " " for f in self.app_reference.file_container])) 
+            [" " + f + " " for f in self.app_reference.file_container])) 
         
         self.dropdown.configure(value=self.options )
 
@@ -275,7 +274,7 @@ class FileWindow(tk.Frame):
             string = "(" + str(ind[i]) + ") "
             if i == 2:
                 string += "CURRENT: "
-            string += files[ind[i]].get_label()
+            string += files[ind[i]]
             
             self.labels[i].configure(text=string) 
             

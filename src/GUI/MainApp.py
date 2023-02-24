@@ -7,11 +7,10 @@ November 2022
 import sys
 import os
 import tkinter as tk
-import tkinter.ttk as ttk
 from pathlib import Path
+import tkinter.filedialog
 
 import FrameClasses as Frame
-import FileData as File
 
 
 
@@ -108,11 +107,11 @@ class MainApp:
             if file.name == filename:
                 add_file = False
         if add_file:
-            self.file_container.append(File.FileData(name=filename))
+            self.file_container.append(filename)
 
         # Update "main" frame with info about new files
         self.main_window.file_label.configure(text="".join(
-            [" " + f.get_label() + " " for f in self.file_container])) 
+            [" " + f + " " for f in self.file_container])) 
         return
     
 
@@ -138,14 +137,14 @@ class MainApp:
             if os.path.splitext(filename)[-1].lower() == ".txt":
                 add_file = True
                 for file in self.file_container:
-                    if file.name == filename:
+                    if file == filename:
                         add_file = False
                 if add_file:
-                    self.file_container.append(File.FileData(name=filename))
+                    self.file_container.append(filename)
             
         # Update "main" frame with info about new files
         self.main_window.file_label.configure(text="".join(
-            [" " + f.get_label() + " " for f in self.file_container])) 
+            [" " + f + " " for f in self.file_container])) 
         return
 
 
