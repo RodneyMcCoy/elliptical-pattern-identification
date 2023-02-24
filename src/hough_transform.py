@@ -52,8 +52,8 @@ def checkMinDist(x,y):
 #second refers to x1y1 or x2y2 (0 or 1)
 #third refers to x or y (0 or 1)
 pairs = checkPairs(x_values,y_values)
-print('done')
-print(pairs)
+#print('done')
+#print(pairs)
 minMinorEllipse = 1
 
 
