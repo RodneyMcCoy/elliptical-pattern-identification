@@ -1,0 +1,51 @@
+('C:\\GitHub\\elliptical-pattern-identification\\build\\build\\ '
+ 'EllipticalPatternIdentification--onefile\\ '
+ 'EllipticalPatternIdentification--onefile.pkg',
+ {'BINARY': True,
+  'DATA': True,
+  'EXECUTABLE': True,
+  'EXTENSION': True,
+  'PYMODULE': True,
+  'PYSOURCE': True,
+  'PYZ': False,
+  'SPLASH': True},
+ [('PYZ-00.pyz',
+   'C:\\GitHub\\elliptical-pattern-identification\\build\\build\\ '
+   'EllipticalPatternIdentification--onefile\\PYZ-00.pyz',
+   'PYZ'),
+  ('struct',
+   'C:\\GitHub\\elliptical-pattern-identification\\build\\build\\ '
+   'EllipticalPatternIdentification--onefile\\localpycs\\struct.pyc',
+   'PYMODULE'),
+  ('pyimod01_archive',
+   'C:\\GitHub\\elliptical-pattern-identification\\build\\build\\ '
+   'EllipticalPatternIdentification--onefile\\localpycs\\pyimod01_archive.pyc',
+   'PYMODULE'),
+  ('pyimod02_importers',
+   'C:\\GitHub\\elliptical-pattern-identification\\build\\build\\ '
+   'EllipticalPatternIdentification--onefile\\localpycs\\pyimod02_importers.pyc',
+   'PYMODULE'),
+  ('pyimod03_ctypes',
+   'C:\\GitHub\\elliptical-pattern-identification\\build\\build\\ '
+   'EllipticalPatternIdentification--onefile\\localpycs\\pyimod03_ctypes.pyc',
+   'PYMODULE'),
+  ('pyimod04_pywin32',
+   'C:\\GitHub\\elliptical-pattern-identification\\build\\build\\ '
+   'EllipticalPatternIdentification--onefile\\localpycs\\pyimod04_pywin32.pyc',
+   'PYMODULE'),
+  ('pyiboot01_bootstrap',
+   'C:\\Users\\rbmj2\\anaconda3\\lib\\site-packages\\PyInstaller\\loader\\pyiboot01_bootstrap.py',
+   'PYSOURCE'),
+  ('pyi_rth__tkinter',
+   'C:\\Users\\rbmj2\\anaconda3\\Lib\\site-packages\\PyInstaller\\hooks\\rthooks\\pyi_rth__tkinter.py',
+   'PYSOURCE'),
+  ('main',
+   'C:\\GitHub\\elliptical-pattern-identification\\src\\GUI\\main.py',
+   'PYSOURCE')],
+ True,
+ False,
+ False,
+ [],
+ None,
+ None,
+ None)

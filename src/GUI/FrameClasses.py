@@ -4,6 +4,8 @@ rbmj2001@outlook.com
 December 2022
 """
 
+# Conrtains classes which inherit from the tkinter Frame class. Each controls a different window
+
 import tkinter as tk
 import tkinter.ttk as ttk
 

@@ -4,6 +4,8 @@ rbmj2001@outlook.com
 November 2022
 """
 
+# Contains the class which controls the Tkinter frontend
+
 import sys
 import os
 import tkinter as tk

@@ -4,6 +4,8 @@ rbmj2001@outlook.com
 December 2022
 """
 
+# Starts the program
+
 import tkinter as tk
 import MainApp as App
 
