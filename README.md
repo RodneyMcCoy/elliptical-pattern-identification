@@ -28,7 +28,7 @@
     <ul>
       <li><a href="#downloading-the-application"> Downloading the Application</li>
       <li><a href="#using-the-application"> Using the Application </li>
-      <li><a href="#build-the-project-yourself"> Build the Project Yourself</li>
+      <li><a href="#want-to-build-the-project-yourself"> Want To Build the Project Yourself?</li>
     </ul>
   </li>
   <li><a href="#contributors">Contributors</a></li>
@@ -47,19 +47,32 @@
 <!-- DOWNLOADING THE APPLICATION -->
 ### Downloading the Application
 
-This project is still being built. (In the future) Navigate to `Releases` to download the application on your own machine.
+1. Navigate to [Releases](https://github.com/RodneyMcCoy/elliptical-pattern-identification/releases) to download the application on your own machine.
+2. You should see a list of folders starting with `ApplicationForOS` where `OS` is the operating system for the application. Download the folder for your specific operating system.
+3. Once you have downloaded the folder, extract the contents.
+4. Once you open the now extracted folder, you should be able to see an application named `EllipticalPatternIdentification` with some operating system specific file extension like `.exe`. You can now open the application
 
 
 
 ### Using the Application
 
-This project is still being built. (In the future) This section will describe how to use the application.
+1. Once you open the `EllipticalPatternIdentification` application, you should be able to see buttons to select files to process, along with various parameter inputs for the algorithm, and more. 
+2. Once you have inputted files into the program, you can use the buttons on the sidebar to look at files and their raw data along with data from the backend algorithms.
+3. To actually process files, select the button `Process Files`. Processing may take a while, the window should update occasionally with the progress of processing the current file. Stopping processing will loose the results of the current file being processed.
 
 
 
-### Build the Project Yourself
+### Want To Build the Project Yourself?
 
-Located here will be the instructions on how to build the project yourself. I will update this when i figure out how to build the project.
+1. Clone the repository to your local machine
+2. Make sure you have the required dependencies installed. 
+	- Python 3
+	- All Usual Python Modules
+	- Tkinter Python Module
+3. We suggest using anaconda since it has all of the relevant dependencies when you use Spyder.
+4. Navigate to src -> main.py
+5. Run main.py with your favorite python environment
+	- main.py starts up the GUI, and the GUI interfaces with all of the backend algorithms
 
 
 
@@ -74,9 +87,9 @@ Located here will be the instructions on how to build the project yourself. I wi
 <!-- CONTRIBUTORS -->
 ## Contributors
 
-This repository was mirrored from and based off of malachiRivkin's and kareece's [Original Work](https://github.com/malachiRivkin/hodographAnalysis) for the 2020 solar eclipse project. To contact those two, you can *hopefully* find malachiRivkin [Here](https://github.com/malachiRivkin) and kareece [Here](https://github.com/kareece). This repository has no explicit association with them. The original code base was created by Thomas Colligan, and was ported over to python by those two.
+This repository was mirrored from and based off of malachiRivkin's and kareece's [Original Work](https://github.com/malachiRivkin/hodographAnalysis) for the 2020 solar eclipse project. To contact those two, you can *hopefully* find malachiRivkin [Here](https://github.com/malachiRivkin) and kareece [Here](https://github.com/kareece).  The original code base was created by Thomas Colligan, and was ported over to python by those two. 
 
-We have revamped and continued their work at this repository for our *Senior Capstone Project*. For giving credit, our information is below. Note that any pressing matters related to this project which aren't answered in this README should be noted under Issues (this includes Bug Reports). After May 2023, we won't be actively updating this repository.
+Although this repository isn't explicitly associated with any of them, we have revamped and continued their work at this repository for our *Senior Capstone Project*. For giving credit, our information is below. Note that any pressing matters related to this project which aren't answered in this README should be noted under Issues (this includes Bug Reports). After May 2023, we won't be actively updating this repository. Any questions that aren't answered here should be sent to Dr. Bernards.
 
 
 **Rodney McCoy** &middot;
@@ -118,7 +131,5 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
-
-Uh... NASA is super cool.
-
+This project was also made with the assistance of Dr. Matthew Bernards and Konstantine Geranios, an Associate Professor and Graduate Student respectively, from the Chemical & Biological Engineering Department at the University of Idaho.
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
