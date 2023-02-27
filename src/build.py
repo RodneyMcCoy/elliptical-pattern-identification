@@ -8,18 +8,14 @@ Feb 2023
 
 import os
 from pathlib import Path
-
-
-MAIN_PY = Path(os.getcwd()) / "GUI" / "main.py"
-
-BUILD_FOLDER = Path(os.getcwd()).parent.absolute()
-
-
 import PyInstaller.__main__
+
+
+
+MAIN_PY = Path(os.getcwd()).absolute() / "GUI" / "main.py"
 
 PyInstaller.__main__.run([
     str(MAIN_PY),
     '-n EllipticalPatternIdentification',
     '--onefile',
-    '--specpath ' + str(BUILD_FOLDER)
 ])

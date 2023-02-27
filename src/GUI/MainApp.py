@@ -36,8 +36,16 @@ class MainApp:
         self.master.geometry("800x500")
 
         # Set window icon
+        # name = "logo.ico"
+        # for root, dirs, files in os.walk(path):
+        #     if name in files:
+        #         return os.path.join(root, name)
         path = Path(os.getcwd()).parent.parent.absolute() / "res" / "logo.ico"
-        self.master.iconbitmap(path)
+        
+        try:
+            self.master.iconbitmap(path)
+        except tk.TclError:
+            pass
 
         # Configure rows and cols
         self.master.rowconfigure(0, minsize=800, weight=1)
