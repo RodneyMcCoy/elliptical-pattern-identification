@@ -50,7 +50,7 @@
 1. Navigate to [Releases](https://github.com/RodneyMcCoy/elliptical-pattern-identification/releases) to download the application on your own machine.
 2. You should see a list of folders starting with `ApplicationForOS` where `OS` is the operating system for the application. Download the folder for your specific operating system.
 3. Once you have downloaded the folder, extract the contents.
-4. Once you open the now extracted folder, you should be able to see an application named `EllipticalPatternIdentification` with some operating system specific file extension like `.exe`. You can now open the application
+4. Once you open the now extracted folder, select the dist folder. You should be able to see an application named `EllipticalPatternIdentification` with some operating system specific file extension like `.exe`. You can now open the application
 
 
 
