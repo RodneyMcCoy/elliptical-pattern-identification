@@ -1,4 +1,4 @@
-# A Walk Through Of The Source Codr
+# A Walk Through Of The Source Code
 
 
 ### main.py
