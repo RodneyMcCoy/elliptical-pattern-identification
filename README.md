@@ -31,6 +31,7 @@
       <li><a href="#want-to-build-the-project-yourself"> Want To Build the Project Yourself?</li>
     </ul>
   </li>
+  <li><a href="#bugs">Bugs</a></li>
   <li><a href="#contributors">Contributors</a></li>
   <li><a href="#license">License</a></li>
   <li><a href="#acknowledgments">Acknowledgments</a></li>
@@ -83,6 +84,11 @@
 <!-- utilityScripts:
 	this directory contains a variety of programs I have created to test ideas, learn analysis 	techniques, and troubleshoot problems. None are essential for analysis, but provide some insight to the evolution of the main analysis script. It also contains the original hodograph code from Thomas Colligan that I ported over to Python. -->
 
+
+<!-- BUGS -->
+## Bugs
+
+As this application wasn't able to be tested to its fullest extent, bugs most likely will occur. They should be listed under issues. I (Rodney) will be actively monitoring this repository over the summer to account for this, so you can also email me at rbmj2001@outlook.com if urgent bugs need fixing. 
 
 <!-- CONTRIBUTORS -->
 ## Contributors
