@@ -107,7 +107,7 @@ Although this repository isn't explicitly associated with any of them, we have r
 
 
 **Riley Doyle** &middot;
-[Github Profile](https://www.example.com/) &middot;
+[Github Profile](https://github.com/rdoyle0914) &middot;
 [Email](doyl1482@vandals.uidaho.edu) &middot;
 [Phone](805-850-8594)
 
