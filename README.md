@@ -33,8 +33,8 @@
   </li>
   <li><a href="#bugs">Bugs</a></li>
   <li><a href="#contributors">Contributors</a></li>
-  <li><a href="#license">License</a></li>
   <li><a href="#acknowledgments">Acknowledgments</a></li>
+  <li><a href="#license">License</a></li>
 </ol>
 
 
@@ -93,9 +93,11 @@ As this application wasn't able to be tested to its fullest extent, bugs most li
 <!-- CONTRIBUTORS -->
 ## Contributors
 
-This repository was mirrored from and based off of malachiRivkin's and kareece's [Original Work](https://github.com/malachiRivkin/hodographAnalysis) for the 2020 solar eclipse project. To contact those two, you can *hopefully* find malachiRivkin [Here](https://github.com/malachiRivkin) and kareece [Here](https://github.com/kareece).  The original code base was created by Thomas Colligan, and was ported over to python by those two. 
+Initially, this code base was created by Thomas Colligan.
 
-Although this repository isn't explicitly associated with any of them, we have revamped and continued their work at this repository for our *Senior Capstone Project*. For giving credit, our information is below. Any questions that aren't answered here should be sent to Dr. Bernards.
+Then, malachiRivkin's and kareece's expanded on Colligan's code, and ported it into Python, in their [Original Work](https://github.com/malachiRivkin/hodographAnalysis) for the 2020 solar eclipse project. To contact those two, you can *hopefully* find malachiRivkin [Here](https://github.com/malachiRivkin) and kareece [Here](https://github.com/kareece). 
+
+We have revamped and continued their work at this repository for our *Senior Capstone Project*. Our information is below. Any questions that aren't answered here should be sent to Dr. Bernards.
 
 
 **Rodney McCoy** &middot;
@@ -104,14 +106,10 @@ Although this repository isn't explicitly associated with any of them, we have r
 [Phone](208-860-4186)
 
 
-
-
 **Riley Doyle** &middot;
 [Github Profile](https://github.com/rdoyle0914) &middot;
 [Email](doyl1482@vandals.uidaho.edu) &middot;
 [Phone](805-850-8594)
-
-
 
 
 **Luis Lopez** &middot;
@@ -124,18 +122,16 @@ Although this repository isn't explicitly associated with any of them, we have r
 
 
 
+<!-- ACKNOWLEDGMENTS -->
+## Acknowledgments
+This project was also made with the assistance of Dr. Matthew Bernards and Konstantine Geranios, an Associate Professor and Graduate Student respectively, from the Chemical & Biological Engineering Department at the University of Idaho.
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
 <!-- LICENSE -->
 ## License
 
 Distributed under the MIT License. See `LICENSE.txt` for more information.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-
-
-<!-- ACKNOWLEDGMENTS -->
-## Acknowledgments
-This project was also made with the assistance of Dr. Matthew Bernards and Konstantine Geranios, an Associate Professor and Graduate Student respectively, from the Chemical & Biological Engineering Department at the University of Idaho.
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
