@@ -95,7 +95,7 @@ As this application wasn't able to be tested to its fullest extent, bugs most li
 
 This repository was mirrored from and based off of malachiRivkin's and kareece's [Original Work](https://github.com/malachiRivkin/hodographAnalysis) for the 2020 solar eclipse project. To contact those two, you can *hopefully* find malachiRivkin [Here](https://github.com/malachiRivkin) and kareece [Here](https://github.com/kareece).  The original code base was created by Thomas Colligan, and was ported over to python by those two. 
 
-Although this repository isn't explicitly associated with any of them, we have revamped and continued their work at this repository for our *Senior Capstone Project*. For giving credit, our information is below. Note that any pressing matters related to this project which aren't answered in this README should be noted under Issues (this includes Bug Reports). After May 2023, we won't be actively updating this repository. Any questions that aren't answered here should be sent to Dr. Bernards.
+Although this repository isn't explicitly associated with any of them, we have revamped and continued their work at this repository for our *Senior Capstone Project*. For giving credit, our information is below. Any questions that aren't answered here should be sent to Dr. Bernards.
 
 
 **Rodney McCoy** &middot;
