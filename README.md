@@ -88,7 +88,7 @@
 <!-- BUGS -->
 ## Bugs
 
-As this application wasn't able to be tested to its fullest extent, bugs most likely will occur. They should be listed under [issues](https://github.com/RodneyMcCoy/elliptical-pattern-identification/issues). I (Rodney) will be actively monitoring this repository over the summer to account for this, so you can also email me at rbmj2001@outlook.com if urgent bugs need fixing. 
+As this application wasn't able to be tested to its fullest extent, bugs most likely will occur. They should be listed under [issues](https://github.com/RodneyMcCoy/elliptical-pattern-identification/issues). I (Rodney) will be semi-actively monitoring this repository over the summer to account for this. You can also email me at rbmj2001@outlook.com if urgent bugs need fixing. 
 
 <!-- CONTRIBUTORS -->
 ## Contributors
