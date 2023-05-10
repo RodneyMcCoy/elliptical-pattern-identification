@@ -2,11 +2,14 @@
 Rodney McCoy
 rbmj2001@outlook.com
 Feb 2023
+
+This script executes the python code to build the pyinstaller application
 """
 
-# This script executes the python code to build the pyinstaller application
-
+# Standard Python Libraries
 import os
+
+# Pyinstaller and File Processing
 from pathlib import Path
 import PyInstaller.__main__
 
