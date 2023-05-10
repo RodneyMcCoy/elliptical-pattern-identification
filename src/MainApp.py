@@ -113,7 +113,7 @@ class MainApp:
         # Add The Inputted File To "file_container" If Its Not Already In Tt
         add_file = True
         for file in self.file_container:
-            if file.name == filename:
+            if file == filename:
                 add_file = False
         if add_file:
             self.file_container.append(filename)
@@ -134,17 +134,23 @@ class MainApp:
         # Tkinter Command To Get Folder As Input From User.
         foldername = tk.filedialog.askdirectory(
             initialdir = initialdir, title = "Select a Folder")
-         
+        
+        # Add The Inputted Files To "file_container" If Its Not Already In It
+        FILES = os.listdir(foldername)
+        
         # If This Is The First File Inputted, Activate Buttons Which Assume
         # Files Are Already Given.
+        if len(FILES) == 0:
+            self.main_window.file_label.configure(text="The Inputted Folder Was Empty.")
+            return
+        
         if self.file_container == []:
             self.main_window.process_button.configure(state = tk.NORMAL)
             self.sidebar.buttons["next"].configure(state = tk.NORMAL)
             self.sidebar.buttons["previous"].configure(state = tk.NORMAL)
             self.sidebar.buttons["select"].configure(state = tk.NORMAL)
-        
-        # Add The Inputted Files To "file_container" If Its Not Already In It
-        for filename in os.listdir(foldername):
+                
+        for filename in FILES:
             if os.path.splitext(filename)[-1].lower() == ".txt":
                 add_file = True
                 for file in self.file_container:
@@ -154,6 +160,10 @@ class MainApp:
                     this_path = Path(foldername) / Path (filename)
                     self.file_container.append(str(this_path))
             
+
+
+
+        
         # Update MainWindow With Info About New Files.
         self.main_window.file_label.configure(text="".join(
             [" " + f + "\n " for f in self.file_container])) 
