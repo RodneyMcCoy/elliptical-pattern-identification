@@ -274,7 +274,10 @@ class FileWindow(tk.Frame):
             self.labels[i].configure(text=string) 
             
         # PLACE ALL RELEVANT FILE DATA HERE.
-        
+        #self.plots = []
+        #for filename in os.listdir(foldername):
+        #    self.plots.append()
+
         
         # Move This Frame To The Front.
         self.frame.tkraise()

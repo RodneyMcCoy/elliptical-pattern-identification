@@ -39,7 +39,6 @@ def ProcessSingleFile(file):
     
     # XXX: This Setup Works But Is Kind Of Janky Since I Just Wanted To Hook Up The 
     # Front End And Back End With The Minimal Amount Of Changes.
-    time.sleep(5)
     backend.flightData, backend.fileToBeInspected = os.path.split(file)
-    print(backend.flightData, backend.fileToBeInspected)
+    print("Currently Processing: ", backend.flightData, backend.fileToBeInspected)
     backend.main()

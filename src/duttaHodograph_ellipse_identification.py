@@ -347,6 +347,7 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
         
     
     #plot to double check subtraction
+    """
     Fig, axs = plt.subplots(2,2,figsize=(10,5), num=3, sharey=True)#, sharex=True)   #figure for u,v butterworth filter
     #plot 3rd order subtraction
     axs[0,0].plot(uPert[0], Alt.magnitude/1000, linewidth=0.5, color='red', label="Polynomial Background \nSubtracted (n=3)")
@@ -354,7 +355,7 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     #plot no subtraction
     axs[0,0].plot(u, Alt.magnitude/1000, linewidth=0.5, color='blue', label="No Background Subtraction")
     axs[1,0].plot(v, Alt.magnitude/1000, linewidth=0.5, color='blue')
-    
+    """
     
     
     
@@ -1335,6 +1336,17 @@ def run_(filePath):
 
 import math
 
+# This Is So Backend Can Access The Parameters Declared In The GUI, namely the
+# default file location for processed data to be stored.
+import main as frontend
+
+# For OS Independent File Path Manipulation
+from pathlib import Path
+
+# To Stop Certain Multithreading Matplotlib Errors
+import matplotlib
+matplotlib.use('agg')
+
 #Calls run_ method  
 
 def main():
@@ -1438,9 +1450,23 @@ def main():
     ells = dist(ells)
     
     pairs = []
-    for ell in ells:
-        fig4, ax = plt.subplots(subplot_kw={'aspect':'equal'})
-        plt.plot(ell[0], ell[1])
+
+    for index, ell in enumerate(ells):
+        # fig4, ax = plt.subplots(subplot_kw={'aspect':'equal'})
+        #plt.plot(ell[0], ell[1])
+        
+        # RESULTS SAVED TO FILE HERE
+        output_path = frontend.DataOutputPath / Path(fileToBeInspected)
+        
+        if not os.path.exists(output_path):
+            os.mkdir(output_path)
+
+        f = open(str(output_path / Path("Text" + str(index))), "a")
+        f.write(str(ell[0]))
+        f.write(str(ell[1]))
+        f.close()
+        
+
         
         #pairs.append(checkPairs(ell[0], ell[1])
     altIds = []
