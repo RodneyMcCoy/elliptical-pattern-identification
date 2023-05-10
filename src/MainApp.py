@@ -100,7 +100,7 @@ class MainApp:
         filename = tk.filedialog.askopenfilename(
             initialdir = initialdir, title = "Select a File", filetypes = 
             (("Text files", "*.txt*"), ("all files", "*.*")))
-         
+                 
         # If This Is The First File Inputted, Activate Buttons Which Assume
         # Files Are Already Given.
         if self.file_container == []:
@@ -143,7 +143,7 @@ class MainApp:
             self.sidebar.buttons["previous"].configure(state = tk.NORMAL)
             self.sidebar.buttons["select"].configure(state = tk.NORMAL)
         
-        # Add The Inputted Files To "file_container" If Its Not Already In Tt
+        # Add The Inputted Files To "file_container" If Its Not Already In It
         for filename in os.listdir(foldername):
             if os.path.splitext(filename)[-1].lower() == ".txt":
                 add_file = True
@@ -151,7 +151,8 @@ class MainApp:
                     if file == filename:
                         add_file = False
                 if add_file:
-                    self.file_container.append(filename)
+                    this_path = Path(foldername) / Path (filename)
+                    self.file_container.append(str(this_path))
             
         # Update MainWindow With Info About New Files.
         self.main_window.file_label.configure(text="".join(

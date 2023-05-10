@@ -181,7 +181,7 @@ class SearchWindow(tk.Frame):
         self.value = tk.StringVar()
         self.value.set( "Select From Files" )
         self.dropdown = ttk.Combobox(self.frame, value=self.options)
-        self.dropdown.config(width = 40)
+        self.dropdown.config(width = 100)
         self.submit_button = tk.Button(self.frame, text='Look At Data', command= self.submit_answer)
 
         # Place Widgets Onto This Frame.

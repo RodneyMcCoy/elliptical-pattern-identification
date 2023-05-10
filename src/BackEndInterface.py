@@ -9,10 +9,10 @@ The Backend Is Done. All Direct Interfacing With The Backend Occurs Here.
 """
 
 # Standard Python Libraries
-import time
+import time, os
 
 # Files In Code Base
-# import duttaHodograph_ellipse_identification as backend
+import duttaHodograph_ellipse_identification as backend
 
 
 # %% Back End Interface
@@ -31,11 +31,15 @@ def OpenFileProcessingThread(*args):
 
 
 
-# THIS IS THE FUNCTION WHICH GIVEN A FILE PATH, PROCESSES THE FUNCTION VIA THE BACKEND ALGORITHMS
 def ProcessSingleFile(file):
-    """ Here Is The Interfacing With The Backend. File Is An Absolute Filepath
-    To The File We Want To Processing. ALl That Is Done Here Is Applying The
-    Backend To That File And Saving The Results To A Folder In DataOutputPath. """
-    time.sleep(.25)
-    # backend.run_(file)
-    # print(file)
+    """ Here Is The Interface Of The Frontend To The Backend. 
+    File Is An Absolute Filepath To The File We Want To Process. ALl That Is 
+    Done Here Is Applying The Backend To That File And Saving The Results To A 
+    Folder In DataOutputPath. """
+    
+    # XXX: This Setup Works But Is Kind Of Janky Since I Just Wanted To Hook Up The 
+    # Front End And Back End With The Minimal Amount Of Changes.
+    time.sleep(5)
+    backend.flightData, backend.fileToBeInspected = os.path.split(file)
+    print(backend.flightData, backend.fileToBeInspected)
+    backend.main()

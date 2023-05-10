@@ -1336,131 +1336,136 @@ def run_(filePath):
 import math
 
 #Calls run_ method  
-run_(flightData) 
-plt.close('all')
 
-
-################################
-x_points = u.magnitude
-y_points = v.magnitude
-
-
-def intersection(x1,x2,x3,x4,y1,y2,y3,y4):
-    d = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4)
-    if d:
-        xs = ((x1*y2-y1*x2)*(x3-x4) - (x1-x2)*(x3*y4-y3*x4)) / d
-        ys = ((x1*y2-y1*x2)*(y3-y4) - (y1-y2)*(x3*y4-y3*x4)) / d
-        if (xs >= min(x1,x2) and xs <= max(x1,x2) and
-            xs >= min(x3,x4) and xs <= max(x3,x4)):
-            return xs, ys
+def main():
+    run_(flightData) 
+    plt.close('all')
+    
+    
+    ################################
+    x_points = u.magnitude
+    y_points = v.magnitude
+    
+    
+    def intersection(x1,x2,x3,x4,y1,y2,y3,y4):
+        d = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4)
+        if d:
+            xs = ((x1*y2-y1*x2)*(x3-x4) - (x1-x2)*(x3*y4-y3*x4)) / d
+            ys = ((x1*y2-y1*x2)*(y3-y4) - (y1-y2)*(x3*y4-y3*x4)) / d
+            if (xs >= min(x1,x2) and xs <= max(x1,x2) and
+                xs >= min(x3,x4) and xs <= max(x3,x4)):
+                return xs, ys
+            
+    xps = np.copy(x_points)
+    yps = np.copy(y_points)
+    def find_intersect(x_points, y_points):
+        xs, ys = [], []
+        ls = []
+        for i in range(len(x_points)-1):
+            for j in range(i-1):
+                ls.append([x_points[i],y_points[j]])
+                if xs_ys := intersection(x_points[i],x_points[i+1],x_points[j],x_points[j+1],
+                                     y_points[i],y_points[i+1],y_points[j],y_points[j+1]):
+                    xs.append(xs_ys[0])
+                    ys.append(xs_ys[1])
+                    ls.append([xs_ys[0],xs_ys[1]])
+                    
+        return xs, ys, ls
+    
+    def closest_value(input_list, input_value):
+        arr = np.asarray(input_list)
+        i = (np.abs(arr - input_value)).argmin()
+        return arr[i]
+    
+    def clean(ls):
+        l2 = [ls[0]] 
+        for i in range(0,len(ls)-1):
+            ii = np.where(x_points == ls[i])[0][0]
+            ii2 = np.where(x_points == ls[i+1])[0][0]
+            if abs(Alt[ii].magnitude - Alt[ii2].magnitude) <= 500:
+                continue
+            else:
+                l2.append(ls[i])
+        return l2
+    
+    def get_pos_ellipse(intersection):
+        ii = np.where(x_points == intersection)[0][0]       
+    
+        xv = []
+        yv = []
+        al = Alt[ii].magnitude
+        for i in range(ii, len(x_points)):
+            if Alt[i].magnitude < al+1700:
+                xv.append(x_points[i])
+                yv.append(y_points[i])
+                #print(x_points[i], y_points[i])
+    
+        return xv, yv
+    
+    def max_dist(ellipse):
+        max = 0
+        for i in range(0,len(ellipse)):
+            for j in range(i,len(ellipse)):
+                if math.dist(ellipse[i], ellipse[j]) > max:
+                    max = math.dist(ellipse[i], ellipse[j])
+        return max
+    
+    def dist(ellipses):
+        temp = []
+        for ellipse in ellipses:
+            if max_dist(ellipse) < 600 and max_dist(ellipse) > 100:
+                temp.append(ellipse)
+        return temp
+    
+    
+    
+    xs, ys, ls = find_intersect(np.flip(x_points), np.flip(y_points))
+    for i in range(0,len(xs)):
+        xs[i] = closest_value(x_points, xs[i])
+        ys[i] = closest_value(y_points, ys[i])
+         
+    for i in range(0,30):
+        xs = clean(xs)
+    
+    
+    #print(xs)
+    ells = []
+    for x in xs:
+        xvals, yvals = get_pos_ellipse(x)
+        ells.append([xvals,yvals])
         
-xps = np.copy(x_points)
-yps = np.copy(y_points)
-def find_intersect(x_points, y_points):
-    xs, ys = [], []
-    ls = []
-    for i in range(len(x_points)-1):
-        for j in range(i-1):
-            ls.append([x_points[i],y_points[j]])
-            if xs_ys := intersection(x_points[i],x_points[i+1],x_points[j],x_points[j+1],
-                                 y_points[i],y_points[i+1],y_points[j],y_points[j+1]):
-                xs.append(xs_ys[0])
-                ys.append(xs_ys[1])
-                ls.append([xs_ys[0],xs_ys[1]])
-                
-    return xs, ys, ls
-
-def closest_value(input_list, input_value):
-    arr = np.asarray(input_list)
-    i = (np.abs(arr - input_value)).argmin()
-    return arr[i]
-
-def clean(ls):
-    l2 = [ls[0]] 
-    for i in range(0,len(ls)-1):
-        ii = np.where(x_points == ls[i])[0][0]
-        ii2 = np.where(x_points == ls[i+1])[0][0]
-        if abs(Alt[ii].magnitude - Alt[ii2].magnitude) <= 500:
-            continue
-        else:
-            l2.append(ls[i])
-    return l2
-
-def get_pos_ellipse(intersection):
-    ii = np.where(x_points == intersection)[0][0]       
-
-    xv = []
-    yv = []
-    al = Alt[ii].magnitude
-    for i in range(ii, len(x_points)):
-        if Alt[i].magnitude < al+1700:
-            xv.append(x_points[i])
-            yv.append(y_points[i])
-            #print(x_points[i], y_points[i])
-
-    return xv, yv
-
-def max_dist(ellipse):
-    max = 0
-    for i in range(0,len(ellipse)):
-        for j in range(i,len(ellipse)):
-            if math.dist(ellipse[i], ellipse[j]) > max:
-                max = math.dist(ellipse[i], ellipse[j])
-    return max
-
-def dist(ellipses):
-    temp = []
-    for ellipse in ellipses:
-        if max_dist(ellipse) < 600 and max_dist(ellipse) > 100:
-            temp.append(ellipse)
-    return temp
-
-
-
-xs, ys, ls = find_intersect(np.flip(x_points), np.flip(y_points))
-for i in range(0,len(xs)):
-    xs[i] = closest_value(x_points, xs[i])
-    ys[i] = closest_value(y_points, ys[i])
-     
-for i in range(0,30):
-    xs = clean(xs)
-
-
-#print(xs)
-ells = []
-for x in xs:
-    xvals, yvals = get_pos_ellipse(x)
-    ells.append([xvals,yvals])
     
-
-ells = dist(ells)
-
-pairs = []
-for ell in ells:
-    fig4, ax = plt.subplots(subplot_kw={'aspect':'equal'})
-    plt.plot(ell[0], ell[1])
+    ells = dist(ells)
     
-    #pairs.append(checkPairs(ell[0], ell[1])
-altIds = []
-for x in xs:
-    ii = np.where(x_points == x)[0][0]
-    altIds.append(Alt[ii])
+    pairs = []
+    for ell in ells:
+        fig4, ax = plt.subplots(subplot_kw={'aspect':'equal'})
+        plt.plot(ell[0], ell[1])
+        
+        #pairs.append(checkPairs(ell[0], ell[1])
+    altIds = []
+    for x in xs:
+        ii = np.where(x_points == x)[0][0]
+        altIds.append(Alt[ii])
+    
+    #xvals, yvals = get_pos_ellipse(xs[0])
+    #print(xvals)
+    
+    '''
+    fig6 = plt.figure()
+    ax = plt.axes(projection='3d')
+    plt.plot(u.magnitude,v.magnitude,Alt.magnitude)
+    ax.scatter()
+    ax.set_xlabel('U')
+    ax.set_ylabel('V')
+    ax.set_zlabel('Altitude')
+    fig6.savefig("uvAlt.png")
+    '''        
+    
+    
+    #possible ellipse points are stored in ells
+    #last line
 
-#xvals, yvals = get_pos_ellipse(xs[0])
-#print(xvals)
 
-'''
-fig6 = plt.figure()
-ax = plt.axes(projection='3d')
-plt.plot(u.magnitude,v.magnitude,Alt.magnitude)
-ax.scatter()
-ax.set_xlabel('U')
-ax.set_ylabel('V')
-ax.set_zlabel('Altitude')
-fig6.savefig("uvAlt.png")
-'''        
-
-
-#possible ellipse points are stored in ells
-#last line
-
+# if __name__ == "__main__":
+#     main()
