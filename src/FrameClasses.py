@@ -11,13 +11,18 @@ is activated when files are currently being processed.
 These classes communicate with the MainApp class.
 """
 
+# Standard Python Libraries
+import os
+
 # Graphics and File Processing
 import tkinter as tk
 import tkinter.ttk as ttk
+from pathlib import Path
+
 
 # Files In Code Base
 import MainApp
-
+import main
 
 
 # %% Sidebar Frame
@@ -274,9 +279,19 @@ class FileWindow(tk.Frame):
             self.labels[i].configure(text=string) 
             
         # PLACE ALL RELEVANT FILE DATA HERE.
-        #self.plots = []
-        #for filename in os.listdir(foldername):
-        #    self.plots.append()
+        self.ellipses = []
+        this_path = Path(main.DataOutputPath) / Path (files[index])
+        for file in os.listdir(this_path):
+            f = open(file, "a")
+            # Split Into X and Y Axes
+            Contents = f.read().split("\n")
+            # Convert X Y Axes Into List
+            XAxis = Contents[0].split(", ")
+            YAxis = Contents[0].split(", ")
+            print(XAxis)
+            print(YAxis)
+            self.ellipses.append((XAxis, YAxis))
+
 
         
         # Move This Frame To The Front.

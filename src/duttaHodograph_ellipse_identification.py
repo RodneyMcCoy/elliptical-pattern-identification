@@ -245,10 +245,10 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     print("BV MEAN: ", np.nanmean(bv))
     print("BV Period [min]: ", (2 * np.pi)/(np.nanmean(bv.magnitude) * 60))
     bv2 = bv2.magnitude 
-    plt.plot(Alt,bv2)
+    # plt.plot(Alt,bv2)
     meanBV2 = np.ones(len(bv2)) * np.mean(bv2)
     # localmean =
-    plt.plot(Alt, meanBV2)
+    # plt.plot(Alt, meanBV2)
     #bv2 = bruntViasalaFreqSquared(potentialTemperature, heightSamplingFreq)     #Maybe consider using metpy version of N^2 ? Height sampling is not used in hodo method, why allow it to affect bv ?
     
 
@@ -362,6 +362,7 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
    
     #Fig.legend(loc='center right', prop={'size': 6})
     #axs[0,1].legend(bbox_to_anchor=(1.04,.5), loc="center left", labels={"No polynomial subtracted", "Polynomial Background Subtracted (n=3)"})
+    """
     Fig.legend(loc=7)
     size=15
     plt.subplots_adjust(left=None, bottom=None, right=.7, top=None, wspace=.2, hspace=.2)
@@ -384,7 +385,7 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
     axs[1,0].set_ylabel("Altitude (km)", fontsize=size)
     axs[0,0].tick_params(axis='x',labelbottom=False) # labels along the bottom edge are off
     axs[0,1].tick_params(axis='x',labelbottom=False) # labels along the bottom edge are off
-    
+    """
 
     #Apply Butterworth Filter
     if applyButterworth:
@@ -421,8 +422,8 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
             filtTemp = butter_bandpass_filter(tempPert[i],freq1, freq2, heightSamplingFreq, order)
             tempButter.append(filtTemp)
             #axs[1,1].plot(vPert[0], Alt.magnitude)
-            axs[1,1].plot(vButter[i], Alt.magnitude/1000, linewidth=0.5, color='red')
-            axs[0,1].plot(uButter[i], Alt.magnitude/1000, linewidth=0.5, color='red')
+            # axs[1,1].plot(vButter[i], Alt.magnitude/1000, linewidth=0.5, color='red')
+            # axs[0,1].plot(uButter[i], Alt.magnitude/1000, linewidth=0.5, color='red')
             #plt.xlabel('time (seconds)')
             #plt.hlines([-a, a], 0, T, linestyles='--')
             #plt.grid(True)
@@ -432,11 +433,11 @@ def preprocessDataResample(file, path, spatialResolution, lambda1, lambda2, orde
         #filter no background subtracted signal
         filtU = butter_bandpass_filter(u,freq1, freq2, heightSamplingFreq, order)
         filtV = butter_bandpass_filter(vPert[i], freq1, freq2, 1/5, order)
-        axs[1,1].plot(filtV, Alt.magnitude/1000, linewidth=0.25, color='blue')
-        axs[0,1].plot(filtU, Alt.magnitude/1000, linewidth=0.25, color='blue')
+        # axs[1,1].plot(filtV, Alt.magnitude/1000, linewidth=0.25, color='blue')
+        # axs[0,1].plot(filtU, Alt.magnitude/1000, linewidth=0.25, color='blue')
         
        # os.chdir(waveParamDir)
-        Fig.savefig('filterEg.png',bbox_inches='tight', format='png', dpi=400)
+        # Fig.savefig('filterEg.png',bbox_inches='tight', format='png', dpi=400)
         #re define u,v
         #u = uButter[4]
         #v = vButter[4]
@@ -814,13 +815,15 @@ def plotBulkMicros(hodo_list, fname):
     cols = 4
     rows = np.ceil(num/cols)
     print("ROWS ", rows)
-    #fig = plt.figure(figsize = (8.5, 2*rows), constrained_layout=True)
+    """
+    fig = plt.figure(figsize = (8.5, 2*rows), constrained_layout=True)
     fig = plt.figure(figsize = (8.5, 11), constrained_layout=True)
     axs = fig.subplots(int(rows),cols)#, sharex=True, sharey=True)
     fig.suptitle('T36 Local Hodographs')
     fig.text(.5, -.02, 'u wind speed')
     fig.text(-.02, .5, 'v wind speed', va='center', rotation='vertical')
     axs, rem = trim(axs, num, rem)
+    """
     
     #Fill Subplots
     for place in axs.flat:
@@ -926,6 +929,7 @@ def plotBulkMicros(hodo_list, fname):
 def macroHodo():
     """ plot hodograph for entire flight
     """
+    return
     #plot v vs. u
     plt.figure("Macroscopic Hodograph", figsize=(10,10))  #Plot macroscopic hodograph
     plt.suptitle("Macro Hodograph for Entire Flight \n Background Wind Removed")
@@ -941,6 +945,7 @@ def macroHodo():
 def uvVisualize():
     """ plot u, v, background wind vs. altitude
     """
+    return
     #housekeeping
     plt.figure("U & V vs Time", figsize=(10,10)) 
     plt.suptitle('Smoothed U & V Components', fontsize=16)
@@ -1300,7 +1305,7 @@ def run_(filePath):
     """ call neccesary functions 
     """
     #make sure there are no existing figures open
-    plt.close('all')
+    # plt.close('all')
     
     # set location of flight data as current working directory
     os.chdir(filePath)
@@ -1311,7 +1316,7 @@ def run_(filePath):
             #print("Processing: ", file)
         file = fileToBeInspected
         data = preprocessDataResample(file, flightData, spatialResolution, lowcut, highcut, order)
-        manualTKGUI(file)
+        # manualTKGUI(file)
         return
     
     if analyze:
@@ -1351,7 +1356,7 @@ matplotlib.use('agg')
 
 def main():
     run_(flightData) 
-    plt.close('all')
+    # plt.close('all')
     
     
     ################################
@@ -1456,14 +1461,16 @@ def main():
         #plt.plot(ell[0], ell[1])
         
         # RESULTS SAVED TO FILE HERE
-        output_path = frontend.DataOutputPath / Path(fileToBeInspected)
+        output_path = frontend.DataOutputPath / Path(os.path.split(fileToBeInspected)[0]+"dir")
         
+        print(output_path)
         if not os.path.exists(output_path):
             os.mkdir(output_path)
 
-        f = open(str(output_path / Path("Text" + str(index))), "a")
-        f.write(str(ell[0]))
-        f.write(str(ell[1]))
+        f = open(str(output_path / Path("Ellipse" + str(index))), "a")
+        [f.write(str(i) + ", ") for i in ell[0]]
+        f.write("\n")
+        [f.write(str(i) + ", ") for i in ell[0]]
         f.close()
         
 
