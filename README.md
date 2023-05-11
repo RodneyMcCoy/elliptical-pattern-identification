@@ -101,7 +101,7 @@ In the design of this repository, having as little coupling as possible between 
 
 1. The FileWindow class takes the data which is outputed by the back end and renders it on the screen. To be able to Cohesivly render that data, it obviously needs prior understanding of what data is outputted. To find and edit this code to render different data, navigate [here](https://github.com/RodneyMcCoy/elliptical-pattern-identification/blob/3aeb31403bed1df2107588743c6c20120d374f9d/src/FrameClasses.py#LL281C18-L281C18).
 
-2. The BackEndInterface executes the back end. It passes a single file path to ProcessSingleFile, where the backend can be set up and run. Unfortunately, when the frontend executes the backend the backend cant open any matplotlib visuals, it will throw many errors. To find and edit this code to execute the backend in the frontend, navigate [here](https://github.com/RodneyMcCoy/elliptical-pattern-identification/blob/0603d83d917c635bd2e2f711e290aaac1ab861db/src/BackEndInterface.py#L35).
+2. The BackEndInterface executes the back end. It passes a single file path to ProcessSingleFile, where the backend can be set up and run. Unfortunately, when the frontend executes the backend the backend cant open any matplotlib visuals, it will throw many errors. To find and edit this code to execute the backend in the frontend, navigate [here](https://github.com/RodneyMcCoy/elliptical-pattern-identification/blob/c64f1daa51ac8050321594a529b946198427be80/src/BackEndInterface.py#L35).
 
 <!-- CONTRIBUTORS -->
 ## Contributors
