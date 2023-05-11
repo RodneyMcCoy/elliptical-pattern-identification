@@ -33,6 +33,7 @@
   </li>
   <li><a href="#navigating-the-repository">Navigating The Repository</a></li>
   <li><a href="#bugs">Bugs</a></li>
+  <li><a href="#notes-to-future-contributors">Notes To Future Contributors</a></li>
   <li><a href="#contributors">Contributors</a></li>
   <li><a href="#acknowledgments">Acknowledgments</a></li>
   <li><a href="#license">License</a></li>
@@ -97,6 +98,10 @@ Details in here on navigating the repository will be added later.
 ## Bugs
 
 As this application wasn't able to be tested to its fullest extent, bugs most likely will occur. They should be listed under [issues](https://github.com/RodneyMcCoy/elliptical-pattern-identification/issues). I (Rodney) will be semi-actively monitoring this repository over the summer to account for this. You can also email me at rbmj2001@outlook.com if urgent bugs need fixing. 
+
+<!-- NOTES-TO-FUTURE-CONTRIBUTORS -->
+## Notes To Future Contributors
+
 
 <!-- CONTRIBUTORS -->
 ## Contributors
