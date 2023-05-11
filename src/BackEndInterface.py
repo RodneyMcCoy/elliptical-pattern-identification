@@ -28,6 +28,7 @@ def OpenFileProcessingThread(*args):
         MainAppReference.progress_window.UpdateProcessing(file)
         ProcessSingleFile(file)
     MainAppReference.progress_window.stop_processing()
+    MainAppReference.main_window.file_label.configure(text="Processing Has Stopped.")
 
 
 
@@ -40,5 +41,4 @@ def ProcessSingleFile(file):
     # XXX: This Setup Works But Is Kind Of Janky Since I Just Wanted To Hook Up The 
     # Front End And Back End With The Minimal Amount Of Changes.
     backend.flightData, backend.fileToBeInspected = os.path.split(file)
-    print("Currently Processing: ", backend.flightData, backend.fileToBeInspected)
     backend.main()

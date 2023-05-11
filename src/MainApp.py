@@ -140,15 +140,14 @@ class MainApp:
         foldername = tk.filedialog.askdirectory(
             initialdir = initialdir, title = "Select a Folder")
         
-        # Add The Inputted Files To "file_container" If Its Not Already In It
-        FILES = os.listdir(foldername)
-        
-        # If This Is The First File Inputted, Activate Buttons Which Assume
-        # Files Are Already Given.
-        if len(FILES) == 0:
+        if len(foldername) == 0:
             self.main_window.file_label.configure(text="The Inputted Folder Was Empty Or No Folder Was Selected.")
             return
         
+        FILES = os.listdir(foldername)
+        
+        # If This Is The First File Inputted, Activate Buttons Which Assume
+        # Files Are Already Given.      
         if self.file_container == []:
             self.main_window.process_button.configure(state = tk.NORMAL)
             self.sidebar.buttons["next"].configure(state = tk.NORMAL)
@@ -159,8 +158,9 @@ class MainApp:
         FoundProperFile = False
         for filename in FILES:
             print(filename)
+            # Add The Inputted Files To "file_container" If Its Not Already In It
             if os.path.splitext(filename)[-1].lower() == ".txt":
-                FoundProperFile == True
+                FoundProperFile = True
                 add_file = True
                 for file in self.file_container:
                     if file == filename:

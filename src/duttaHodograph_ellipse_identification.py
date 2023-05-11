@@ -1461,10 +1461,8 @@ def main():
         #plt.plot(ell[0], ell[1])
         
         # RESULTS SAVED TO FILE HERE
-        print(os.path.split(fileToBeInspected))
-        output_path = frontend.DataOutputPath / Path(os.path.split(fileToBeInspected)[-2]+"dir")
+        output_path = frontend.DataOutputPath / Path(os.path.splitext(fileToBeInspected)[-2]+"output")
         
-        print(output_path)
         if not os.path.exists(output_path):
             os.mkdir(output_path)
 

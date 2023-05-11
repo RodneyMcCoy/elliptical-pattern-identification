@@ -278,7 +278,7 @@ class FileWindow(tk.Frame):
             
             self.labels[i].configure(text=string) 
             
-        # PLACE ALL RELEVANT FILE DATA HERE.
+        # XXX: PLACE ALL RELEVANT FILE DATA HERE.
         self.ellipses = []
         this_path = Path(main.DataOutputPath) / Path (files[index])
         for file in os.listdir(this_path):
