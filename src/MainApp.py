@@ -100,7 +100,12 @@ class MainApp:
         filename = tk.filedialog.askopenfilename(
             initialdir = initialdir, title = "Select a File", filetypes = 
             (("Text files", "*.txt*"), ("all files", "*.*")))
-                 
+        
+        if len(filename) == 0:
+            self.main_window.file_label.configure(text="No File Was Selected.")
+            return
+
+        
         # If This Is The First File Inputted, Activate Buttons Which Assume
         # Files Are Already Given.
         if self.file_container == []:
@@ -141,7 +146,7 @@ class MainApp:
         # If This Is The First File Inputted, Activate Buttons Which Assume
         # Files Are Already Given.
         if len(FILES) == 0:
-            self.main_window.file_label.configure(text="The Inputted Folder Was Empty.")
+            self.main_window.file_label.configure(text="The Inputted Folder Was Empty Or No Folder Was Selected.")
             return
         
         if self.file_container == []:
@@ -150,8 +155,12 @@ class MainApp:
             self.sidebar.buttons["previous"].configure(state = tk.NORMAL)
             self.sidebar.buttons["select"].configure(state = tk.NORMAL)
                 
+            
+        FoundProperFile = False
         for filename in FILES:
+            print(filename)
             if os.path.splitext(filename)[-1].lower() == ".txt":
+                FoundProperFile == True
                 add_file = True
                 for file in self.file_container:
                     if file == filename:
@@ -160,7 +169,9 @@ class MainApp:
                     this_path = Path(foldername) / Path (filename)
                     self.file_container.append(str(this_path))
             
-
+        if FoundProperFile == False:
+            self.main_window.file_label.configure(text="No file of proper formatting (ending in .txt) was found in folder.")
+            return
 
 
         
