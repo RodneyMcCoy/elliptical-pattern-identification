@@ -31,7 +31,6 @@
       <li><a href="#want-to-build-the-project-yourself"> Want To Build the Project Yourself?</li>
     </ul>
   </li>
-  <li><a href="#navigating-the-repository">Navigating The Repository</a></li>
   <li><a href="#bugs">Bugs</a></li>
   <li><a href="#notes-to-future-contributors">Notes To Future Contributors</a></li>
   <li><a href="#contributors">Contributors</a></li>
@@ -88,10 +87,6 @@
 
 
 
-<!-- NAVIGATING THE REPOSITORY -->
-## Navigating The Repository
-
-Details in here on navigating the repository will be added later.
 
 
 <!-- BUGS -->
@@ -102,6 +97,10 @@ As this application wasn't able to be tested to its fullest extent, bugs most li
 <!-- NOTES-TO-FUTURE-CONTRIBUTORS -->
 ## Notes To Future Contributors
 
+In the design of this repository, having as little coupling as possible between the frontend and backend was essential. The front end is important but for testing, we wanted to be able to execute the backend by itself without any other front end code. There are only two locations where the front and backend connect. 
+
+1. The FileWindow class takes the data which is outputed by the back end and renders it on the screen. To be able to Cohesivly render that data, it obviously needs prior understanding of what data is outputted. To find and edit this code to render different data, navigate to .
+2. The BackEndInterface executes the back end. It passes a single file path to ProcessSingleFile, where the backend can be set up and run. Unfortunately, when the frontend executes the backend the backend cant open any matplotlib visuals, it will throw many errors. o find and edit this code to execute the backend in the frontend, navigate to .
 
 <!-- CONTRIBUTORS -->
 ## Contributors
