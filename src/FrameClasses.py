@@ -134,7 +134,7 @@ class ProgressWindow(tk.Frame):
         # Create Widgets For This Frame.
         self.label = ttk.Label(self.frame, text=
             "Processing File: ")
-        self.stop_button = ttk.Button(self.frame, text="Stop processing at the current file", 
+        self.stop_button = ttk.Button(self.frame, text="Stop processing after this file", 
             command = self.stop_processing)
         
         # Place Widgets Onto This Frame.
@@ -244,12 +244,13 @@ class FileWindow(tk.Frame):
         
         # Create The Widgets For This Frame.
         self.labels = []
-        for i in range(5):
+        for i in range(6):
             self.labels.append(ttk.Label(self.frame, text="_"))
-            
+        
         # Place The Widgets Onto This Frame.
-        for i in range(5):
+        for i in range(6):
             self.labels[i].grid(row=i, column=0, sticky="ew", padx=5, pady=4)
+        
         
         # Place The Frame Onto The Master Window.
         self.frame.grid(row=0, column=1, sticky="nsew")
@@ -277,12 +278,24 @@ class FileWindow(tk.Frame):
             string += files[ind[i]]
             
             self.labels[i].configure(text=string) 
+        self.labels[5].configure(text="Found Outputted Data Pertaining To File")
             
-        # XXX: PLACE ALL RELEVANT FILE DATA HERE.
+        # Jank Meant To Properly Extract File Path
+        a,b = os.path.split(files[index])
+        this_path = main.DataOutputPath / Path(os.path.splitext(b)[-2]+"_output")
+        
+        # Move This Frame To The Front.
+        self.frame.tkraise()
+
+        # If No Output Data Found, Indicate This And Return        
+        if not os.path.exists(this_path):
+            self.labels[5].configure(text="Could Not Find Outputted Data Pertaining To File")
+            return
+
+        # XXX: PLACE ALL RELEVANT FILE DATA ONTO WINDOW HERE.
         self.ellipses = []
-        this_path = Path(main.DataOutputPath) / Path (files[index])
         for file in os.listdir(this_path):
-            f = open(file, "a")
+            f = open(file, "r")
             # Split Into X and Y Axes
             Contents = f.read().split("\n")
             # Convert X Y Axes Into List
@@ -291,9 +304,5 @@ class FileWindow(tk.Frame):
             print(XAxis)
             print(YAxis)
             self.ellipses.append((XAxis, YAxis))
-
-
         
-        # Move This Frame To The Front.
-        self.frame.tkraise()
         return

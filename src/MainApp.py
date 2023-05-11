@@ -157,7 +157,6 @@ class MainApp:
             
         FoundProperFile = False
         for filename in FILES:
-            print(filename)
             # Add The Inputted Files To "file_container" If Its Not Already In It
             if os.path.splitext(filename)[-1].lower() == ".txt":
                 FoundProperFile = True
