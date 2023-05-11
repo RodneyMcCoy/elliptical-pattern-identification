@@ -105,7 +105,7 @@ https://github.com/RodneyMcCoy/elliptical-pattern-identification/blob/3aeb31403b
 
 2. The BackEndInterface executes the back end. It passes a single file path to ProcessSingleFile, where the backend can be set up and run. Unfortunately, when the frontend executes the backend the backend cant open any matplotlib visuals, it will throw many errors. To find and edit this code to execute the backend in the frontend, a permalink is placed below.
 
-https://github.com/RodneyMcCoy/elliptical-pattern-identification/blob/d0f9072173ae393b1d3777b1db1898ba73e925f0/src/BackEndInterface.py#L35
+https://github.com/RodneyMcCoy/elliptical-pattern-identification/blob/3aeb31403bed1df2107588743c6c20120d374f9d/src/FrameClasses.py#LL281C18-L281C18
 
 <!-- CONTRIBUTORS -->
 ## Contributors
