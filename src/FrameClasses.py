@@ -18,9 +18,6 @@ import os
 import tkinter as tk
 import tkinter.ttk as ttk
 from pathlib import Path
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import matplotlib.pyplot as plt
 
 # Files In Code Base
 import MainApp
@@ -154,6 +151,7 @@ class ProgressWindow(tk.Frame):
         self.app_reference.sidebar.state(True)
         self.app_reference.Stop_Progress_Window()
         self.app_reference.switch_to_Main_Window()
+        self.app_reference.currently_processing = False
         return
     
     

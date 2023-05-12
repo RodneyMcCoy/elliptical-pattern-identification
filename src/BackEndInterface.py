@@ -19,21 +19,17 @@ import duttaHodograph_ellipse_identification as backend
 
 def OpenFileProcessingThread(*args):
     """ The Main Secondary Thread Controller. """
-    pipe_to_mainapp, pipe_to_interface, file_container = args
-    print ("Process Started")
-    sys.stdout.flush()
-    pipe = ""
-    pipe_to_mainapp.send("Process Started")
+    pipe_to_frontend, file_container = args
     for file in file_container:
-        if pipe_to_interface.poll():
-            pipe = pipe_to_interface.recv()
+        pipe = ""
+        if pipe_to_frontend.poll():
+            pipe = pipe_to_frontend.recv()
             if pipe == "STOP":
                 break
-        print("Backend: ", file)
-        pipe_to_mainapp.send(file)
+        pipe_to_frontend.send("Now Processing: " + file)
         ProcessSingleFile(file)
-    print("Process Terminated")
-    pipe_to_mainapp.send("STOP")
+    pipe_to_frontend.send("File Processing Has Stopped")
+    pipe_to_frontend.close()
     return
 
 
