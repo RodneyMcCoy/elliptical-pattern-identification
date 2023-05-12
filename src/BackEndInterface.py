@@ -9,7 +9,7 @@ The Backend Is Done. All Direct Interfacing With The Backend Occurs Here.
 """
 
 # Standard Python Libraries
-import time, os
+import time, os, sys
 
 # Files In Code Base
 import duttaHodograph_ellipse_identification as backend
@@ -19,16 +19,22 @@ import duttaHodograph_ellipse_identification as backend
 
 def OpenFileProcessingThread(*args):
     """ The Main Secondary Thread Controller. """
-    MainAppReference = args[0]
-    ContinueProcessing = args[1]
-    FileContainer = args[2]
-    for file in FileContainer:
-        if not ContinueProcessing.is_set():
-            break
-        MainAppReference.progress_window.UpdateProcessing(file)
+    pipe_to_mainapp, pipe_to_interface, file_container = args
+    print ("Process Started")
+    sys.stdout.flush()
+    pipe = ""
+    pipe_to_mainapp.send("Process Started")
+    for file in file_container:
+        if pipe_to_interface.poll():
+            pipe = pipe_to_interface.recv()
+            if pipe == "STOP":
+                break
+        print("Backend: ", file)
+        pipe_to_mainapp.send(file)
         ProcessSingleFile(file)
-    MainAppReference.progress_window.stop_processing()
-    MainAppReference.main_window.file_label.configure(text="Processing Has Stopped.")
+    print("Process Terminated")
+    pipe_to_mainapp.send("STOP")
+    return
 
 
 

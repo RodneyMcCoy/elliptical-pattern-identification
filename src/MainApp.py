@@ -9,7 +9,8 @@ processes files.
 """
 
 # Standard Python Libraries
-import sys, os, threading
+import sys, os
+import multiprocessing
 
 # Graphics and File Processing
 import tkinter as tk
@@ -190,6 +191,7 @@ class MainApp:
         self.sidebar.state(False)
         
         # Create Event To Communicate Between Threads.
+        """
         self.continue_processing = threading.Event()
         self.continue_processing.set()
         # Create Secondary Thread For Processing Files.
@@ -197,14 +199,50 @@ class MainApp:
                                        (self, self.continue_processing, self.file_container))
         self.thread.daemon = False
         self.thread.start()
+        """
+        
+        # Create Event To Communicate Between Threads.
+        # self.continue_processing = threading.Event()
+        # self.continue_processing.set()
+        # self.thread.daemon = False
+
+        # Create Secondary Thread For Processing Files.
+
+
+        self.pipe_to_mainapp, self.pipe_to_interface = multiprocessing.Pipe(duplex = True)
+
+        self.process = multiprocessing.Process(target=BackEndInterface.OpenFileProcessingThread, args=
+                                       (self.pipe_to_mainapp, self.pipe_to_interface, self.file_container))
+        # multiprocessing.set_start_method('fork', force=True)
+
+        self.is_processing_done()
+
+        self.process.start()
+
         return
 
 
 
+    def is_processing_done(self):
+        pipe = ""
+        if self.pipe_to_mainapp.poll():
+            pipe = self.pipe_to_mainapp.recv()
+            if pipe == "STOP":
+                self.progress_window.stop_processing()
+                return
+            
+            self.progress_window.label["text"] = str(pipe)
+        
+        print("Frontend: ", pipe)
+        self.master.after(1900, self.is_processing_done)
+        return
+
+
+        
     def Stop_Progress_Window(self):
         """ For When Processing Needs To Stop. Deactivates / Deletes Secondary
         Thread. """
-        self.continue_processing.clear()
+        self.pipe_to_interface.send("STOP")
         return
 
 

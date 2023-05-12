@@ -20,6 +20,7 @@ import tkinter.ttk as ttk
 from pathlib import Path
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
 
 # Files In Code Base
 import MainApp
@@ -293,7 +294,7 @@ class FileWindow(tk.Frame):
 
 
         # XXX: PLACE ALL RELEVANT FILE DATA ONTO WINDOW HERE.
-        self.ellipses = []
+        # self.ellipses = []
         for file in os.listdir(this_path):
             f = open(this_path / Path(file), "r")
             # Split Into X and Y Axes
@@ -301,18 +302,18 @@ class FileWindow(tk.Frame):
             # Convert X Y Axes Into List
             XAxis = Contents[0].split(", ")
             YAxis = Contents[0].split(", ")
-            self.ellipses.append((XAxis, YAxis))
+            # self.ellipses.append((XAxis, YAxis))
+            """
             # the figure that will contain the plot
-            fig = Figure(figsize = (5, 5),dpi = 100)
-
-            # list of squares
-            y = [i**2 for i in range(101)]
-
+            fig = Figure()
+            plt.subplots(subplot_kw={'aspect':'equal'})
+            plt.plot(XAxis, YAxis)
+           
             # adding the subplot
             plot1 = fig.add_subplot(111)
             
             # plotting the graph
-            plot1.plot(y)
+            plot1.plot(XAxis, YAxis)
             
             # creating the Tkinter canvas
             # containing the Matplotlib figure
@@ -320,5 +321,6 @@ class FileWindow(tk.Frame):
                                        master = self.frame)  
             canvas.draw()
             canvas.get_tk_widget().pack()
-        
+            """
+            break
         return

@@ -31,7 +31,7 @@ import os
 from io import StringIO
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 #for ellipse fitting
 #from math import atan2
@@ -45,11 +45,14 @@ import metpy.calc as mpcalc
 from metpy.units import units
 
 #tk gui
+"""
 import tkinter
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import *
 from tkinter.font import Font
+"""
+
 #from tkinter import ttk
 
 #skimage ellipse fitting
