@@ -18,7 +18,8 @@ import os
 import tkinter as tk
 import tkinter.ttk as ttk
 from pathlib import Path
-
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 # Files In Code Base
 import MainApp
@@ -242,16 +243,12 @@ class FileWindow(tk.Frame):
         self.master = app.master
         self.frame = tk.Frame(self.master)
         
-        # Create The Widgets For This Frame.
-        self.labels = []
-        for i in range(6):
-            self.labels.append(ttk.Label(self.frame, text="_"))
+        # Create A Label With Info For This Frame
+        self.label = ttk.Label(self.frame, text="_")
         
         # Place The Widgets Onto This Frame.
-        for i in range(6):
-            self.labels[i].grid(row=i, column=0, sticky="ew", padx=5, pady=4)
-        
-        
+        self.label.pack(side = tk.LEFT )
+
         # Place The Frame Onto The Master Window.
         self.frame.grid(row=0, column=1, sticky="nsew")
         return
@@ -270,39 +267,58 @@ class FileWindow(tk.Frame):
                 ind.append((index + i) % len(files))
             elif i == 0:
                 ind.append(index)
-                
+        string = ""
+        
         for i in range(5):
-            string = "(" + str(ind[i]) + ") "
+            string += "(" + str(ind[i]) + ") "
             if i == 2:
                 string += "CURRENT: "
-            string += files[ind[i]]
-            
-            self.labels[i].configure(text=string) 
-        self.labels[5].configure(text="Found Outputted Data Pertaining To File")
+            abs_path,file_name = os.path.split(files[ind[i]])
+            string += file_name + "\n"
             
         # Jank Meant To Properly Extract File Path
-        a,b = os.path.split(files[index])
-        this_path = main.DataOutputPath / Path(os.path.splitext(b)[-2]+"_output")
+        abs_path,file_name = os.path.split(files[index])
+        this_path = main.DataOutputPath / Path(os.path.splitext(file_name)[-2]+"_output")
         
         # Move This Frame To The Front.
         self.frame.tkraise()
 
         # If No Output Data Found, Indicate This And Return        
         if not os.path.exists(this_path):
-            self.labels[5].configure(text="Could Not Find Outputted Data Pertaining To File")
+            string += "Could Not Find Outputted Data Pertaining To File"
+            self.label.configure(text=string) 
             return
+        string += "Found Outputted Data Pertaining To File"
+        self.label.configure(text=string) 
+
 
         # XXX: PLACE ALL RELEVANT FILE DATA ONTO WINDOW HERE.
         self.ellipses = []
         for file in os.listdir(this_path):
-            f = open(file, "r")
+            f = open(this_path / Path(file), "r")
             # Split Into X and Y Axes
             Contents = f.read().split("\n")
             # Convert X Y Axes Into List
             XAxis = Contents[0].split(", ")
             YAxis = Contents[0].split(", ")
-            print(XAxis)
-            print(YAxis)
             self.ellipses.append((XAxis, YAxis))
+            # the figure that will contain the plot
+            fig = Figure(figsize = (5, 5),dpi = 100)
+
+            # list of squares
+            y = [i**2 for i in range(101)]
+
+            # adding the subplot
+            plot1 = fig.add_subplot(111)
+            
+            # plotting the graph
+            plot1.plot(y)
+            
+            # creating the Tkinter canvas
+            # containing the Matplotlib figure
+            canvas = FigureCanvasTkAgg(fig,
+                                       master = self.frame)  
+            canvas.draw()
+            canvas.get_tk_widget().pack()
         
         return

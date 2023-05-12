@@ -1469,7 +1469,7 @@ def main():
         f = open(str(output_path / Path("Ellipse" + str(index))), "a")
         [f.write(str(i) + ", ") for i in ell[0]]
         f.write("\n")
-        [f.write(str(i) + ", ") for i in ell[0]]
+        [f.write(str(i) + ", ") for i in ell[1]]
         f.close()
         
 
