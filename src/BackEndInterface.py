@@ -3,13 +3,15 @@ Rodney McCoy
 rbmj2001@outlook.com
 May 2023
 
-This Script Controls Behavior For The Secondary Thread. This Is Essential Because
-If We Call The Backend From The Same Thread As The GUI, It Freezes Until
-The Backend Is Done. All Direct Interfacing With The Backend Occurs Here.
+This Script Controls Behavior For The Secondary Process. This Is Essential Because
+If We Call The Backend From The Same Process As The GUI, It Freezes Until
+The Backend Is Done, And my Multithreaded Attempt Ended Up Making The App
+Unusable, Tkinter Fails With Multithreading. All Direct Interfacing With The 
+Backend Occurs Here.
 """
 
 # Standard Python Libraries
-import time, os, sys
+import os
 
 # Files In Code Base
 import duttaHodograph_ellipse_identification as backend
@@ -18,18 +20,15 @@ import duttaHodograph_ellipse_identification as backend
 # %% Back End Interface
 
 def OpenFileProcessingThread(*args):
-    """ The Main Secondary Thread Controller. """
-    pipe_to_frontend, file_container = args
-    for file in file_container:
-        pipe = ""
-        if pipe_to_frontend.poll():
-            pipe = pipe_to_frontend.recv()
-            if pipe == "STOP":
+    """ The Main Secondary Process Controller. """
+    frontend, files = args
+    for file in files:
+        if frontend.poll():
+            if frontend.recv() == "STOP":
                 break
-        pipe_to_frontend.send("Now Processing: " + file)
+        frontend.send("Now Processing " + file)
         ProcessSingleFile(file)
-    pipe_to_frontend.send("File Processing Has Stopped")
-    pipe_to_frontend.close()
+    frontend.close()
     return
 
 

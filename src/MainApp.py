@@ -194,9 +194,9 @@ class MainApp:
         
         # Create Secondary Process For Using Backend.
 
-        self.pipe_to_backend, pipe_to_frontend = multiprocessing.Pipe(duplex = True)
+        self.backend, frontend = multiprocessing.Pipe(duplex = True)
         self.process = multiprocessing.Process(target=BackEndInterface.OpenFileProcessingThread,
-                                               args= (pipe_to_frontend, self.file_container))
+                                               args= (frontend, self.file_container))
 
         self.is_processing_done()
         self.process.start()
@@ -206,27 +206,29 @@ class MainApp:
 
 
     def is_processing_done(self):
-        pipe = ""
-        if self.pipe_to_backend.poll():
-            pipe = self.pipe_to_backend.recv()
+        if not self.currently_processing:
+            return
+        if self.backend.poll():
+            pipe = self.backend.recv()
             if pipe == "STOP":
-                self.progress_window.stop_processing()
+                self.stop_processing()
                 return
-            
-            self.progress_window.label["text"] = str(pipe)
+            print(pipe)
+            self.progress_window.label["text"] = pipe
         
-        if pipe != "":
-            print("Message From BackEndInterface: ", pipe)
         self.master.after(250, self.is_processing_done)
         return
 
 
         
-    def Stop_Progress_Window(self):
+    def stop_processing(self):
         """ For When Processing Needs To Stop. Deactivates / Deletes Secondary
-        Thread. """
-        self.pipe_to_backend.send("STOP")
-        self.pipe_to_backend.close()
+        Process. """
+        self.sidebar.state(True)
+        self.switch_to_Main_Window()
+        self.currently_processing = False
+        self.backend.send("STOP")
+        # self.pipe_to_backend.close()
         return
 
 

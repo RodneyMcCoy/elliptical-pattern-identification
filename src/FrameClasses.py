@@ -18,6 +18,9 @@ import os
 import tkinter as tk
 import tkinter.ttk as ttk
 from pathlib import Path
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
 
 # Files In Code Base
 import MainApp
@@ -132,9 +135,9 @@ class ProgressWindow(tk.Frame):
         
         # Create Widgets For This Frame.
         self.label = ttk.Label(self.frame, text=
-            "Processing File: ")
+            "Starting...")
         self.stop_button = ttk.Button(self.frame, text="Stop processing after this file", 
-            command = self.stop_processing)
+            command = self.app_reference.stop_processing)
         
         # Place Widgets Onto This Frame.
         self.label.pack()
@@ -143,18 +146,6 @@ class ProgressWindow(tk.Frame):
         # Place Progress Window Frame Onto Master Window.
         self.frame.grid(row=0, column=1, sticky="nsew")
         return
-        
-        
-
-    def stop_processing(self):
-        """ Stops The Files From Being Processed, Returns To Main Window. """
-        self.app_reference.sidebar.state(True)
-        self.app_reference.Stop_Progress_Window()
-        self.app_reference.switch_to_Main_Window()
-        self.app_reference.currently_processing = False
-        return
-    
-    
         
     def load_this_frame(self):
         """ Called To Activate The Progress Window On Button Push. """
@@ -284,10 +275,9 @@ class FileWindow(tk.Frame):
 
         # If No Output Data Found, Indicate This And Return        
         if not os.path.exists(this_path):
-            string += "Could Not Find Outputted Data Pertaining To File"
             self.label.configure(text=string) 
             return
-        string += "Found Outputted Data Pertaining To File"
+        string += "Found Outputted Data"
         self.label.configure(text=string) 
 
 
@@ -300,18 +290,17 @@ class FileWindow(tk.Frame):
             # Convert X Y Axes Into List
             XAxis = Contents[0].split(", ")
             YAxis = Contents[0].split(", ")
-            # self.ellipses.append((XAxis, YAxis))
-            """
+
             # the figure that will contain the plot
             fig = Figure()
             plt.subplots(subplot_kw={'aspect':'equal'})
             plt.plot(XAxis, YAxis)
            
             # adding the subplot
-            plot1 = fig.add_subplot(111)
+            #plot1 = fig.add_subplot(111)
             
             # plotting the graph
-            plot1.plot(XAxis, YAxis)
+            #plot1.plot(XAxis, YAxis)
             
             # creating the Tkinter canvas
             # containing the Matplotlib figure
@@ -319,6 +308,5 @@ class FileWindow(tk.Frame):
                                        master = self.frame)  
             canvas.draw()
             canvas.get_tk_widget().pack()
-            """
             break
         return
