@@ -75,9 +75,18 @@ class MainApp:
         self.main_window = Frame.MainWindow(self)
         self.sidebar = Frame.Sidebar(self)
         self.file_window = Frame.FileWindow(self)
-
+        
         # Ensure The Starting Class / Frame Is MainWindow.
         self.switch_to_Main_Window()
+        
+        # Add Files Contained In Default Folders
+        self.input_files(os.listdir(main.DataInputPath), str(main.DataInputPath))
+
+        # for output_file in os.listdir(main.DataOutputPath):
+
+        if self.file_container != []:
+            self.files_are_inputted()
+
         return
 
     
@@ -112,23 +121,10 @@ class MainApp:
         # If This Is The First File Inputted, Activate Buttons Which Assume
         # Files Are Already Given.
         if self.file_container == []:
-            self.main_window.process_button.configure(state = tk.NORMAL)
-            self.sidebar.buttons["next"].configure(state = tk.NORMAL)
-            self.sidebar.buttons["previous"].configure(state = tk.NORMAL)
-            self.sidebar.buttons["select"].configure(state = tk.NORMAL)
+            self.files_are_inputted()
 
+        self.input_files([filename])
 
-        # Add The Inputted File To "file_container" If Its Not Already In Tt
-        add_file = True
-        for file in self.file_container:
-            if file == filename:
-                add_file = False
-        if add_file:
-            self.file_container.append(filename)
-
-        # Update MainWindow With Info About New File.
-        self.main_window.file_label.configure(text="".join(
-            [" " + f + "\n " for f in self.file_container])) 
         return
     
 
@@ -146,44 +142,56 @@ class MainApp:
         if len(foldername) == 0:
             self.main_window.file_label.configure(text="The Inputted Folder Was Empty Or No Folder Was Selected.")
             return
-        
-        FILES = os.listdir(foldername)
-        
+                
         # If This Is The First File Inputted, Activate Buttons Which Assume
         # Files Are Already Given.      
         if self.file_container == []:
-            self.main_window.process_button.configure(state = tk.NORMAL)
-            self.sidebar.buttons["next"].configure(state = tk.NORMAL)
-            self.sidebar.buttons["previous"].configure(state = tk.NORMAL)
-            self.sidebar.buttons["select"].configure(state = tk.NORMAL)
-                
-            
-        FoundProperFile = False
-        for filename in FILES:
-            # Add The Inputted Files To "file_container" If Its Not Already In It
-            if os.path.splitext(filename)[-1].lower() == ".txt":
-                FoundProperFile = True
-                add_file = True
-                for file in self.file_container:
-                    if file == filename:
-                        add_file = False
-                if add_file:
-                    this_path = Path(foldername) / Path (filename)
-                    self.file_container.append(str(this_path))
-            
-        if FoundProperFile == False:
-            self.main_window.file_label.configure(text="No file of proper formatting (ending in .txt) was found in folder.")
-            return
-
-
+            self.files_are_inputted()
         
-        # Update MainWindow With Info About New Files.
-        self.main_window.file_label.configure(text="".join(
-            [" " + f + "\n " for f in self.file_container])) 
+        self.input_files(os.listdir(foldername), foldername)
+            
+
         return
 
 
 
+    def input_files(self, files, folder = None):
+        count = 0
+        FoundProperFile = False
+        for filename in files:
+            if folder is None:
+                this_path = Path(filename)
+            else:
+                this_path = Path(folder) / Path (filename)
+            # Add The Inputted Files To "file_container" If Its Not Already In It
+            if os.path.splitext(filename)[-1].lower() == ".txt":
+                FoundProperFile = True
+                if not str(this_path) in self.file_container:
+                    self.file_container.append(str(this_path))
+                    count += 1
+            
+        if FoundProperFile == False:
+            self.main_window.file_label.configure(text="No file of proper formatting (ending in .txt) was found.")
+            return
+        
+        # Update MainWindow With Info About New Files.
+        Text = str(count) + " new files were inputted.\n"
+        # Text += "".join([" " + f + "\n " for f in files])
+        self.main_window.file_label.configure(text=Text) 
+        return
+    
+    
+
+    def files_are_inputted(self):
+        """ Allows GUI Behavior Which Assumes Files Are Given """
+        self.main_window.process_button.configure(state = tk.NORMAL)
+        self.sidebar.buttons["next"].configure(state = tk.NORMAL)
+        self.sidebar.buttons["previous"].configure(state = tk.NORMAL)
+        self.sidebar.buttons["select"].configure(state = tk.NORMAL)
+        return
+    
+        
+        
     def switch_to_Progress_Window(self):
         """ Main Controller Of Behavior For When Activating The ProgressWindow """
         # Load Progress Window.
@@ -200,7 +208,6 @@ class MainApp:
 
         self.is_processing_done()
         self.process.start()
-
         return
 
 
@@ -229,7 +236,7 @@ class MainApp:
         self.currently_processing = False
         if flag:
             self.backend.send("STOP")
-        # self.pipe_to_backend.close()
+        self.main_window.file_label["text"] = "Processing Has Ended"
         return
 
 
@@ -237,6 +244,7 @@ class MainApp:
     def switch_to_Main_Window(self):
         """ Main Controller Of Behavior For When Activating The MainWindow. """
         self.main_window.load_this_frame()
+        self.main_window.file_label.configure(text="") 
         return
         
         

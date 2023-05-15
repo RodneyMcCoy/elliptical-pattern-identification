@@ -233,23 +233,23 @@ class FileWindow(tk.Frame):
         self.master = app.master
         self.frame = tk.Frame(self.master)
         
-        # A List Of File Names Found In The Relevant Outputed Data File
-        self.files = []
-        self.current_ellipse = 0
-        
         # Create A Label With Info For This Frame
         self.label = ttk.Label(self.frame, text="_")
         
         # Place The Widgets Onto This Frame.
         self.label.pack(side = tk.LEFT )
 
+# %% 
+
         # XXX: Other Backend Dependent Widgets Initialized Here. 
         # So We Can Fine Tune The Information Rendered On The File Window
+        self.files = []
+        self.current_ellipse = 0
         self.left_button = ttk.Button(self.frame, text="Previous Ellipse")
         self.right_button = ttk.Button(self.frame, text="Next Ellipse")
         self.image = ttk.Label(self.frame, text="No Image")
         
-        
+# %%
 
         # Place The Frame Onto The Master Window.
         self.frame.grid(row=0, column=1, sticky="nsew")
@@ -292,6 +292,7 @@ class FileWindow(tk.Frame):
         string += "Found Outputted Data"
         self.label.configure(text=string) 
 
+# %%
 
         # XXX: PLACE ALL RELEVANT FILE DATA ONTO WINDOW HERE.
         self.files = os.listdir(this_path)      
@@ -299,4 +300,7 @@ class FileWindow(tk.Frame):
             f = open(this_path / Path(file), "r")
         
             break
+
+# %%
+
         return

@@ -1463,6 +1463,9 @@ def main():
         plt.plot(ell[0], ell[1])
         
         # RESULTS SAVED TO FILE HERE
+        # TIP: My Frontend Code Assumes The Folder Which Contains Data Ends With
+        # _output And Then Some File Extension. If You Change This, At Best The 
+        # Frontend Will Lose Some Functionality And At Worst It Will Break
         output_path = frontend.DataOutputPath / Path(os.path.splitext(fileToBeInspected)[-2]+"_output")
         
         if not os.path.exists(output_path):

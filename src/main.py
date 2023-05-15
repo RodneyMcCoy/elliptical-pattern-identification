@@ -22,8 +22,8 @@ import MainApp as App
 
 # If You Want To Manually Override These Constants, They Are Path Objects, Not String, So Do
 # Path(StringFilePath) So Nothing Breaks.
-DataInputPath = Path(os.getcwd()).parent.absolute() / "test"
-DataOutputPath = Path(os.getcwd()).parent.absolute() / "processed data"
+DataInputPath = Path(os.getcwd()).parent.absolute() / "test" 
+DataOutputPath = Path(os.getcwd()).parent.absolute() / "processed data" 
 
 
 
