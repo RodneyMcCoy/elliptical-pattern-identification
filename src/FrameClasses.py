@@ -137,7 +137,7 @@ class ProgressWindow(tk.Frame):
         self.label = ttk.Label(self.frame, text=
             "Starting...")
         self.stop_button = ttk.Button(self.frame, text="Stop processing after this file", 
-            command = self.app_reference.stop_processing)
+            command = lambda : self.app_reference.stop_processing(True))
         
         # Place Widgets Onto This Frame.
         self.label.pack()
@@ -233,11 +233,23 @@ class FileWindow(tk.Frame):
         self.master = app.master
         self.frame = tk.Frame(self.master)
         
+        # A List Of File Names Found In The Relevant Outputed Data File
+        self.files = []
+        self.current_ellipse = 0
+        
         # Create A Label With Info For This Frame
         self.label = ttk.Label(self.frame, text="_")
         
         # Place The Widgets Onto This Frame.
         self.label.pack(side = tk.LEFT )
+
+        # XXX: Other Backend Dependent Widgets Initialized Here. 
+        # So We Can Fine Tune The Information Rendered On The File Window
+        self.left_button = ttk.Button(self.frame, text="Previous Ellipse")
+        self.right_button = ttk.Button(self.frame, text="Next Ellipse")
+        self.image = ttk.Label(self.frame, text="No Image")
+        
+        
 
         # Place The Frame Onto The Master Window.
         self.frame.grid(row=0, column=1, sticky="nsew")
@@ -282,31 +294,9 @@ class FileWindow(tk.Frame):
 
 
         # XXX: PLACE ALL RELEVANT FILE DATA ONTO WINDOW HERE.
-        # self.ellipses = []
-        for file in os.listdir(this_path):
+        self.files = os.listdir(this_path)      
+        for file in self.files:
             f = open(this_path / Path(file), "r")
-            # Split Into X and Y Axes
-            Contents = f.read().split("\n")
-            # Convert X Y Axes Into List
-            XAxis = Contents[0].split(", ")
-            YAxis = Contents[0].split(", ")
-
-            # the figure that will contain the plot
-            fig = Figure()
-            plt.subplots(subplot_kw={'aspect':'equal'})
-            plt.plot(XAxis, YAxis)
-           
-            # adding the subplot
-            #plot1 = fig.add_subplot(111)
-            
-            # plotting the graph
-            #plot1.plot(XAxis, YAxis)
-            
-            # creating the Tkinter canvas
-            # containing the Matplotlib figure
-            canvas = FigureCanvasTkAgg(fig,
-                                       master = self.frame)  
-            canvas.draw()
-            canvas.get_tk_widget().pack()
+        
             break
         return

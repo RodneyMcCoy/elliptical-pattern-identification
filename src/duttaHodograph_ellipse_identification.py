@@ -31,7 +31,6 @@ import os
 from io import StringIO
 import numpy as np
 import pandas as pd
-# import matplotlib.pyplot as plt
 
 #for ellipse fitting
 #from math import atan2
@@ -44,14 +43,14 @@ from scipy import signal
 import metpy.calc as mpcalc
 from metpy.units import units
 
-#tk gui
-"""
+# Tkinter and GUI Related Library Imports
+import matplotlib.pyplot as plt
 import tkinter
-from matplotlib.figure import Figure
+# from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from tkinter import *
-from tkinter.font import Font
-"""
+# from tkinter import *
+# from tkinter.font import Font
+
 
 #from tkinter import ttk
 
@@ -1460,16 +1459,17 @@ def main():
     pairs = []
 
     for index, ell in enumerate(ells):
-        # fig4, ax = plt.subplots(subplot_kw={'aspect':'equal'})
-        #plt.plot(ell[0], ell[1])
+        fig4, ax = plt.subplots(subplot_kw={'aspect':'equal'})
+        plt.plot(ell[0], ell[1])
         
         # RESULTS SAVED TO FILE HERE
         output_path = frontend.DataOutputPath / Path(os.path.splitext(fileToBeInspected)[-2]+"_output")
         
         if not os.path.exists(output_path):
             os.mkdir(output_path)
-
-        f = open(str(output_path / Path("Ellipse" + str(index))), "a")
+            
+        plt.savefig(str(output_path / Path("EllipseImage" + str(index))) )
+        f = open(str(output_path / Path("EllipseText" + str(index))), "a")
         [f.write(str(i) + ", ") for i in ell[0]]
         f.write("\n")
         [f.write(str(i) + ", ") for i in ell[1]]

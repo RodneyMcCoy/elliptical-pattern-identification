@@ -28,6 +28,7 @@ def OpenFileProcessingThread(*args):
                 break
         frontend.send("Now Processing " + file)
         ProcessSingleFile(file)
+    frontend.send("STOP")
     frontend.close()
     return
 

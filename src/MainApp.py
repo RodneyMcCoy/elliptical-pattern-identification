@@ -86,7 +86,7 @@ class MainApp:
         """ Controls When Tkiner WM_DELETE_WINDOW Is Raised. Meant To Cleanly
         Exit Python Interpreter. """
         if self.currently_processing:
-            self.progress_window.stop_processing()
+            self.stop_processing(True)
         self.master.destroy()
         sys.exit()
         return
@@ -211,7 +211,7 @@ class MainApp:
         if self.backend.poll():
             pipe = self.backend.recv()
             if pipe == "STOP":
-                self.stop_processing()
+                self.stop_processing(False)
                 return
             print(pipe)
             self.progress_window.label["text"] = pipe
@@ -221,13 +221,14 @@ class MainApp:
 
 
         
-    def stop_processing(self):
+    def stop_processing(self, flag):
         """ For When Processing Needs To Stop. Deactivates / Deletes Secondary
         Process. """
         self.sidebar.state(True)
         self.switch_to_Main_Window()
         self.currently_processing = False
-        self.backend.send("STOP")
+        if flag:
+            self.backend.send("STOP")
         # self.pipe_to_backend.close()
         return
 
