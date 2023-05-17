@@ -1366,6 +1366,7 @@ def main():
     y_points = v.magnitude
     
     
+    # Find points where the graph intersects with itself
     def intersection(x1,x2,x3,x4,y1,y2,y3,y4):
         d = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4)
         if d:
@@ -1377,6 +1378,8 @@ def main():
             
     xps = np.copy(x_points)
     yps = np.copy(y_points)
+    
+    # Apply intersection method to our data
     def find_intersect(x_points, y_points):
         xs, ys = [], []
         ls = []
@@ -1396,6 +1399,8 @@ def main():
         i = (np.abs(arr - input_value)).argmin()
         return arr[i]
     
+    # Used to reduce the number of values in xs and ys by eliminating 
+    #   intersections within a certain range of each other
     def clean(ls):
         l2 = [ls[0]] 
         for i in range(0,len(ls)-1):
@@ -1407,6 +1412,8 @@ def main():
                 l2.append(ls[i])
         return l2
     
+    # Make lists of points near each intersection found based on the known heights 
+    #   of AGWs
     def get_pos_ellipse(intersection):
         ii = np.where(x_points == intersection)[0][0]       
     
@@ -1437,27 +1444,52 @@ def main():
         return temp
     
     
-    
+    # Calculate height of an ellispe for parameterization of ellipses
+    def ellipse_height(ellipse):
+        alts = []
+        for point in ellipse:
+            ii = np.where(x_points == point[0])
+            alts.append(Alt[ii])
+            
+        big = max(alts)
+        smol = min(alts)
+        
+        return big-smol
+            
+    # Note: find_intersect usually works better when data is flipped (high alts -> low alts)
     xs, ys, ls = find_intersect(np.flip(x_points), np.flip(y_points))
+    
+    # Since find_intersect uses some equations to estimate the locations of intersections
+    #   we need to find the closest actual points from our data file
     for i in range(0,len(xs)):
         xs[i] = closest_value(x_points, xs[i])
         ys[i] = closest_value(y_points, ys[i])
-         
+        
+    # Clean intersections to reduce the size of output
+    # Note: there is likely a better way to do this        
     for i in range(0,30):
         xs = clean(xs)
     
     
-    #print(xs)
+    # Store each possible ellipse into a list of ellipses
     ells = []
     for x in xs:
         xvals, yvals = get_pos_ellipse(x)
         ells.append([xvals,yvals])
+    
+    # Find heights of ellipses
+    heights = []
+    for ell in ells:
+        heights.append(ellipse_height(ell))
         
+    for height in heights:
+        print(height)
     
     ells = dist(ells)
     
     pairs = []
 
+    ########## GRAPHING AND OUTPUT ###########
     for index, ell in enumerate(ells):
         fig4, ax = plt.subplots(subplot_kw={'aspect':'equal'})
         plt.plot(ell[0], ell[1])
