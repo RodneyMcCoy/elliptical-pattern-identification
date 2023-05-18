@@ -113,7 +113,7 @@ tropopause = 11427  #m
 
 ##################################END OF USER INPUT######################
 scriptDirectory = os.getcwd()
-print(scriptDirectory)
+# print(scriptDirectory)
 
 def getFlightConfiguration(profile, configFile, configFilePath):
     """retrieve information from cite configuration file which contains site initials, flight times, tropopause heights
@@ -1447,6 +1447,7 @@ def main():
     # Calculate height of an ellispe for parameterization of ellipses
     def ellipse_height(ellipse):
         alts = []
+        print(Alt)
         for point in ellipse:
             ii = np.where(x_points == point[0])
             [alts.append(A) for A in Alt[ii]]
