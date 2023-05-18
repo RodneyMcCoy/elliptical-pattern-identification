@@ -1449,7 +1449,7 @@ def main():
         alts = []
         for point in ellipse:
             ii = np.where(x_points == point[0])
-            alts.append(Alt[ii])
+            alts.append(Alt[ii].magnitude)
             
         big = max(alts)
         smol = min(alts)
