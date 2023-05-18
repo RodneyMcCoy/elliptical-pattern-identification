@@ -49,7 +49,7 @@
 <!-- DOWNLOADING THE APPLICATION -->
 ### Downloading the Application
 
-** There currently is no pyinstaller build saved. i will do this in a few weeks when we get a mostly final build on the repo**
+** There currently is no pyinstaller build saved. i will do this in a few weeks when we get a mostly final build on the repo **
 
 1. Navigate to [Releases](https://github.com/RodneyMcCoy/elliptical-pattern-identification/releases) to download the application on your own machine.
 2. You should see a list of folders starting with `ApplicationForOS` where `OS` is the operating system for the application. Download the folder for your specific operating system.
