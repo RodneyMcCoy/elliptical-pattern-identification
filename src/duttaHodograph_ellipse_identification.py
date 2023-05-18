@@ -1453,10 +1453,10 @@ def main():
             [alts.append(A) for A in Alt[ii]]
         
         print(alts)
-        # big = max(alts)
-        # smol = min(alts)
+        big = max(alts)
+        smol = min(alts)
         
-        return 0# big-smol
+        return  big-smol
             
     # Note: find_intersect usually works better when data is flipped (high alts -> low alts)
     xs, ys, ls = find_intersect(np.flip(x_points), np.flip(y_points))
