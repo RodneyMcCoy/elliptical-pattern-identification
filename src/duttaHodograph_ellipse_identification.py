@@ -113,7 +113,7 @@ tropopause = 11427  #m
 
 ##################################END OF USER INPUT######################
 scriptDirectory = os.getcwd()
-print(scriptDirectory)
+# print(scriptDirectory)
 
 def getFlightConfiguration(profile, configFile, configFilePath):
     """retrieve information from cite configuration file which contains site initials, flight times, tropopause heights
@@ -1447,14 +1447,16 @@ def main():
     # Calculate height of an ellispe for parameterization of ellipses
     def ellipse_height(ellipse):
         alts = []
+        print(Alt)
         for point in ellipse:
             ii = np.where(x_points == point[0])
-            alts.append(Alt[ii].magnitude)
-            
+            [alts.append(A) for A in Alt[ii]]
+        
+        print(alts)
         big = max(alts)
         smol = min(alts)
         
-        return big-smol
+        return  big-smol
             
     # Note: find_intersect usually works better when data is flipped (high alts -> low alts)
     xs, ys, ls = find_intersect(np.flip(x_points), np.flip(y_points))
@@ -1482,12 +1484,16 @@ def main():
     for ell in ells:
         heights.append(ellipse_height(ell))
         
-    for height in heights:
-        print(height)
     
     ells = dist(ells)
     
-    pairs = []
+    # pairs = []
+
+    output_path = frontend.DataOutputPath / Path(os.path.splitext(fileToBeInspected)[-2]+"_output")
+
+    f = open(str(output_path / Path("Heights")), "a")
+    [f.write(str(height) + ", ") for height in heights]
+    f.close()
 
     ########## GRAPHING AND OUTPUT ###########
     for index, ell in enumerate(ells):
@@ -1498,12 +1504,13 @@ def main():
         # TIP: My Frontend Code Assumes The Folder Which Contains Data Ends With
         # _output And Then Some File Extension. If You Change This, At Best The 
         # Frontend Will Lose Some Functionality And At Worst It Will Break
-        output_path = frontend.DataOutputPath / Path(os.path.splitext(fileToBeInspected)[-2]+"_output")
         
         if not os.path.exists(output_path):
             os.mkdir(output_path)
             
         plt.savefig(str(output_path / Path("EllipseImage" + str(index))) )
+        plt.close()
+        
         f = open(str(output_path / Path("EllipseText" + str(index))), "a")
         [f.write(str(i) + ", ") for i in ell[0]]
         f.write("\n")
