@@ -1450,11 +1450,12 @@ def main():
         for point in ellipse:
             ii = np.where(x_points == point[0])
             alts.append(Alt[ii])
-            
-        big = max(alts)
-        smol = min(alts)
         
-        return big-smol
+        print(alts)
+        # big = max(alts)
+        # smol = min(alts)
+        
+        return 0# big-smol
             
     # Note: find_intersect usually works better when data is flipped (high alts -> low alts)
     xs, ys, ls = find_intersect(np.flip(x_points), np.flip(y_points))
@@ -1482,12 +1483,16 @@ def main():
     for ell in ells:
         heights.append(ellipse_height(ell))
         
-    for height in heights:
-        print(height)
     
     ells = dist(ells)
     
-    pairs = []
+    # pairs = []
+
+    output_path = frontend.DataOutputPath / Path(os.path.splitext(fileToBeInspected)[-2]+"_output")
+
+    f = open(str(output_path / Path("Heights")), "a")
+    [f.write(str(height) + ", ") for height in heights]
+    f.close()
 
     ########## GRAPHING AND OUTPUT ###########
     for index, ell in enumerate(ells):
@@ -1498,12 +1503,13 @@ def main():
         # TIP: My Frontend Code Assumes The Folder Which Contains Data Ends With
         # _output And Then Some File Extension. If You Change This, At Best The 
         # Frontend Will Lose Some Functionality And At Worst It Will Break
-        output_path = frontend.DataOutputPath / Path(os.path.splitext(fileToBeInspected)[-2]+"_output")
         
         if not os.path.exists(output_path):
             os.mkdir(output_path)
             
         plt.savefig(str(output_path / Path("EllipseImage" + str(index))) )
+        plt.close()
+        
         f = open(str(output_path / Path("EllipseText" + str(index))), "a")
         [f.write(str(i) + ", ") for i in ell[0]]
         f.write("\n")

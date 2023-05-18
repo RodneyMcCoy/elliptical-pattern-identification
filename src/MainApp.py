@@ -66,8 +66,6 @@ class MainApp:
         self.file_container = []
         # Denotes Which File Is Selected And Should Be Displayed For FileWindow.
         self.current_file_index = 0
-        # Denots Whether Program Is Currently Processing Files.
-        self.currently_processing = False
                 
         # Initialize Each Class / Frame In "FrameClasses.py".
         self.progress_window = Frame.ProgressWindow(self)
@@ -75,6 +73,11 @@ class MainApp:
         self.main_window = Frame.MainWindow(self)
         self.sidebar = Frame.Sidebar(self)
         self.file_window = Frame.FileWindow(self)
+        
+        # Initialize Multiprocessing Objects To Communicate With Backend
+        self.backend, self.frontend = multiprocessing.Pipe(duplex = True)
+        self.currently_processing = multiprocessing.Event()
+        self.currently_processing.clear()
         
         # Ensure The Starting Class / Frame Is MainWindow.
         self.switch_to_Main_Window()
@@ -94,7 +97,7 @@ class MainApp:
     def close(self):
         """ Controls When Tkiner WM_DELETE_WINDOW Is Raised. Meant To Cleanly
         Exit Python Interpreter. """
-        if self.currently_processing:
+        if self.currently_processing.is_set():
             self.stop_processing(True)
         self.master.destroy()
         sys.exit()
@@ -201,10 +204,9 @@ class MainApp:
         self.sidebar.state(False)
         
         # Create Secondary Process For Using Backend.
-
-        self.backend, frontend = multiprocessing.Pipe(duplex = True)
-        self.process = multiprocessing.Process(target=BackEndInterface.OpenFileProcessingThread,
-                                               args= (frontend, self.file_container))
+        self.currently_processing.set()
+        self.process = multiprocessing.Process(target=BackEndInterface.OpenBackendProcess,
+                                               args= (self.frontend, self.currently_processing, self.file_container))
 
         self.is_processing_done()
         self.process.start()
@@ -213,7 +215,7 @@ class MainApp:
 
 
     def is_processing_done(self):
-        if not self.currently_processing:
+        if not self.currently_processing.is_set():
             return
         if self.backend.poll():
             pipe = self.backend.recv()
@@ -233,7 +235,7 @@ class MainApp:
         Process. """
         self.sidebar.state(True)
         self.switch_to_Main_Window()
-        self.currently_processing = False
+        self.currently_processing.clear()
         if flag:
             self.backend.send("STOP")
         self.main_window.file_label["text"] = "Processing Has Ended"

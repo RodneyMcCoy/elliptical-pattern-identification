@@ -20,23 +20,38 @@ import main
 
 # %% Back End Interface
 
-def OpenFileProcessingThread(*args):
+def OpenBackendProcess(*args):
     """ The Main Secondary Process Controller. """
-    frontend, files = args
+    frontend, currently_processing, files = args
+    number = 0
     for file in files:
         # Check If Frontend Says Processing Should Stop
+        if not currently_processing.is_set():
+            break
         if frontend.poll():
             if frontend.recv() == "STOP":
                 break
+            
         # Check If Processed Data For This File Can Be Found
+        skip = False
         for data in os.listdir(main.DataOutputPath):
             if data == file + "_output":
-                print(file, " was already processed")
-                continue
-        frontend.send("Now Processing " + file)
+                skip = True
+                break
+        if skip:
+            print(file, " was already processed")
+            continue
+        
+        # Continue To Process This File
+        text = str(number) + " Files Processed: Now Processing "
+        abs_path,file_name = os.path.split(file)
+        text += file_name
+        frontend.send(text)
         ProcessSingleFile(file)
+        number += 1
     frontend.send("STOP")
-    frontend.close()
+    currently_processing.clear()
+    # frontend.close()
     return
 
 

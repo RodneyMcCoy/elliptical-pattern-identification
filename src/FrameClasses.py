@@ -150,7 +150,6 @@ class ProgressWindow(tk.Frame):
     def load_this_frame(self):
         """ Called To Activate The Progress Window On Button Push. """
         self.frame.tkraise()
-        self.app_reference.currently_processing = True
         return
 
     def UpdateProcessing(self, *args):
