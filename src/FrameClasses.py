@@ -137,7 +137,7 @@ class ProgressWindow(tk.Frame):
         self.label = ttk.Label(self.frame, text=
             "Starting...")
         self.stop_button = ttk.Button(self.frame, text="Stop processing after this file", 
-            command = lambda : self.app_reference.stop_processing(True))
+            command = lambda : self.app_reference.stop_processing())
         
         # Place Widgets Onto This Frame.
         self.label.pack()
@@ -149,6 +149,7 @@ class ProgressWindow(tk.Frame):
         
     def load_this_frame(self):
         """ Called To Activate The Progress Window On Button Push. """
+        self.label["text"] = "Starting..."
         self.frame.tkraise()
         return
 
@@ -244,9 +245,8 @@ class FileWindow(tk.Frame):
         # So We Can Fine Tune The Information Rendered On The File Window
         self.files = []
         self.current_ellipse = 0
-        self.left_button = ttk.Button(self.frame, text="Previous Ellipse")
-        self.right_button = ttk.Button(self.frame, text="Next Ellipse")
-        self.image = ttk.Label(self.frame, text="No Image")
+        self.image = ttk.Label(self.frame, text="Heights: ")
+        self.image.pack(side = tk.TOP)
         
 # %%
 
@@ -279,27 +279,32 @@ class FileWindow(tk.Frame):
             
         # Jank Meant To Properly Extract File Path
         abs_path,file_name = os.path.split(files[index])
-        this_path = main.DataOutputPath / Path(os.path.splitext(file_name)[-2]+"_output")
+        self.path_to_data = main.DataOutputPath / Path(os.path.splitext(file_name)[-2]+"_output")
         
         # Move This Frame To The Front.
         self.frame.tkraise()
 
         # If No Output Data Found, Indicate This And Return        
-        if not os.path.exists(this_path):
+        if not os.path.exists(self.path_to_data):
             self.label.configure(text=string) 
+            self.print_file_data(False)
             return
         string += "Found Outputted Data"
         self.label.configure(text=string) 
+        self.print_file_data(True)
 
-# %%
+    def print_file_data(self, data_found : bool):
+        if data_found:
+            # XXX: PLACE ALL RELEVANT FILE DATA ONTO WINDOW HERE.
+            self.files = os.listdir(self.path_to_data)      
+            for file in self.files:
+                break
+                # f = open(this_path / Path(file), "r")
+            heights = open(self.path_to_data / Path("Heights"), "r")
+            self.image["text"] = "Heights: " + heights.read()
+            heights.close()
+        else:
+            self.image["text"] = ""
 
-        # XXX: PLACE ALL RELEVANT FILE DATA ONTO WINDOW HERE.
-        self.files = os.listdir(this_path)      
-        for file in self.files:
-            f = open(this_path / Path(file), "r")
-        
-            break
-
-# %%
 
         return

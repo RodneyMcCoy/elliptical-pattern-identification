@@ -1447,16 +1447,16 @@ def main():
     # Calculate height of an ellispe for parameterization of ellipses
     def ellipse_height(ellipse):
         alts = []
-        print(Alt)
         for point in ellipse:
             ii = np.where(x_points == point[0])
-            [alts.append(A) for A in Alt[ii]]
-        
-        print(alts)
+            T = list(Alt[ii].magnitude)
+            for t in T:
+                alts.append(t)    
+
         big = max(alts)
         smol = min(alts)
         
-        return  big-smol
+        return big-smol
             
     # Note: find_intersect usually works better when data is flipped (high alts -> low alts)
     xs, ys, ls = find_intersect(np.flip(x_points), np.flip(y_points))
@@ -1489,24 +1489,30 @@ def main():
     
     # pairs = []
 
-    output_path = frontend.DataOutputPath / Path(os.path.splitext(fileToBeInspected)[-2]+"_output")
 
+    # %% Graphing And Output
+    
+    # Create Output Folder
+    output_path = frontend.DataOutputPath / Path(os.path.splitext(fileToBeInspected)[-2]+"_output")
+    if os.path.exists(output_path):
+        print("Warning, folder " + str(output_path) + " already exists in the folder " + str(frontend.DataOutputPath))
+    else:
+        os.mkdir(output_path)
+
+    # Output Heights Of Ellipsis Into Text File
     f = open(str(output_path / Path("Heights")), "a")
-    [f.write(str(height) + ", ") for height in heights]
+    wrap_around_size = 15
+    for index, height in enumerate(heights):
+        f.write("(" + str(index) + ", " + str(height) + ")  ") 
+        if index >= wrap_around_size and index % wrap_around_size == 0:
+            f.write('\n')
     f.close()
 
-    ########## GRAPHING AND OUTPUT ###########
     for index, ell in enumerate(ells):
         fig4, ax = plt.subplots(subplot_kw={'aspect':'equal'})
         plt.plot(ell[0], ell[1])
         
-        # RESULTS SAVED TO FILE HERE
-        # TIP: My Frontend Code Assumes The Folder Which Contains Data Ends With
-        # _output And Then Some File Extension. If You Change This, At Best The 
-        # Frontend Will Lose Some Functionality And At Worst It Will Break
-        
-        if not os.path.exists(output_path):
-            os.mkdir(output_path)
+        # RESULTS SAVED TO INDIVIDUAL FILE HERE
             
         plt.savefig(str(output_path / Path("EllipseImage" + str(index))) )
         plt.close()
@@ -1520,6 +1526,7 @@ def main():
 
         
         #pairs.append(checkPairs(ell[0], ell[1])
+        
     altIds = []
     for x in xs:
         ii = np.where(x_points == x)[0][0]

@@ -15,6 +15,7 @@ import os
 
 # Files In Code Base
 import duttaHodograph_ellipse_identification as backend
+from pathlib import Path
 import main
 
 
@@ -25,17 +26,14 @@ def OpenBackendProcess(*args):
     frontend, currently_processing, files = args
     number = 0
     for file in files:
-        # Check If Frontend Says Processing Should Stop
         if not currently_processing.is_set():
             break
-        if frontend.poll():
-            if frontend.recv() == "STOP":
-                break
-            
+        
         # Check If Processed Data For This File Can Be Found
         skip = False
         for data in os.listdir(main.DataOutputPath):
-            if data == file + "_output":
+            # print(str(main.DataOutputPath / Path(data)), file + "_output")
+            if str(main.DataOutputPath / Path(data)) == file + "_output":
                 skip = True
                 break
         if skip:
@@ -49,9 +47,14 @@ def OpenBackendProcess(*args):
         frontend.send(text)
         ProcessSingleFile(file)
         number += 1
-    frontend.send("STOP")
+        
+    if number == 0:
+        print("File Processing Was Started, But There Was No File Which Could Be Processed.")
+        print("Either No Files Were Inputted, Or Every File That Was Found Already Had Outputted Data")
+
     currently_processing.clear()
-    # frontend.close()
+    
+    print("Processing Has Finished")
     return
 
 
@@ -62,13 +65,8 @@ def ProcessSingleFile(file):
     Done Here Is Applying The Backend To That File And Saving The Results To A 
     Folder In DataOutputPath. """
     
-# %%
-    
-    # XXX: This Setup Works But Is Kind Of Janky Since I Just Wanted To Hook Up The 
-    # Front End And Back End With The Minimal Amount Of Changes.
+    # XXX: Call The Backend On The File "file"
     backend.flightData, backend.fileToBeInspected = os.path.split(file)
     backend.main()
-
-# %%
 
     return

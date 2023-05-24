@@ -127,7 +127,6 @@ class MainApp:
             self.files_are_inputted()
 
         self.input_files([filename])
-
         return
     
 
@@ -152,8 +151,6 @@ class MainApp:
             self.files_are_inputted()
         
         self.input_files(os.listdir(foldername), foldername)
-            
-
         return
 
 
@@ -216,12 +213,10 @@ class MainApp:
 
     def is_processing_done(self):
         if not self.currently_processing.is_set():
+            self.stop_processing()
             return
         if self.backend.poll():
             pipe = self.backend.recv()
-            if pipe == "STOP":
-                self.stop_processing(False)
-                return
             print(pipe)
             self.progress_window.label["text"] = pipe
         
@@ -230,14 +225,12 @@ class MainApp:
 
 
         
-    def stop_processing(self, flag):
+    def stop_processing(self):
         """ For When Processing Needs To Stop. Deactivates / Deletes Secondary
         Process. """
         self.sidebar.state(True)
         self.switch_to_Main_Window()
         self.currently_processing.clear()
-        if flag:
-            self.backend.send("STOP")
         self.main_window.file_label["text"] = "Processing Has Ended"
         return
 
