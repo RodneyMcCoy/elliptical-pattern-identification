@@ -32,8 +32,11 @@ def OpenBackendProcess(*args):
         # Check If Processed Data For This File Can Be Found
         skip = False
         for data in os.listdir(main.DataOutputPath):
-            # print(str(main.DataOutputPath / Path(data)), file + "_output")
-            if str(main.DataOutputPath / Path(data)) == file + "_output":
+            abs_path,file_name = os.path.split(file)
+            path_to_data1 = main.DataOutputPath / Path(os.path.splitext(file_name)[-2]+"_output")
+            path_to_data2 = main.DataOutputPath / Path(data)
+            # print(path_to_data1, path_to_data2)
+            if path_to_data1 == path_to_data2:
                 skip = True
                 break
         if skip:
