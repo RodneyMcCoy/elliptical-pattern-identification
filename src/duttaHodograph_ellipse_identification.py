@@ -1446,18 +1446,25 @@ def main():
     
     # Calculate height of an ellispe for parameterization of ellipses
     def ellipse_height(ellipse):
+        x_vals = ellipse[0]
+        
         alts = []
-        for point in ellipse:
-            ii = np.where(x_points == point[0])
+        for xs in x_vals:
+            ii = np.where(x_points == xs)
             T = list(Alt[ii].magnitude)
             for t in T:
-                alts.append(t)    
-
-        big = max(alts)
-        smol = min(alts)
-        
-        return big-smol
+                alts.append(t) 
             
+            
+        big = max(alts)
+        print("max: ", big)
+        small = min(alts)
+        print("min: ", small)
+        
+        print('Height: ', big-small)
+        
+        return big-small
+    
     # Note: find_intersect usually works better when data is flipped (high alts -> low alts)
     xs, ys, ls = find_intersect(np.flip(x_points), np.flip(y_points))
     
